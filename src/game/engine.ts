@@ -279,6 +279,7 @@ export function sueForPeace(state: GameState, neighborId: string): GameState {
 
 const MARRIAGE_COST = 50;
 const DOWRY_CHANCE = 0.35;
+export const MIN_MARRIAGE_AGE = 18;
 
 function findMarriageable(state: GameState, personId: string): Person | null {
   if (state.ruler.id === personId) return state.ruler;
@@ -319,11 +320,12 @@ export function proposeMarriage(
   if (!neighbor || neighbor.atWar || neighbor.relation < -20) return s;
   const person = findMarriageable(s, personId);
   if (!person || person.spouseId) return s;
+  if (s.year - person.birthYear < MIN_MARRIAGE_AGE) return s;
   if (s.resources.gold < MARRIAGE_COST) return s;
   s.resources.gold -= MARRIAGE_COST;
 
   const spouseSex: Sex = person.sex === "M" ? "F" : "M";
-  const spouse = createPerson(s, spouseSex, s.year - randInt(16, 32), null, null);
+  const spouse = createPerson(s, spouseSex, s.year - randInt(MIN_MARRIAGE_AGE, 32), null, null);
   spouse.spouseId = person.id;
   person.spouseId = spouse.id;
 

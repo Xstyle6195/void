@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { TRAITS } from "../game/data";
+import { MIN_MARRIAGE_AGE } from "../game/engine";
 import { buildCoupleGroups, computeGenerations, reignOrder } from "../game/genealogy";
 import type { GameState, Person } from "../game/types";
 import { useGameStore } from "../state/store";
@@ -92,7 +93,10 @@ function MarriageSection({
         </p>
       ) : (
         <ul className="marriage-list">
-          {marriageable.map((p) => (
+          {marriageable.map((p) => {
+            const age = game.year - p.birthYear;
+            const tooYoung = age < MIN_MARRIAGE_AGE;
+            return (
             <li key={p.id} className="marriage-item">
               <div className="province-row">
                 <div>
@@ -100,18 +104,20 @@ function MarriageSection({
                   <span className="tag">
                     {p.id === game.ruler.id ? "Souverain(e)" : "Héritier(e)"}
                   </span>
-                  <div className="muted">{game.year - p.birthYear} ans, célibataire</div>
+                  <div className="muted">{age} ans, célibataire</div>
                 </div>
                 <button
                   className="btn small"
+                  disabled={tooYoung}
+                  title={tooYoung ? `Doit avoir au moins ${MIN_MARRIAGE_AGE} ans` : ""}
                   onClick={() =>
                     setOpenPersonId(openPersonId === p.id ? null : p.id)
                   }
                 >
-                  Marier
+                  {tooYoung ? `Trop jeune (< ${MIN_MARRIAGE_AGE} ans)` : "Marier"}
                 </button>
               </div>
-              {openPersonId === p.id && (
+              {openPersonId === p.id && !tooYoung && (
                 <div className="build-menu">
                   {game.neighbors.map((n) => {
                     const disabled =
@@ -141,7 +147,8 @@ function MarriageSection({
                 </div>
               )}
             </li>
-          ))}
+            );
+          })}
         </ul>
       )}
     </section>
