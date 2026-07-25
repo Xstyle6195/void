@@ -1,0 +1,62 @@
+:root {
+  --bg: #f3ead9;
+  --bg-alt: #e9dcc0;
+  --panel: #fbf4e4;
+  --border: #c9b389;
+  --text: #3a2f22;
+  --text-muted: #7a6a51;
+  --accent: #8a1f1f;
+  --accent-soft: #b34747;
+  --gold: #a9791f;
+  --good: #3f6b3f;
+  --bad: #8a1f1f;
+
+  font: 17px/1.5 Georgia, "Iowan Old Style", "Palatino Linotype", serif;
+  color-scheme: light dark;
+  color: var(--text);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1c1712;
+    --bg-alt: #241d16;
+    --panel: #2a2219;
+    --border: #4a3c28;
+    --text: #ecdfc4;
+    --text-muted: #b3a488;
+    --accent: #c96a4c;
+    --accent-soft: #d98f76;
+    --gold: #d1a94a;
+    --good: #7fae7f;
+    --bad: #d1685f;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100svh;
+  background:
+    radial-gradient(circle at top, var(--bg-alt), var(--bg));
+}
+
+#root {
+  min-height: 100svh;
+}
+
+h1,
+h2,
+h3 {
+  font-family: "Trajan Pro", Georgia, serif;
+  color: var(--text);
+  margin: 0 0 8px;
+}
+
+button {
+  font: inherit;
+}
