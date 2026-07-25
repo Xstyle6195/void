@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { BUILDINGS } from "../game/data";
-import type { BuildingId, GameState } from "../game/types";
+import type { BuildingCategory, BuildingId, GameState } from "../game/types";
 import { useGameStore } from "../state/store";
 
 const KIND_LABEL: Record<string, string> = {
@@ -9,6 +9,30 @@ const KIND_LABEL: Record<string, string> = {
   village: "Village",
   frontier: "Frontière",
   colony: "Colonie",
+};
+
+const CATEGORY_ORDER: BuildingCategory[] = [
+  "military",
+  "civil",
+  "scientific",
+  "cultural",
+  "political",
+];
+
+const CATEGORY_LABEL: Record<BuildingCategory, string> = {
+  military: "Militaire",
+  civil: "Civil",
+  scientific: "Scientifique",
+  cultural: "Culturel",
+  political: "Politique",
+};
+
+const CATEGORY_ICON: Record<BuildingCategory, string> = {
+  military: "⚔️",
+  civil: "🏘️",
+  scientific: "🔬",
+  cultural: "🎭",
+  political: "🏛️",
 };
 
 export function ProvinceList({ game }: { game: GameState }) {
@@ -45,7 +69,7 @@ export function ProvinceList({ game }: { game: GameState }) {
                   setOpenProvince(openProvince === p.id ? null : p.id)
                 }
               >
-                Bâtir
+                Construction
               </button>
             </div>
             <div className="building-icons">
@@ -56,20 +80,34 @@ export function ProvinceList({ game }: { game: GameState }) {
               ))}
             </div>
             {openProvince === p.id && (
-              <div className="build-menu">
-                {Object.values(BUILDINGS).map((b) => {
-                  const built = p.buildings.includes(b.id as BuildingId);
+              <div className="build-categories">
+                {CATEGORY_ORDER.map((category) => {
+                  const buildings = Object.values(BUILDINGS).filter(
+                    (b) => b.category === category,
+                  );
                   return (
-                    <button
-                      key={b.id}
-                      className="btn small"
-                      disabled={built || game.resources.gold < b.cost}
-                      onClick={() => buildAt(p.id, b.id as BuildingId)}
-                      title={b.description}
-                    >
-                      {built ? "✔ " : ""}
-                      {b.name} ({b.cost} or)
-                    </button>
+                    <div className="build-category" key={category}>
+                      <div className="build-category-label">
+                        {CATEGORY_ICON[category]} {CATEGORY_LABEL[category]}
+                      </div>
+                      <div className="build-menu">
+                        {buildings.map((b) => {
+                          const built = p.buildings.includes(b.id as BuildingId);
+                          return (
+                            <button
+                              key={b.id}
+                              className="btn small"
+                              disabled={built || game.resources.gold < b.cost}
+                              onClick={() => buildAt(p.id, b.id as BuildingId)}
+                              title={b.description}
+                            >
+                              {built ? "✔ " : ""}
+                              {b.name} ({b.cost} or)
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
                   );
                 })}
               </div>

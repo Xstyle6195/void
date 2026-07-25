@@ -50,11 +50,32 @@ export type BuildingId =
   | "barracks"
   | "temple"
   | "walls"
-  | "hall";
+  | "hall"
+  | "arsenal"
+  | "garrison"
+  | "housing"
+  | "mine"
+  | "factory"
+  | "school"
+  | "laboratory"
+  | "observatory"
+  | "museum"
+  | "monument"
+  | "palace"
+  | "parliament"
+  | "embassy";
+
+export type BuildingCategory =
+  | "military"
+  | "civil"
+  | "scientific"
+  | "cultural"
+  | "political";
 
 export interface BuildingType {
   id: BuildingId;
   name: string;
+  category: BuildingCategory;
   cost: number;
   description: string;
   effects: {
@@ -63,6 +84,9 @@ export interface BuildingType {
     stability?: number;
     martial?: number;
     prestige?: number;
+    defense?: number;
+    populationGrowth?: number;
+    relationBonus?: number;
   };
 }
 

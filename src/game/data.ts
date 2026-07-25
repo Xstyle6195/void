@@ -88,47 +88,166 @@ export const TRAITS: Record<TraitId, Trait> = {
 };
 
 export const BUILDINGS: Record<string, BuildingType> = {
-  farm: {
-    id: "farm",
-    name: "Champs cultivés",
-    cost: 40,
-    description: "Augmente la production de nourriture.",
-    effects: { food: 6 },
-  },
-  market: {
-    id: "market",
-    name: "Marché",
-    cost: 60,
-    description: "Augmente les revenus en or.",
-    effects: { gold: 5 },
-  },
+  // --- Militaire : unités (puissance offensive) et défenses ---
   barracks: {
     id: "barracks",
     name: "Caserne",
+    category: "military",
     cost: 80,
-    description: "Renforce la puissance militaire.",
+    description: "Entraîne des troupes et renforce la puissance militaire.",
     effects: { martial: 4 },
   },
-  temple: {
-    id: "temple",
-    name: "Temple",
-    cost: 70,
-    description: "Améliore la stabilité et la piété du royaume.",
-    effects: { stability: 4, prestige: 1 },
+  arsenal: {
+    id: "arsenal",
+    name: "Arsenal",
+    category: "military",
+    cost: 170,
+    description: "Arme des troupes d'élite pour des campagnes offensives.",
+    effects: { martial: 9 },
   },
   walls: {
     id: "walls",
     name: "Murailles",
+    category: "military",
     cost: 100,
     description: "Protège la province des invasions.",
-    effects: { martial: 2, stability: 2 },
+    effects: { martial: 2, stability: 2, defense: 15 },
   },
+  garrison: {
+    id: "garrison",
+    name: "Garnison",
+    category: "military",
+    cost: 130,
+    description: "Une garnison permanente qui défend la ville en cas de siège.",
+    effects: { defense: 20, stability: 1 },
+  },
+
+  // --- Civil : habitations et production ---
+  housing: {
+    id: "housing",
+    name: "Quartiers d'habitation",
+    category: "civil",
+    cost: 75,
+    description: "Loge davantage d'habitants et accélère la croissance.",
+    effects: { populationGrowth: 0.015 },
+  },
+  farm: {
+    id: "farm",
+    name: "Champs cultivés",
+    category: "civil",
+    cost: 40,
+    description: "Augmente la production de nourriture.",
+    effects: { food: 6 },
+  },
+  mine: {
+    id: "mine",
+    name: "Mine",
+    category: "civil",
+    cost: 120,
+    description: "Extrait des minerais précieux, source d'or régulière.",
+    effects: { gold: 11 },
+  },
+  market: {
+    id: "market",
+    name: "Marché",
+    category: "civil",
+    cost: 60,
+    description: "Augmente les revenus en or.",
+    effects: { gold: 5 },
+  },
+  factory: {
+    id: "factory",
+    name: "Manufacture",
+    category: "civil",
+    cost: 210,
+    description: "Produit en masse, au prix d'un peu de mécontentement.",
+    effects: { gold: 20, stability: -1 },
+  },
+
+  // --- Scientifique : savoir et innovation ---
+  school: {
+    id: "school",
+    name: "École",
+    category: "scientific",
+    cost: 95,
+    description: "Instruit la population et stimule son développement.",
+    effects: { populationGrowth: 0.01, gold: 3 },
+  },
+  laboratory: {
+    id: "laboratory",
+    name: "Laboratoire",
+    category: "scientific",
+    cost: 190,
+    description: "Fait progresser les connaissances et l'artisanat.",
+    effects: { gold: 9, prestige: 3 },
+  },
+  observatory: {
+    id: "observatory",
+    name: "Observatoire",
+    category: "scientific",
+    cost: 150,
+    description: "Étudie les astres, source de prestige savant.",
+    effects: { prestige: 4, stability: 1 },
+  },
+
+  // --- Culturel : foi, mémoire et grandeur ---
+  temple: {
+    id: "temple",
+    name: "Temple",
+    category: "cultural",
+    cost: 70,
+    description: "Améliore la stabilité et la piété du royaume.",
+    effects: { stability: 4, prestige: 1 },
+  },
+  museum: {
+    id: "museum",
+    name: "Musée",
+    category: "cultural",
+    cost: 130,
+    description: "Expose les trésors du royaume, source de prestige.",
+    effects: { prestige: 6 },
+  },
+  monument: {
+    id: "monument",
+    name: "Monument",
+    category: "cultural",
+    cost: 210,
+    description: "Un monument grandiose célébrant la dynastie.",
+    effects: { prestige: 9, stability: 2 },
+  },
+
+  // --- Politique : pouvoir et diplomatie ---
   hall: {
     id: "hall",
     name: "Grande Halle",
+    category: "political",
     cost: 90,
     description: "Un lieu de pouvoir qui accroît le prestige.",
     effects: { prestige: 3, stability: 1 },
+  },
+  parliament: {
+    id: "parliament",
+    name: "Parlement",
+    category: "political",
+    cost: 180,
+    description: "Une assemblée qui stabilise la gouvernance du royaume.",
+    effects: { stability: 9 },
+  },
+  embassy: {
+    id: "embassy",
+    name: "Ambassade",
+    category: "political",
+    cost: 145,
+    description: "Entretient des relations suivies avec tous les royaumes voisins.",
+    effects: { relationBonus: 1 },
+  },
+  palace: {
+    id: "palace",
+    name: "Palais royal",
+    category: "political",
+    cost: 260,
+    description: "Le siège éclatant du pouvoir dynastique.",
+    effects: { prestige: 11, stability: 3 },
   },
 };
 

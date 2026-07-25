@@ -282,13 +282,33 @@
   margin-top: 6px;
 }
 
+.build-categories {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--border);
+}
+
+.build-category {
+  margin-bottom: 10px;
+}
+
+.build-category:last-child {
+  margin-bottom: 0;
+}
+
+.build-category-label {
+  font-size: 0.78em;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
 .build-menu {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  margin-top: 8px;
-  padding-top: 8px;
-  border-top: 1px dashed var(--border);
 }
 
 .diplo-actions {

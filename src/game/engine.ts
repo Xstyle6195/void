@@ -365,6 +365,10 @@ export function acknowledgeSuccession(state: GameState): GameState {
 
 // ---- Turn processing ----
 
+function provinceDefense(province: Province): number {
+  return province.buildings.reduce((sum, b) => sum + (BUILDINGS[b].effects.defense ?? 0), 0);
+}
+
 function totalMilitary(state: GameState): number {
   const rulerStats = statsWithTraits(state.ruler);
   let military = rulerStats.martial * 2;
@@ -387,10 +391,12 @@ function handleProduction(state: GameState): void {
     gold += Math.floor(p.population / 30);
     food += p.bonusFood ?? 0;
     gold += p.bonusGold ?? 0;
+    let growthRate = 0.03;
     for (const b of p.buildings) {
       const effects = BUILDINGS[b].effects;
       food += effects.food ?? 0;
       gold += effects.gold ?? 0;
+      growthRate += effects.populationGrowth ?? 0;
       state.resources.stability = clamp(
         state.resources.stability + (effects.stability ?? 0) * 0.1,
         0,
@@ -398,7 +404,7 @@ function handleProduction(state: GameState): void {
       );
       state.resources.prestige += (effects.prestige ?? 0) * 0.1;
     }
-    p.population += Math.max(1, Math.floor(p.population * 0.03));
+    p.population += Math.max(1, Math.floor(p.population * growthRate));
   }
   const upkeep = Math.floor(state.provinces.length * 5 + state.resources.food * 0.15);
   state.resources.food = Math.max(0, state.resources.food + food - upkeep);
@@ -440,12 +446,14 @@ function handleWars(state: GameState): void {
     } else if (roll < -8) {
       state.resources.stability = clamp(state.resources.stability - 6, 0, 100);
       state.resources.gold = Math.max(0, state.resources.gold - 15);
-      const target = state.provinces.find((p) => p.kind === "frontier");
-      if (target && chance(0.15)) {
+      const vulnerable = state.provinces.filter((p) => p.kind !== "capital");
+      const target = vulnerable.length > 0 ? pick(vulnerable) : null;
+      const captureChance = target ? clamp(0.22 - provinceDefense(target) * 0.006, 0.02, 0.22) : 0;
+      if (target && chance(captureChance)) {
         state.provinces = state.provinces.filter((p) => p.id !== target.id);
         log(state, "war", `${neighbor.name} s'empare de la province de ${target.name} !`);
       } else {
-        log(state, "war", `Défaite face à ${neighbor.name}. Le moral en pâtit.`);
+        log(state, "war", `Défaite face à ${neighbor.name}. Les défenses tiennent bon.`);
       }
     } else {
       log(state, "war", `Aucun camp ne prend l'avantage face à ${neighbor.name}.`);
@@ -521,8 +529,12 @@ export function processTurn(state: GameState): GameState {
 
   handleBirths(s);
 
+  const embassyBonus = s.provinces.reduce(
+    (sum, p) => sum + p.buildings.reduce((s2, b) => s2 + (BUILDINGS[b].effects.relationBonus ?? 0), 0),
+    0,
+  );
   for (const neighbor of s.neighbors) {
-    neighbor.relation = clamp(neighbor.relation + randInt(-2, 2), -100, 100);
+    neighbor.relation = clamp(neighbor.relation + randInt(-2, 2) + embassyBonus, -100, 100);
   }
 
   const ctx: EventContext = { state: s };
