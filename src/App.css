@@ -415,6 +415,10 @@
   border-left-color: #b5729a;
 }
 
+.log-army {
+  border-left-color: var(--gold);
+}
+
 .overlay {
   position: fixed;
   inset: 0;

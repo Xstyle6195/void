@@ -1,4 +1,4 @@
-import type { BuildingType, Trait, TraitId } from "./types";
+import type { BuildingType, Trait, TraitId, UnitTypeDef } from "./types";
 
 export const TRAITS: Record<TraitId, Trait> = {
   brave: {
@@ -120,6 +120,14 @@ export const BUILDINGS: Record<string, BuildingType> = {
     cost: 130,
     description: "Une garnison permanente qui défend la ville en cas de siège.",
     effects: { defense: 20, stability: 1 },
+  },
+  shipyard: {
+    id: "shipyard",
+    name: "Chantier naval",
+    category: "military",
+    cost: 150,
+    description: "Permet de recruter et d'équiper des forces navales.",
+    effects: { martial: 3 },
   },
 
   // --- Civil : habitations et production ---
@@ -250,6 +258,52 @@ export const BUILDINGS: Record<string, BuildingType> = {
     effects: { prestige: 11, stability: 3 },
   },
 };
+
+export const RECRUIT_BATCH = 25;
+export const RECRUIT_COST_PER_MAN = 3;
+
+export const UNIT_TYPES: UnitTypeDef[] = [
+  {
+    id: "infantry",
+    name: "Infanterie",
+    corps: "land",
+    description: "Fantassins équipés d'épées et de boucliers.",
+    equipCostPerMan: 6,
+    upkeepPerMan: 0.3,
+    power: 1,
+    requiresBuilding: "barracks",
+  },
+  {
+    id: "cavalry",
+    name: "Cavalerie",
+    corps: "land",
+    description: "Cavaliers rapides, redoutables en charge.",
+    equipCostPerMan: 16,
+    upkeepPerMan: 0.7,
+    power: 2.6,
+    requiresBuilding: "barracks",
+  },
+  {
+    id: "galley",
+    name: "Galère de guerre",
+    corps: "naval",
+    description: "Navire de guerre armé d'éperons et d'archers.",
+    equipCostPerMan: 30,
+    upkeepPerMan: 1.2,
+    power: 4,
+    requiresBuilding: "shipyard",
+  },
+  {
+    id: "transport",
+    name: "Knarr de transport",
+    corps: "naval",
+    description: "Navire robuste pour le transport de troupes et de marchandises.",
+    equipCostPerMan: 18,
+    upkeepPerMan: 0.6,
+    power: 1.5,
+    requiresBuilding: "shipyard",
+  },
+];
 
 export const MALE_NAMES = [
   "Aldric", "Baldwin", "Cedric", "Dagobert", "Edric", "Fenwick", "Gareth",

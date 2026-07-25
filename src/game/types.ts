@@ -63,7 +63,8 @@ export type BuildingId =
   | "monument"
   | "palace"
   | "parliament"
-  | "embassy";
+  | "embassy"
+  | "shipyard";
 
 export type BuildingCategory =
   | "military"
@@ -105,6 +106,29 @@ export interface Province {
   bonusFood?: number;
 }
 
+export type CorpsType = "land" | "naval" | "air";
+
+export interface UnitTypeDef {
+  id: string;
+  name: string;
+  corps: CorpsType;
+  description: string;
+  equipCostPerMan: number;
+  upkeepPerMan: number;
+  power: number;
+  requiresBuilding: BuildingId | null;
+}
+
+export interface ArmyUnitStack {
+  unitId: string;
+  count: number;
+}
+
+export interface ArmyState {
+  recruits: Record<CorpsType, number>;
+  units: ArmyUnitStack[];
+}
+
 export interface Neighbor {
   id: string;
   name: string;
@@ -131,6 +155,7 @@ export type LogKind =
   | "diplomacy"
   | "marriage"
   | "expedition"
+  | "army"
   | "gameover";
 
 export interface LogEntry {
@@ -222,4 +247,5 @@ export interface GameState {
   knownTiles: string[];
   expeditionOffers: ExpeditionOffer[];
   activeExpeditions: ActiveExpedition[];
+  army: ArmyState;
 }

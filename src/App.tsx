@@ -1,5 +1,6 @@
 import { useState } from "react";
 import "./App.css";
+import { ArmyView } from "./components/ArmyView";
 import { Chronicle } from "./components/Chronicle";
 import { DiplomacyPanel } from "./components/DiplomacyPanel";
 import { EventModal } from "./components/EventModal";
@@ -14,7 +15,7 @@ import { RulerPanel } from "./components/RulerPanel";
 import { SuccessionScreen } from "./components/SuccessionScreen";
 import { useGameStore } from "./state/store";
 
-type Tab = "royaume" | "carte" | "expedition" | "diplomatie" | "dynastie";
+type Tab = "royaume" | "carte" | "expedition" | "armee" | "diplomatie" | "dynastie";
 
 function App() {
   const game = useGameStore((s) => s.game);
@@ -54,6 +55,12 @@ function App() {
           Expéditions
         </button>
         <button
+          className={`tab-btn${tab === "armee" ? " active" : ""}`}
+          onClick={() => setTab("armee")}
+        >
+          Armée
+        </button>
+        <button
           className={`tab-btn${tab === "diplomatie" ? " active" : ""}`}
           onClick={() => setTab("diplomatie")}
         >
@@ -86,6 +93,11 @@ function App() {
       {tab === "expedition" && (
         <main>
           <ExpeditionView game={game} />
+        </main>
+      )}
+      {tab === "armee" && (
+        <main>
+          <ArmyView game={game} />
         </main>
       )}
       {tab === "diplomatie" && (

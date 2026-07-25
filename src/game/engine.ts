@@ -1,3 +1,4 @@
+import { totalArmyPower, totalArmyUpkeep } from "./army";
 import {
   BUILDINGS,
   FEMALE_NAMES,
@@ -124,6 +125,7 @@ export function createInitialState(): GameState {
     knownTiles: [],
     expeditionOffers: [],
     activeExpeditions: [],
+    army: { recruits: { land: 0, naval: 0, air: 0 }, units: [] },
   };
 
   const founder = createPerson(state, "M", startYear - randInt(22, 35), null, null);
@@ -380,6 +382,7 @@ function totalMilitary(state: GameState): number {
   for (const n of state.neighbors) {
     if (n.allied && !n.atWar) military += Math.round(n.strength * 0.15);
   }
+  military += totalArmyPower(state);
   return military;
 }
 
@@ -412,7 +415,11 @@ function handleProduction(state: GameState): void {
   const routeBonus = state.neighbors
     .filter((n) => !n.atWar)
     .reduce((sum, n) => sum + n.tradeRouteLevel * 6, 0);
-  state.resources.gold = Math.max(0, state.resources.gold + gold + tradeBonus + routeBonus);
+  const armyUpkeep = totalArmyUpkeep(state);
+  state.resources.gold = Math.max(
+    0,
+    state.resources.gold + gold + tradeBonus + routeBonus - armyUpkeep,
+  );
   if (state.resources.food === 0) {
     state.resources.stability = clamp(state.resources.stability - 5, 0, 100);
   }
