@@ -125,7 +125,12 @@ export function createInitialState(): GameState {
     knownTiles: [],
     expeditionOffers: [],
     activeExpeditions: [],
-    army: { recruits: { land: 0, naval: 0, air: 0 }, units: [] },
+    army: {
+      recruits: { land: 0, naval: 0, air: 0 },
+      units: [],
+      readinessBonus: 0,
+      readinessExpiresYear: 0,
+    },
   };
 
   const founder = createPerson(state, "M", startYear - randInt(22, 35), null, null);
@@ -251,6 +256,26 @@ export function declareWar(state: GameState, neighborId: string): GameState {
   neighbor.atWar = true;
   neighbor.relation = clamp(neighbor.relation - 30, -100, 100);
   log(s, "war", `Guerre déclarée contre ${neighbor.name} !`);
+  return s;
+}
+
+const ATTACK_COST = 40;
+const ATTACK_SURPRISE_BONUS = 10;
+
+export function attackNeighbor(state: GameState, neighborId: string): GameState {
+  const s = structuredClone(state);
+  const neighbor = s.neighbors.find((n) => n.id === neighborId);
+  if (!neighbor || neighbor.atWar) return s;
+  if (totalArmyPower(s) <= 0 || s.resources.gold < ATTACK_COST) return s;
+  s.resources.gold -= ATTACK_COST;
+  if (neighbor.allied) {
+    neighbor.allied = false;
+    log(s, "diplomacy", `L'alliance avec ${neighbor.name} est rompue par cette agression.`);
+  }
+  neighbor.atWar = true;
+  neighbor.relation = clamp(neighbor.relation - 30, -100, 100);
+  log(s, "war", `${s.kingdomName} lance une offensive contre ${neighbor.name} !`);
+  resolveBattleRound(s, neighbor, totalMilitary(s), ATTACK_SURPRISE_BONUS);
   return s;
 }
 
@@ -425,6 +450,41 @@ function handleProduction(state: GameState): void {
   }
 }
 
+function resolveBattleRound(
+  state: GameState,
+  neighbor: Neighbor,
+  myMilitary: number,
+  bonus: number,
+): void {
+  const roll = myMilitary + bonus + randInt(-10, 10) - (neighbor.strength + randInt(-10, 10));
+  if (roll > 8) {
+    state.resources.prestige += 3;
+    state.resources.gold += 20;
+    neighbor.strength = Math.max(5, neighbor.strength - 3);
+    log(state, "war", `Victoire contre ${neighbor.name} ! Butin et prestige gagnés.`);
+    if (chance(0.2)) {
+      neighbor.atWar = false;
+      neighbor.relation = -20;
+      log(state, "peace", `${neighbor.name} capitule et demande la paix.`);
+    }
+  } else if (roll < -8) {
+    state.resources.stability = clamp(state.resources.stability - 6, 0, 100);
+    state.resources.gold = Math.max(0, state.resources.gold - 15);
+    const vulnerable = state.provinces.filter((p) => p.kind !== "capital");
+    const target = vulnerable.length > 0 ? pick(vulnerable) : null;
+    const captureChance = target ? clamp(0.22 - provinceDefense(target) * 0.006, 0.02, 0.22) : 0;
+    if (target && chance(captureChance)) {
+      state.provinces = state.provinces.filter((p) => p.id !== target.id);
+      log(state, "war", `${neighbor.name} s'empare de la province de ${target.name} !`);
+    } else {
+      log(state, "war", `Défaite face à ${neighbor.name}. Les défenses tiennent bon.`);
+    }
+  } else {
+    log(state, "war", `Aucun camp ne prend l'avantage face à ${neighbor.name}.`);
+  }
+  neighbor.strength += randInt(0, 3);
+}
+
 function handleWars(state: GameState): void {
   const myMilitary = totalMilitary(state);
   for (const neighbor of state.neighbors) {
@@ -439,33 +499,7 @@ function handleWars(state: GameState): void {
       }
       continue;
     }
-    const roll = myMilitary + randInt(-10, 10) - (neighbor.strength + randInt(-10, 10));
-    if (roll > 8) {
-      state.resources.prestige += 3;
-      state.resources.gold += 20;
-      neighbor.strength = Math.max(5, neighbor.strength - 3);
-      log(state, "war", `Victoire contre ${neighbor.name} ! Butin et prestige gagnés.`);
-      if (chance(0.2)) {
-        neighbor.atWar = false;
-        neighbor.relation = -20;
-        log(state, "peace", `${neighbor.name} capitule et demande la paix.`);
-      }
-    } else if (roll < -8) {
-      state.resources.stability = clamp(state.resources.stability - 6, 0, 100);
-      state.resources.gold = Math.max(0, state.resources.gold - 15);
-      const vulnerable = state.provinces.filter((p) => p.kind !== "capital");
-      const target = vulnerable.length > 0 ? pick(vulnerable) : null;
-      const captureChance = target ? clamp(0.22 - provinceDefense(target) * 0.006, 0.02, 0.22) : 0;
-      if (target && chance(captureChance)) {
-        state.provinces = state.provinces.filter((p) => p.id !== target.id);
-        log(state, "war", `${neighbor.name} s'empare de la province de ${target.name} !`);
-      } else {
-        log(state, "war", `Défaite face à ${neighbor.name}. Les défenses tiennent bon.`);
-      }
-    } else {
-      log(state, "war", `Aucun camp ne prend l'avantage face à ${neighbor.name}.`);
-    }
-    neighbor.strength += randInt(0, 3);
+    resolveBattleRound(state, neighbor, myMilitary, 0);
   }
 }
 

@@ -127,6 +127,8 @@ export interface ArmyUnitStack {
 export interface ArmyState {
   recruits: Record<CorpsType, number>;
   units: ArmyUnitStack[];
+  readinessBonus: number;
+  readinessExpiresYear: number;
 }
 
 export interface Neighbor {

@@ -18,13 +18,44 @@ export function unitsForCorps(corps: CorpsType) {
   return UNIT_TYPES.filter((u) => u.corps === corps);
 }
 
+export const EXERCISE_COST_PER_UNIT = 1.5;
+export const EXERCISE_BONUS = 0.15;
+export const EXERCISE_MAX_BONUS = 0.45;
+export const EXERCISE_DURATION = 5;
+
+export function totalArmyUnits(state: GameState): number {
+  return state.army.units.reduce((sum, u) => sum + u.count, 0);
+}
+
+export function activeReadinessBonus(state: GameState): number {
+  return state.year <= state.army.readinessExpiresYear ? state.army.readinessBonus : 0;
+}
+
 export function totalArmyPower(state: GameState): number {
   let power = 0;
   for (const stack of state.army.units) {
     const def = UNIT_TYPES.find((u) => u.id === stack.unitId);
     if (def) power += def.power * stack.count;
   }
-  return power;
+  return power * (1 + activeReadinessBonus(state));
+}
+
+export function conductExercises(state: GameState): GameState {
+  const s = structuredClone(state);
+  const totalUnits = totalArmyUnits(s);
+  if (totalUnits <= 0) return s;
+  const cost = Math.round(totalUnits * EXERCISE_COST_PER_UNIT);
+  if (s.resources.gold < cost) return s;
+  s.resources.gold -= cost;
+  const currentBonus = activeReadinessBonus(s);
+  s.army.readinessBonus = Math.min(EXERCISE_MAX_BONUS, currentBonus + EXERCISE_BONUS);
+  s.army.readinessExpiresYear = s.year + EXERCISE_DURATION;
+  log(
+    s,
+    "army",
+    `Les troupes s'exercent : préparation militaire à ${Math.round(s.army.readinessBonus * 100)}% jusqu'en ${s.army.readinessExpiresYear}.`,
+  );
+  return s;
 }
 
 export function totalArmyUpkeep(state: GameState): number {

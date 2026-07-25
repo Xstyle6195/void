@@ -2,6 +2,7 @@ import { create } from "zustand";
 import {
   acknowledgeSuccession,
   answerEvent,
+  attackNeighbor,
   buildBuilding,
   createInitialState,
   declareWar,
@@ -12,7 +13,7 @@ import {
   sendGift,
   sueForPeace,
 } from "../game/engine";
-import { equipUnit, recruitMen } from "../game/army";
+import { conductExercises, equipUnit, recruitMen } from "../game/army";
 import { launchExpedition } from "../game/expeditions";
 import type { BuildingId, CorpsType, GameState } from "../game/types";
 
@@ -51,6 +52,8 @@ interface Store {
   sendExpedition: (offerId: string) => void;
   recruit: (corps: CorpsType, provinceId: string) => void;
   equip: (unitId: string) => void;
+  attack: (neighborId: string) => void;
+  exercise: () => void;
   restart: () => void;
 }
 
@@ -118,6 +121,16 @@ export const useGameStore = create<Store>((set, get) => ({
   },
   equip: (unitId) => {
     const updated = equipUnit(get().game, unitId);
+    persist(updated);
+    set({ game: updated });
+  },
+  attack: (neighborId) => {
+    const updated = attackNeighbor(get().game, neighborId);
+    persist(updated);
+    set({ game: updated });
+  },
+  exercise: () => {
+    const updated = conductExercises(get().game);
     persist(updated);
     set({ game: updated });
   },
