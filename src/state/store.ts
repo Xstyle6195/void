@@ -8,6 +8,7 @@ import {
   declareWar,
   formAlliance,
   foundProvince,
+  joinAllyWar,
   processTurn,
   proposeMarriage,
   sendGift,
@@ -54,6 +55,7 @@ interface Store {
   equip: (unitId: string) => void;
   attack: (neighborId: string) => void;
   exercise: () => void;
+  joinWar: (allyId: string, enemyId: string) => void;
   restart: () => void;
 }
 
@@ -131,6 +133,11 @@ export const useGameStore = create<Store>((set, get) => ({
   },
   exercise: () => {
     const updated = conductExercises(get().game);
+    persist(updated);
+    set({ game: updated });
+  },
+  joinWar: (allyId, enemyId) => {
+    const updated = joinAllyWar(get().game, allyId, enemyId);
     persist(updated);
     set({ game: updated });
   },

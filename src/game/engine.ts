@@ -174,9 +174,27 @@ export function createInitialState(): GameState {
       capitalX: neighborCapital.x,
       capitalY: neighborCapital.y,
       territory,
+      alliesWith: [],
+      rivalsWith: [],
+      warWith: [],
     };
     state.neighbors.push(neighbor);
     for (const t of territory) revealAround(known, world, t.x, t.y, 1);
+  }
+
+  for (let i = 0; i < state.neighbors.length; i++) {
+    for (let j = i + 1; j < state.neighbors.length; j++) {
+      const a = state.neighbors[i];
+      const b = state.neighbors[j];
+      const roll = Math.random();
+      if (roll < 0.3) {
+        a.alliesWith.push(b.id);
+        b.alliesWith.push(a.id);
+      } else if (roll < 0.6) {
+        a.rivalsWith.push(b.id);
+        b.rivalsWith.push(a.id);
+      }
+    }
   }
 
   state.knownTiles = Array.from(known);
@@ -245,6 +263,21 @@ export function sendGift(state: GameState, neighborId: string): GameState {
   return s;
 }
 
+const CONSEQUENCE_SHIFT = 15;
+
+function propagateWarConsequences(state: GameState, target: Neighbor): void {
+  for (const n of state.neighbors) {
+    if (n.id === target.id) continue;
+    if (target.alliesWith.includes(n.id)) {
+      n.relation = clamp(n.relation - CONSEQUENCE_SHIFT, -100, 100);
+      log(state, "diplomacy", `${n.name}, allié de ${target.name}, se méfie désormais de vous.`);
+    } else if (target.rivalsWith.includes(n.id)) {
+      n.relation = clamp(n.relation + CONSEQUENCE_SHIFT, -100, 100);
+      log(state, "diplomacy", `${n.name}, rival de ${target.name}, se réjouit de votre offensive.`);
+    }
+  }
+}
+
 export function declareWar(state: GameState, neighborId: string): GameState {
   const s = structuredClone(state);
   const neighbor = s.neighbors.find((n) => n.id === neighborId);
@@ -256,6 +289,7 @@ export function declareWar(state: GameState, neighborId: string): GameState {
   neighbor.atWar = true;
   neighbor.relation = clamp(neighbor.relation - 30, -100, 100);
   log(s, "war", `Guerre déclarée contre ${neighbor.name} !`);
+  propagateWarConsequences(s, neighbor);
   return s;
 }
 
@@ -275,7 +309,30 @@ export function attackNeighbor(state: GameState, neighborId: string): GameState 
   neighbor.atWar = true;
   neighbor.relation = clamp(neighbor.relation - 30, -100, 100);
   log(s, "war", `${s.kingdomName} lance une offensive contre ${neighbor.name} !`);
+  propagateWarConsequences(s, neighbor);
   resolveBattleRound(s, neighbor, totalMilitary(s), ATTACK_SURPRISE_BONUS);
+  return s;
+}
+
+export function joinAllyWar(
+  state: GameState,
+  allyId: string,
+  enemyId: string,
+): GameState {
+  const s = structuredClone(state);
+  const ally = s.neighbors.find((n) => n.id === allyId);
+  const enemy = s.neighbors.find((n) => n.id === enemyId);
+  if (!ally || !enemy || !ally.allied || enemy.atWar) return s;
+  if (!enemy.warWith.includes(ally.id)) return s;
+  enemy.atWar = true;
+  enemy.relation = clamp(enemy.relation - 25, -100, 100);
+  ally.relation = clamp(ally.relation + 20, -100, 100);
+  log(
+    s,
+    "war",
+    `${s.kingdomName} rejoint ${ally.name} dans sa guerre contre ${enemy.name} !`,
+  );
+  propagateWarConsequences(s, enemy);
   return s;
 }
 
@@ -503,6 +560,26 @@ function handleWars(state: GameState): void {
   }
 }
 
+function handleNeighborPolitics(state: GameState): void {
+  for (let i = 0; i < state.neighbors.length; i++) {
+    for (let j = i + 1; j < state.neighbors.length; j++) {
+      const a = state.neighbors[i];
+      const b = state.neighbors[j];
+      if (a.warWith.includes(b.id)) {
+        if (chance(0.15)) {
+          a.warWith = a.warWith.filter((id) => id !== b.id);
+          b.warWith = b.warWith.filter((id) => id !== a.id);
+          log(state, "peace", `${a.name} et ${b.name} signent la paix.`);
+        }
+      } else if (a.rivalsWith.includes(b.id) && chance(0.05)) {
+        a.warWith.push(b.id);
+        b.warWith.push(a.id);
+        log(state, "war", `${a.name} déclare la guerre à ${b.name} !`);
+      }
+    }
+  }
+}
+
 function deathChance(person: Person, age: number): number {
   let base = 0;
   if (age > 75) base = 0.35;
@@ -559,6 +636,7 @@ export function processTurn(state: GameState): GameState {
   s.year += 1;
   handleProduction(s);
   handleWars(s);
+  handleNeighborPolitics(s);
   resolveExpeditions(s);
   topUpExpeditionOffers(s);
 
@@ -574,8 +652,13 @@ export function processTurn(state: GameState): GameState {
     (sum, p) => sum + p.buildings.reduce((s2, b) => s2 + (BUILDINGS[b].effects.relationBonus ?? 0), 0),
     0,
   );
+  const rulerDiplomacyDrift = Math.round((statsWithTraits(s.ruler).diplomacy - 10) / 4);
   for (const neighbor of s.neighbors) {
-    neighbor.relation = clamp(neighbor.relation + randInt(-2, 2) + embassyBonus, -100, 100);
+    neighbor.relation = clamp(
+      neighbor.relation + randInt(-2, 2) + embassyBonus + rulerDiplomacyDrift,
+      -100,
+      100,
+    );
   }
 
   const ctx: EventContext = { state: s };

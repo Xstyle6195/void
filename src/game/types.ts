@@ -143,6 +143,9 @@ export interface Neighbor {
   capitalX: number;
   capitalY: number;
   territory: { x: number; y: number }[];
+  alliesWith: string[]; // ids of other neighbors this kingdom is allied with
+  rivalsWith: string[]; // ids of other neighbors this kingdom is rivals with
+  warWith: string[]; // ids of other neighbors this kingdom is currently at war with
 }
 
 export type LogKind =
