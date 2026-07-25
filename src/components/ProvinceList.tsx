@@ -8,6 +8,7 @@ const KIND_LABEL: Record<string, string> = {
   town: "Ville",
   village: "Village",
   frontier: "Frontière",
+  colony: "Colonie",
 };
 
 export function ProvinceList({ game }: { game: GameState }) {

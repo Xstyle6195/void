@@ -3,6 +3,7 @@ import "./App.css";
 import { Chronicle } from "./components/Chronicle";
 import { DiplomacyPanel } from "./components/DiplomacyPanel";
 import { EventModal } from "./components/EventModal";
+import { ExpeditionView } from "./components/ExpeditionView";
 import { FamilyTree } from "./components/FamilyTree";
 import { GameOverScreen } from "./components/GameOverScreen";
 import { MapView } from "./components/MapView";
@@ -13,7 +14,7 @@ import { RulerPanel } from "./components/RulerPanel";
 import { SuccessionScreen } from "./components/SuccessionScreen";
 import { useGameStore } from "./state/store";
 
-type Tab = "royaume" | "carte" | "diplomatie" | "dynastie";
+type Tab = "royaume" | "carte" | "expedition" | "diplomatie" | "dynastie";
 
 function App() {
   const game = useGameStore((s) => s.game);
@@ -47,6 +48,12 @@ function App() {
           Carte d'Orion
         </button>
         <button
+          className={`tab-btn${tab === "expedition" ? " active" : ""}`}
+          onClick={() => setTab("expedition")}
+        >
+          Expéditions
+        </button>
+        <button
           className={`tab-btn${tab === "diplomatie" ? " active" : ""}`}
           onClick={() => setTab("diplomatie")}
         >
@@ -74,6 +81,11 @@ function App() {
       {tab === "carte" && (
         <main>
           <MapView game={game} />
+        </main>
+      )}
+      {tab === "expedition" && (
+        <main>
+          <ExpeditionView game={game} />
         </main>
       )}
       {tab === "diplomatie" && (

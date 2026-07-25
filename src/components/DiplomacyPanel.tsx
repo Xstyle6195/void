@@ -26,6 +26,11 @@ export function DiplomacyPanel({ game }: { game: GameState }) {
                 <strong>{n.name}</strong>{" "}
                 {n.atWar && <span className="tag war">En guerre</span>}
                 {n.allied && <span className="tag ally">Alliés</span>}
+                {n.tradeRouteLevel > 0 && (
+                  <span className="tag" title="Bonus commercial passif issu d'une expédition mercantile">
+                    Route commerciale {n.tradeRouteLevel}/3
+                  </span>
+                )}
                 <div className="muted">
                   {relationLabel(n.relation)} ({n.relation}) · Force {n.strength}
                 </div>

@@ -1,13 +1,12 @@
 import {
   BUILDINGS,
   FEMALE_NAMES,
-  KINGDOM_NAME_ADJ,
-  KINGDOM_NAME_SUFFIX,
   MALE_NAMES,
   NEIGHBOR_NAME_POOL,
   TRAITS,
 } from "./data";
 import { EVENTS, pickEvent, resolveChoice } from "./events";
+import { resolveExpeditions, topUpExpeditionOffers } from "./expeditions";
 import {
   buildTerritory,
   findExpansionTile,
@@ -26,7 +25,7 @@ import type {
   Stats,
   TraitId,
 } from "./types";
-import { chance, clamp, log, nextId, pick, randInt } from "./utils";
+import { chance, clamp, log, nextId, pick, randInt, randomKingdomName } from "./utils";
 import { getOrionWorld } from "./worldgen";
 
 const OPPOSITE_TRAITS: Partial<Record<TraitId, TraitId>> = {
@@ -103,10 +102,6 @@ export function createPerson(
   return person;
 }
 
-function randomKingdomName(): string {
-  return `${pick(KINGDOM_NAME_ADJ)}${pick(KINGDOM_NAME_SUFFIX)}`;
-}
-
 export function createInitialState(): GameState {
   const startYear = 850;
   const state: GameState = {
@@ -127,6 +122,8 @@ export function createInitialState(): GameState {
     reignCount: 1,
     nextId: 0,
     knownTiles: [],
+    expeditionOffers: [],
+    activeExpeditions: [],
   };
 
   const founder = createPerson(state, "M", startYear - randInt(22, 35), null, null);
@@ -166,6 +163,7 @@ export function createInitialState(): GameState {
       atWar: false,
       isVassal: false,
       allied: false,
+      tradeRouteLevel: 0,
       capitalX: neighborCapital.x,
       capitalY: neighborCapital.y,
       territory,
@@ -175,6 +173,7 @@ export function createInitialState(): GameState {
   }
 
   state.knownTiles = Array.from(known);
+  topUpExpeditionOffers(state);
 
   log(state, "province", `Fondation de ${state.kingdomName} par ${founder.name}, l'an ${startYear}.`);
   return state;
@@ -386,6 +385,8 @@ function handleProduction(state: GameState): void {
   for (const p of state.provinces) {
     food += Math.floor(p.population / 20);
     gold += Math.floor(p.population / 30);
+    food += p.bonusFood ?? 0;
+    gold += p.bonusGold ?? 0;
     for (const b of p.buildings) {
       const effects = BUILDINGS[b].effects;
       food += effects.food ?? 0;
@@ -402,7 +403,10 @@ function handleProduction(state: GameState): void {
   const upkeep = Math.floor(state.provinces.length * 5 + state.resources.food * 0.15);
   state.resources.food = Math.max(0, state.resources.food + food - upkeep);
   const tradeBonus = state.neighbors.filter((n) => n.allied).length * 8;
-  state.resources.gold = Math.max(0, state.resources.gold + gold + tradeBonus);
+  const routeBonus = state.neighbors
+    .filter((n) => !n.atWar)
+    .reduce((sum, n) => sum + n.tradeRouteLevel * 6, 0);
+  state.resources.gold = Math.max(0, state.resources.gold + gold + tradeBonus + routeBonus);
   if (state.resources.food === 0) {
     state.resources.stability = clamp(state.resources.stability - 5, 0, 100);
   }
@@ -506,6 +510,8 @@ export function processTurn(state: GameState): GameState {
   s.year += 1;
   handleProduction(s);
   handleWars(s);
+  resolveExpeditions(s);
+  topUpExpeditionOffers(s);
 
   const age = s.year - s.ruler.birthYear;
   if (chance(deathChance(s.ruler, age))) {

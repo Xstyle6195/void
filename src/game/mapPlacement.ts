@@ -99,6 +99,26 @@ export function buildTerritory(
   return territory;
 }
 
+export function findExpeditionTarget(
+  world: WorldMap,
+  known: Set<string>,
+  capital: TilePos,
+  minDist: number,
+  maxDist: number,
+  requireLand: boolean,
+): TilePos | null {
+  for (let attempt = 0; attempt < 800; attempt++) {
+    const x = randInt(0, world.width - 1);
+    const y = randInt(0, world.height - 1);
+    if (known.has(tileKey(x, y))) continue;
+    if (requireLand && !isSettleable(world.tiles[y][x])) continue;
+    const d = Math.hypot(x - capital.x, y - capital.y);
+    if (d < minDist || d > maxDist) continue;
+    return { x, y };
+  }
+  return null;
+}
+
 export function findExpansionTile(
   world: WorldMap,
   owned: TilePos[],

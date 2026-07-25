@@ -12,6 +12,7 @@ import {
   sendGift,
   sueForPeace,
 } from "../game/engine";
+import { launchExpedition } from "../game/expeditions";
 import type { BuildingId, GameState } from "../game/types";
 
 const SAVE_KEY = "dynastie-save-v1";
@@ -46,6 +47,7 @@ interface Store {
   peaceNeighbor: (neighborId: string) => void;
   allyNeighbor: (neighborId: string) => void;
   marryOff: (personId: string, neighborId: string) => void;
+  sendExpedition: (offerId: string) => void;
   restart: () => void;
 }
 
@@ -98,6 +100,11 @@ export const useGameStore = create<Store>((set, get) => ({
   },
   marryOff: (personId, neighborId) => {
     const updated = proposeMarriage(get().game, personId, neighborId);
+    persist(updated);
+    set({ game: updated });
+  },
+  sendExpedition: (offerId) => {
+    const updated = launchExpedition(get().game, offerId);
     persist(updated);
     set({ game: updated });
   },

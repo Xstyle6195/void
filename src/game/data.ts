@@ -157,3 +157,14 @@ export const KINGDOM_NAME_ADJ = [
 export const KINGDOM_NAME_SUFFIX = [
   "fort", "brise", "combe", "garde", "haven", "roche", "val", "terre",
 ];
+
+export const EXPLORER_TITLES_MALE = [
+  "Capitaine", "Éclaireur", "Navigateur", "Cartographe", "Baroudeur",
+];
+export const EXPLORER_TITLES_FEMALE = [
+  "Capitaine", "Éclaireuse", "Navigatrice", "Cartographe", "Baroudeuse",
+];
+export const MERCHANT_TITLES_MALE = ["Négociant", "Marchand", "Facteur"];
+export const MERCHANT_TITLES_FEMALE = ["Négociante", "Marchande", "Factrice"];
+export const PROSPECTOR_TITLES_MALE = ["Prospecteur", "Mineur", "Arpenteur"];
+export const PROSPECTOR_TITLES_FEMALE = ["Prospectrice", "Mineuse", "Arpenteuse"];

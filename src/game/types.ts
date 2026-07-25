@@ -66,7 +66,7 @@ export interface BuildingType {
   };
 }
 
-export type ProvinceKind = "capital" | "town" | "village" | "frontier";
+export type ProvinceKind = "capital" | "town" | "village" | "frontier" | "colony";
 
 export interface Province {
   id: string;
@@ -77,6 +77,8 @@ export interface Province {
   foundedYear: number;
   x: number;
   y: number;
+  bonusGold?: number;
+  bonusFood?: number;
 }
 
 export interface Neighbor {
@@ -87,6 +89,7 @@ export interface Neighbor {
   atWar: boolean;
   isVassal: boolean;
   allied: boolean;
+  tradeRouteLevel: number; // 0 = none, 1-3 = trade route quality
   capitalX: number;
   capitalY: number;
   territory: { x: number; y: number }[];
@@ -103,6 +106,7 @@ export type LogKind =
   | "province"
   | "diplomacy"
   | "marriage"
+  | "expedition"
   | "gameover";
 
 export interface LogEntry {
@@ -143,6 +147,37 @@ export interface PendingEvent {
   eventId: string;
 }
 
+export type ExpeditionKind = "geographic" | "mercantile" | "resource";
+export type Ambition = 1 | 2 | 3;
+
+export interface ExpeditionOffer {
+  id: string;
+  kind: ExpeditionKind;
+  explorerName: string;
+  title: string;
+  description: string;
+  cost: number;
+  duration: number;
+  ambition: Ambition;
+  successChance: number;
+  colonize: boolean;
+  expiresYear: number;
+  targetX: number;
+  targetY: number;
+  neighborId: string | null;
+  tradeLevel: number;
+  rewardGold: number;
+  rewardFood: number;
+  rewardPrestige: number;
+}
+
+export interface ActiveExpedition {
+  id: string;
+  offer: ExpeditionOffer;
+  departureYear: number;
+  returnYear: number;
+}
+
 export interface GameState {
   year: number;
   dynastyName: string;
@@ -161,4 +196,6 @@ export interface GameState {
   reignCount: number;
   nextId: number;
   knownTiles: string[];
+  expeditionOffers: ExpeditionOffer[];
+  activeExpeditions: ActiveExpedition[];
 }

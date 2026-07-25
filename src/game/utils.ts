@@ -1,3 +1,4 @@
+import { KINGDOM_NAME_ADJ, KINGDOM_NAME_SUFFIX } from "./data";
 import type { GameState, LogEntry, LogKind } from "./types";
 
 export function randInt(min: number, max: number): number {
@@ -25,4 +26,8 @@ export function log(state: GameState, kind: LogKind, text: string): void {
   const entry: LogEntry = { year: state.year, kind, text };
   state.log.unshift(entry);
   if (state.log.length > 200) state.log.length = 200;
+}
+
+export function randomKingdomName(): string {
+  return `${pick(KINGDOM_NAME_ADJ)}${pick(KINGDOM_NAME_SUFFIX)}`;
 }
