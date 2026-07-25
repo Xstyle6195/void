@@ -104,6 +104,7 @@ export interface Province {
   y: number;
   bonusGold?: number;
   bonusFood?: number;
+  satisfaction: number; // 0-100, local contentment of this province's people
 }
 
 export type CorpsType = "land" | "naval" | "air";
@@ -161,6 +162,7 @@ export type LogKind =
   | "marriage"
   | "expedition"
   | "army"
+  | "revolt"
   | "gameover";
 
 export interface LogEntry {

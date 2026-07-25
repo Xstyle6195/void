@@ -15,6 +15,12 @@ import {
   findStartingCapital,
   revealAround,
 } from "./mapPlacement";
+import {
+  growthMultiplier,
+  productionMultiplier,
+  SATISFACTION_START,
+  satisfactionTier,
+} from "./satisfaction";
 import type {
   BuildingId,
   EventContext,
@@ -150,6 +156,7 @@ export function createInitialState(): GameState {
     foundedYear: startYear,
     x: capitalPos.x,
     y: capitalPos.y,
+    satisfaction: SATISFACTION_START,
   };
   state.provinces.push(capital);
 
@@ -227,6 +234,7 @@ export function foundProvince(state: GameState): GameState {
     foundedYear: s.year,
     x: spot.x,
     y: spot.y,
+    satisfaction: SATISFACTION_START,
   };
   s.provinces.push(province);
   const known = new Set(s.knownTiles);
@@ -385,6 +393,7 @@ function tryDowryLand(s: GameState, neighbor: Neighbor): string | null {
     foundedYear: s.year,
     x: tile.x,
     y: tile.y,
+    satisfaction: SATISFACTION_START,
   };
   s.provinces.push(province);
   const known = new Set(s.knownTiles);
@@ -472,16 +481,16 @@ function handleProduction(state: GameState): void {
   let food = 10;
   let gold = 10;
   for (const p of state.provinces) {
-    food += Math.floor(p.population / 20);
-    gold += Math.floor(p.population / 30);
-    food += p.bonusFood ?? 0;
-    gold += p.bonusGold ?? 0;
+    let pFood = Math.floor(p.population / 20) + (p.bonusFood ?? 0);
+    let pGold = Math.floor(p.population / 30) + (p.bonusGold ?? 0);
     let growthRate = 0.03;
+    let localStabilityEffect = 0;
     for (const b of p.buildings) {
       const effects = BUILDINGS[b].effects;
-      food += effects.food ?? 0;
-      gold += effects.gold ?? 0;
+      pFood += effects.food ?? 0;
+      pGold += effects.gold ?? 0;
       growthRate += effects.populationGrowth ?? 0;
+      localStabilityEffect += effects.stability ?? 0;
       state.resources.stability = clamp(
         state.resources.stability + (effects.stability ?? 0) * 0.1,
         0,
@@ -489,7 +498,20 @@ function handleProduction(state: GameState): void {
       );
       state.resources.prestige += (effects.prestige ?? 0) * 0.1;
     }
-    p.population += Math.max(1, Math.floor(p.population * growthRate));
+
+    const tier = satisfactionTier(p.satisfaction);
+    food += Math.round(pFood * productionMultiplier(tier));
+    gold += Math.round(pGold * productionMultiplier(tier));
+    p.population += Math.max(1, Math.floor(p.population * growthRate * growthMultiplier(tier)));
+
+    p.satisfaction = clamp(
+      p.satisfaction +
+        (state.resources.stability - p.satisfaction) * 0.06 +
+        localStabilityEffect * 0.15 +
+        randInt(-1, 1),
+      0,
+      100,
+    );
   }
   const upkeep = Math.floor(state.provinces.length * 5 + state.resources.food * 0.15);
   state.resources.food = Math.max(0, state.resources.food + food - upkeep);
@@ -580,6 +602,35 @@ function handleNeighborPolitics(state: GameState): void {
   }
 }
 
+const SECESSION_CHANCE = 0.08;
+const REVOLUTION_CHANCE = 0.05;
+
+function handleUnrest(state: GameState): boolean {
+  for (const p of [...state.provinces]) {
+    if (p.kind === "capital") continue;
+    if (satisfactionTier(p.satisfaction) !== "furious") continue;
+    if (!chance(SECESSION_CHANCE)) continue;
+    state.provinces = state.provinces.filter((x) => x.id !== p.id);
+    if (state.neighbors.length > 0 && chance(0.5)) {
+      const neighbor = pick(state.neighbors);
+      neighbor.territory.push({ x: p.x, y: p.y });
+      log(state, "revolt", `${p.name} se soulève et rallie le royaume de ${neighbor.name} !`);
+    } else {
+      log(state, "revolt", `${p.name} se soulève et proclame son indépendance !`);
+    }
+  }
+
+  if (satisfactionTier(state.resources.stability) === "furious" && chance(REVOLUTION_CHANCE)) {
+    log(state, "revolt", "Le mécontentement général dégénère en révolte ouverte !");
+    handleSuccession(
+      state,
+      `${state.ruler.name} est renversé(e) par la colère du peuple après ${state.year - state.ruler.birthYear} ans de règne.`,
+    );
+    return true;
+  }
+  return false;
+}
+
 function deathChance(person: Person, age: number): number {
   let base = 0;
   if (age > 75) base = 0.35;
@@ -592,10 +643,18 @@ function deathChance(person: Person, age: number): number {
   return clamp(base, 0, 0.9);
 }
 
-function handleSuccession(state: GameState): void {
+function handleSuccession(
+  state: GameState,
+  departureText?: string,
+): void {
   state.ruler.deathYear = state.year;
   state.deceased.push(state.ruler);
-  log(state, "death", `${state.ruler.name} s'éteint à l'âge de ${state.year - state.ruler.birthYear} ans.`);
+  log(
+    state,
+    "death",
+    departureText ??
+      `${state.ruler.name} s'éteint à l'âge de ${state.year - state.ruler.birthYear} ans.`,
+  );
 
   if (state.heirs.length === 0) {
     state.phase = "gameover";
@@ -639,6 +698,10 @@ export function processTurn(state: GameState): GameState {
   handleNeighborPolitics(s);
   resolveExpeditions(s);
   topUpExpeditionOffers(s);
+
+  if (handleUnrest(s)) {
+    return s;
+  }
 
   const age = s.year - s.ruler.birthYear;
   if (chance(deathChance(s.ruler, age))) {

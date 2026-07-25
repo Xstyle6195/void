@@ -9,6 +9,7 @@ import {
   PROSPECTOR_TITLES_MALE,
 } from "./data";
 import { findExpeditionTarget, revealAround, type TilePos } from "./mapPlacement";
+import { SATISFACTION_START } from "./satisfaction";
 import type {
   Ambition,
   ActiveExpedition,
@@ -275,6 +276,7 @@ function resolveGeographic(s: GameState, offer: ExpeditionOffer): string {
       foundedYear: s.year,
       x: offer.targetX,
       y: offer.targetY,
+      satisfaction: SATISFACTION_START,
     };
     s.provinces.push(province);
     revealAround(known, world, offer.targetX, offer.targetY, 3);
@@ -311,6 +313,7 @@ function resolveResource(s: GameState, offer: ExpeditionOffer): string {
       y: offer.targetY,
       bonusGold: 3 * offer.ambition,
       bonusFood: 2 * offer.ambition,
+      satisfaction: SATISFACTION_START,
     };
     s.provinces.push(province);
     return `${offer.explorerName} fonde une colonie d'exploitation : ${province.name}.`;

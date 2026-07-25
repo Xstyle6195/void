@@ -419,6 +419,67 @@
   border-left-color: var(--gold);
 }
 
+.log-revolt {
+  border-left-color: var(--bad);
+}
+
+.tier-text {
+  font-size: 0.9em;
+}
+
+.tier-text-delighted,
+.tier-fill-delighted {
+  color: var(--good);
+}
+
+.tier-text-unhappy,
+.tier-fill-unhappy {
+  color: var(--gold);
+}
+
+.tier-text-furious,
+.tier-fill-furious {
+  color: var(--bad);
+}
+
+.bar-fill.tier-fill-delighted {
+  background: var(--good);
+}
+
+.bar-fill.tier-fill-content {
+  background: var(--gold);
+}
+
+.bar-fill.tier-fill-unhappy {
+  background: var(--accent-soft);
+}
+
+.bar-fill.tier-fill-furious {
+  background: var(--bad);
+}
+
+.tag.tier-tag-delighted {
+  background: var(--good);
+  color: white;
+  border-color: var(--good);
+}
+
+.tag.tier-tag-content {
+  background: var(--bg-alt);
+}
+
+.tag.tier-tag-unhappy {
+  background: var(--gold);
+  color: #241a0d;
+  border-color: var(--gold);
+}
+
+.tag.tier-tag-furious {
+  background: var(--bad);
+  color: white;
+  border-color: var(--bad);
+}
+
 .overlay {
   position: fixed;
   inset: 0;

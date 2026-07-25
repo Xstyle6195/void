@@ -9,13 +9,21 @@ import { FamilyTree } from "./components/FamilyTree";
 import { GameOverScreen } from "./components/GameOverScreen";
 import { MapView } from "./components/MapView";
 import { MarriageSection } from "./components/MarriageSection";
+import { PeopleView } from "./components/PeopleView";
 import { ProvinceList } from "./components/ProvinceList";
 import { ResourceBar } from "./components/ResourceBar";
 import { RulerPanel } from "./components/RulerPanel";
 import { SuccessionScreen } from "./components/SuccessionScreen";
 import { useGameStore } from "./state/store";
 
-type Tab = "royaume" | "carte" | "expedition" | "armee" | "diplomatie" | "dynastie";
+type Tab =
+  | "royaume"
+  | "politique"
+  | "carte"
+  | "expedition"
+  | "armee"
+  | "diplomatie"
+  | "dynastie";
 
 function App() {
   const game = useGameStore((s) => s.game);
@@ -41,6 +49,12 @@ function App() {
           onClick={() => setTab("royaume")}
         >
           Royaume
+        </button>
+        <button
+          className={`tab-btn${tab === "politique" ? " active" : ""}`}
+          onClick={() => setTab("politique")}
+        >
+          Politique
         </button>
         <button
           className={`tab-btn${tab === "carte" ? " active" : ""}`}
@@ -80,8 +94,17 @@ function App() {
             <RulerPanel game={game} />
           </div>
           <div className="column">
-            <ProvinceList game={game} />
             <Chronicle game={game} />
+          </div>
+        </main>
+      )}
+      {tab === "politique" && (
+        <main className="app-grid">
+          <div className="column">
+            <PeopleView game={game} />
+          </div>
+          <div className="column">
+            <ProvinceList game={game} />
           </div>
         </main>
       )}
