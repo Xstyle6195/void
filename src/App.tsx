@@ -6,13 +6,14 @@ import { EventModal } from "./components/EventModal";
 import { FamilyTree } from "./components/FamilyTree";
 import { GameOverScreen } from "./components/GameOverScreen";
 import { MapView } from "./components/MapView";
+import { MarriageSection } from "./components/MarriageSection";
 import { ProvinceList } from "./components/ProvinceList";
 import { ResourceBar } from "./components/ResourceBar";
 import { RulerPanel } from "./components/RulerPanel";
 import { SuccessionScreen } from "./components/SuccessionScreen";
 import { useGameStore } from "./state/store";
 
-type Tab = "royaume" | "carte" | "dynastie";
+type Tab = "royaume" | "carte" | "diplomatie" | "dynastie";
 
 function App() {
   const game = useGameStore((s) => s.game);
@@ -46,6 +47,12 @@ function App() {
           Carte d'Orion
         </button>
         <button
+          className={`tab-btn${tab === "diplomatie" ? " active" : ""}`}
+          onClick={() => setTab("diplomatie")}
+        >
+          Diplomatie
+        </button>
+        <button
           className={`tab-btn${tab === "dynastie" ? " active" : ""}`}
           onClick={() => setTab("dynastie")}
         >
@@ -57,7 +64,6 @@ function App() {
         <main className="app-grid">
           <div className="column">
             <RulerPanel game={game} />
-            <DiplomacyPanel game={game} />
           </div>
           <div className="column">
             <ProvinceList game={game} />
@@ -68,6 +74,16 @@ function App() {
       {tab === "carte" && (
         <main>
           <MapView game={game} />
+        </main>
+      )}
+      {tab === "diplomatie" && (
+        <main className="app-grid">
+          <div className="column">
+            <DiplomacyPanel game={game} />
+          </div>
+          <div className="column">
+            <MarriageSection game={game} />
+          </div>
         </main>
       )}
       {tab === "dynastie" && (
