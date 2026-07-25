@@ -5,8 +5,10 @@ import {
   buildBuilding,
   createInitialState,
   declareWar,
+  formAlliance,
   foundProvince,
   processTurn,
+  proposeMarriage,
   sendGift,
   sueForPeace,
 } from "../game/engine";
@@ -42,6 +44,8 @@ interface Store {
   giftNeighbor: (neighborId: string) => void;
   warNeighbor: (neighborId: string) => void;
   peaceNeighbor: (neighborId: string) => void;
+  allyNeighbor: (neighborId: string) => void;
+  marryOff: (personId: string, neighborId: string) => void;
   restart: () => void;
 }
 
@@ -84,6 +88,16 @@ export const useGameStore = create<Store>((set, get) => ({
   },
   peaceNeighbor: (neighborId) => {
     const updated = sueForPeace(get().game, neighborId);
+    persist(updated);
+    set({ game: updated });
+  },
+  allyNeighbor: (neighborId) => {
+    const updated = formAlliance(get().game, neighborId);
+    persist(updated);
+    set({ game: updated });
+  },
+  marryOff: (personId, neighborId) => {
+    const updated = proposeMarriage(get().game, personId, neighborId);
     persist(updated);
     set({ game: updated });
   },

@@ -82,10 +82,11 @@ export function createPerson(
   state: GameState,
   sex: Sex,
   birthYear: number,
-  parentId: string | null,
+  fatherId: string | null,
+  motherId: string | null,
 ): Person {
   const name = sex === "M" ? pick(MALE_NAMES) : pick(FEMALE_NAMES);
-  return {
+  const person: Person = {
     id: nextId(state, "person"),
     name,
     sex,
@@ -94,8 +95,12 @@ export function createPerson(
     traits: randomTraits(randInt(1, 3)),
     stats: baseStats(),
     health: randInt(75, 100),
-    parentId,
+    fatherId,
+    motherId,
+    spouseId: null,
   };
+  state.familyMembers.push(person);
+  return person;
 }
 
 function randomKingdomName(): string {
@@ -112,6 +117,7 @@ export function createInitialState(): GameState {
     ruler: null as unknown as Person,
     heirs: [],
     deceased: [],
+    familyMembers: [],
     provinces: [],
     resources: { gold: 80, food: 60, stability: 60, prestige: 5 },
     neighbors: [],
@@ -123,7 +129,7 @@ export function createInitialState(): GameState {
     knownTiles: [],
   };
 
-  const founder = createPerson(state, "M", startYear - randInt(22, 35), null);
+  const founder = createPerson(state, "M", startYear - randInt(22, 35), null, null);
   state.ruler = founder;
   state.dynastyName = `${founder.name}ides`;
   state.kingdomName = randomKingdomName();
@@ -159,6 +165,7 @@ export function createInitialState(): GameState {
       strength: randInt(15, 35),
       atWar: false,
       isVassal: false,
+      allied: false,
       capitalX: neighborCapital.x,
       capitalY: neighborCapital.y,
       territory,
@@ -236,9 +243,27 @@ export function declareWar(state: GameState, neighborId: string): GameState {
   const s = structuredClone(state);
   const neighbor = s.neighbors.find((n) => n.id === neighborId);
   if (!neighbor || neighbor.atWar) return s;
+  if (neighbor.allied) {
+    neighbor.allied = false;
+    log(s, "diplomacy", `L'alliance avec ${neighbor.name} est rompue par cette agression.`);
+  }
   neighbor.atWar = true;
   neighbor.relation = clamp(neighbor.relation - 30, -100, 100);
   log(s, "war", `Guerre déclarée contre ${neighbor.name} !`);
+  return s;
+}
+
+export function formAlliance(state: GameState, neighborId: string): GameState {
+  const s = structuredClone(state);
+  const neighbor = s.neighbors.find((n) => n.id === neighborId);
+  if (!neighbor || neighbor.atWar || neighbor.allied || neighbor.relation < 40) return s;
+  neighbor.allied = true;
+  neighbor.relation = clamp(neighbor.relation + 10, -100, 100);
+  log(
+    s,
+    "diplomacy",
+    `Une alliance est scellée avec ${neighbor.name} : libre passage et soutien mutuel.`,
+  );
   return s;
 }
 
@@ -249,6 +274,72 @@ export function sueForPeace(state: GameState, neighborId: string): GameState {
   neighbor.atWar = false;
   neighbor.relation = clamp(neighbor.relation + 5, -100, 100);
   log(s, "peace", `La paix est signée avec ${neighbor.name}.`);
+  return s;
+}
+
+const MARRIAGE_COST = 50;
+const DOWRY_CHANCE = 0.35;
+
+function findMarriageable(state: GameState, personId: string): Person | null {
+  if (state.ruler.id === personId) return state.ruler;
+  return state.heirs.find((h) => h.id === personId) ?? null;
+}
+
+function tryDowryLand(s: GameState, neighbor: Neighbor): string | null {
+  const giftable = neighbor.territory.filter(
+    (t) => !(t.x === neighbor.capitalX && t.y === neighbor.capitalY),
+  );
+  if (giftable.length === 0) return null;
+  const tile = giftable[randInt(0, giftable.length - 1)];
+  neighbor.territory = neighbor.territory.filter((t) => t !== tile);
+  const province: Province = {
+    id: nextId(s, "province"),
+    name: randomKingdomName(),
+    kind: "frontier",
+    population: 35,
+    buildings: [],
+    foundedYear: s.year,
+    x: tile.x,
+    y: tile.y,
+  };
+  s.provinces.push(province);
+  const known = new Set(s.knownTiles);
+  revealAround(known, getOrionWorld(), tile.x, tile.y, 2);
+  s.knownTiles = Array.from(known);
+  return province.name;
+}
+
+export function proposeMarriage(
+  state: GameState,
+  personId: string,
+  neighborId: string,
+): GameState {
+  const s = structuredClone(state);
+  const neighbor = s.neighbors.find((n) => n.id === neighborId);
+  if (!neighbor || neighbor.atWar || neighbor.relation < -20) return s;
+  const person = findMarriageable(s, personId);
+  if (!person || person.spouseId) return s;
+  if (s.resources.gold < MARRIAGE_COST) return s;
+  s.resources.gold -= MARRIAGE_COST;
+
+  const spouseSex: Sex = person.sex === "M" ? "F" : "M";
+  const spouse = createPerson(s, spouseSex, s.year - randInt(16, 32), null, null);
+  spouse.spouseId = person.id;
+  person.spouseId = spouse.id;
+
+  const wasAllied = neighbor.allied;
+  neighbor.allied = true;
+  neighbor.relation = clamp(neighbor.relation + 40, -100, 100);
+  s.resources.prestige += 8;
+
+  let text = `${person.name} épouse ${spouse.name} de la maison de ${neighbor.name}, scellant une alliance${wasAllied ? "" : " nouvelle"}.`;
+  if (chance(DOWRY_CHANCE)) {
+    const landName = tryDowryLand(s, neighbor);
+    if (landName) {
+      text += ` En dot, ${neighbor.name} cède les terres de ${landName}.`;
+    }
+  }
+  log(s, "marriage", text);
   return s;
 }
 
@@ -281,6 +372,9 @@ function totalMilitary(state: GameState): number {
     if (p.buildings.includes("walls")) military += 3;
     military += Math.floor(p.population / 50);
   }
+  for (const n of state.neighbors) {
+    if (n.allied && !n.atWar) military += Math.round(n.strength * 0.15);
+  }
   return military;
 }
 
@@ -305,7 +399,8 @@ function handleProduction(state: GameState): void {
   }
   const upkeep = Math.floor(state.provinces.length * 5 + state.resources.food * 0.15);
   state.resources.food = Math.max(0, state.resources.food + food - upkeep);
-  state.resources.gold = Math.max(0, state.resources.gold + gold);
+  const tradeBonus = state.neighbors.filter((n) => n.allied).length * 8;
+  state.resources.gold = Math.max(0, state.resources.gold + gold + tradeBonus);
   if (state.resources.food === 0) {
     state.resources.stability = clamp(state.resources.stability - 5, 0, 100);
   }
@@ -392,9 +487,12 @@ function handleSuccession(state: GameState): void {
 function handleBirths(state: GameState): void {
   const age = state.year - state.ruler.birthYear;
   if (age < 16 || age > 50) return;
+  if (!state.ruler.spouseId) return;
   if (state.heirs.length >= 5) return;
-  if (!chance(0.12)) return;
-  const child = createPerson(state, chance(0.5) ? "M" : "F", state.year, state.ruler.id);
+  if (!chance(0.18)) return;
+  const fatherId = state.ruler.sex === "M" ? state.ruler.id : state.ruler.spouseId;
+  const motherId = state.ruler.sex === "F" ? state.ruler.id : state.ruler.spouseId;
+  const child = createPerson(state, chance(0.5) ? "M" : "F", state.year, fatherId, motherId);
   state.heirs.push(child);
   log(state, "birth", `Naissance de ${child.name}, enfant de ${state.ruler.name}.`);
 }

@@ -2,7 +2,7 @@ import type { GameState } from "../game/types";
 import { useGameStore } from "../state/store";
 
 function relationLabel(relation: number): string {
-  if (relation > 50) return "Alliés";
+  if (relation > 50) return "Cordiaux";
   if (relation > 10) return "Amicaux";
   if (relation > -10) return "Neutres";
   if (relation > -50) return "Tendus";
@@ -13,6 +13,7 @@ export function DiplomacyPanel({ game }: { game: GameState }) {
   const giftNeighbor = useGameStore((s) => s.giftNeighbor);
   const warNeighbor = useGameStore((s) => s.warNeighbor);
   const peaceNeighbor = useGameStore((s) => s.peaceNeighbor);
+  const allyNeighbor = useGameStore((s) => s.allyNeighbor);
 
   return (
     <section className="panel">
@@ -24,6 +25,7 @@ export function DiplomacyPanel({ game }: { game: GameState }) {
               <div>
                 <strong>{n.name}</strong>{" "}
                 {n.atWar && <span className="tag war">En guerre</span>}
+                {n.allied && <span className="tag ally">Alliés</span>}
                 <div className="muted">
                   {relationLabel(n.relation)} ({n.relation}) · Force {n.strength}
                 </div>
@@ -52,6 +54,16 @@ export function DiplomacyPanel({ game }: { game: GameState }) {
               ) : (
                 <button className="btn small danger" onClick={() => warNeighbor(n.id)}>
                   Déclarer la guerre
+                </button>
+              )}
+              {!n.atWar && !n.allied && (
+                <button
+                  className="btn small"
+                  disabled={n.relation < 40}
+                  title="Nécessite des relations cordiales (40+) : libre passage, soutien militaire et bonus commercial."
+                  onClick={() => allyNeighbor(n.id)}
+                >
+                  Proposer une alliance
                 </button>
               )}
             </div>

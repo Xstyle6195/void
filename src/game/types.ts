@@ -39,7 +39,9 @@ export interface Person {
   traits: TraitId[];
   stats: Stats;
   health: number; // 0-100
-  parentId: string | null;
+  fatherId: string | null;
+  motherId: string | null;
+  spouseId: string | null;
 }
 
 export type BuildingId =
@@ -84,6 +86,7 @@ export interface Neighbor {
   strength: number; // relative military power
   atWar: boolean;
   isVassal: boolean;
+  allied: boolean;
   capitalX: number;
   capitalY: number;
   territory: { x: number; y: number }[];
@@ -99,6 +102,7 @@ export type LogKind =
   | "building"
   | "province"
   | "diplomacy"
+  | "marriage"
   | "gameover";
 
 export interface LogEntry {
@@ -147,6 +151,7 @@ export interface GameState {
   ruler: Person;
   heirs: Person[];
   deceased: Person[];
+  familyMembers: Person[];
   provinces: Province[];
   resources: Resources;
   neighbors: Neighbor[];

@@ -269,6 +269,12 @@
   border-color: var(--accent);
 }
 
+.tag.ally {
+  background: var(--good);
+  color: white;
+  border-color: var(--good);
+}
+
 .building-icons {
   display: flex;
   flex-wrap: wrap;
@@ -385,6 +391,10 @@
   border-left-color: var(--accent);
 }
 
+.log-marriage {
+  border-left-color: #b5729a;
+}
+
 .overlay {
   position: fixed;
   inset: 0;
@@ -420,4 +430,87 @@
 
 .succession-new-ruler {
   font-size: 1.1em;
+}
+
+.generation-row {
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px dashed var(--border);
+}
+
+.generation-row:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.generation-label {
+  font-weight: bold;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 0.8em;
+  margin-bottom: 10px;
+}
+
+.generation-members {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+.couple-group {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.person-card {
+  background: var(--bg-alt);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  min-width: 170px;
+  max-width: 200px;
+}
+
+.person-card.current-ruler {
+  border-color: var(--gold);
+  border-width: 2px;
+  box-shadow: 0 0 0 1px var(--gold);
+}
+
+.person-card.deceased {
+  opacity: 0.75;
+}
+
+.person-name {
+  font-weight: bold;
+  margin-bottom: 2px;
+}
+
+.person-role {
+  font-size: 0.8em;
+  color: var(--accent-soft);
+  margin: 4px 0;
+}
+
+.person-parents,
+.person-spouse {
+  font-size: 0.8em;
+}
+
+.marriage-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.marriage-item {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.marriage-item:last-child {
+  border-bottom: none;
 }
