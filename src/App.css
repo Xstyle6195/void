@@ -54,6 +54,70 @@
   font-size: 1.2em;
 }
 
+.tabs {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.tab-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 8px 20px;
+  font: inherit;
+  font-weight: bold;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.tab-btn.active {
+  background: var(--gold);
+  color: #241a0d;
+  border-color: var(--gold);
+}
+
+.map-scroll {
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin: 12px 0;
+  background: #05070a;
+  max-height: 70vh;
+}
+
+.world-canvas {
+  display: block;
+  image-rendering: pixelated;
+}
+
+.map-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85em;
+}
+
+.legend-swatch {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  border: 1px solid rgba(0, 0, 0, 0.3);
+}
+
+.legend-swatch.outline {
+  background: transparent;
+  border: 2px solid;
+}
+
 .app-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;

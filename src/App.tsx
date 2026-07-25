@@ -1,17 +1,22 @@
+import { useState } from "react";
 import "./App.css";
 import { Chronicle } from "./components/Chronicle";
 import { DiplomacyPanel } from "./components/DiplomacyPanel";
 import { EventModal } from "./components/EventModal";
 import { GameOverScreen } from "./components/GameOverScreen";
+import { MapView } from "./components/MapView";
 import { ProvinceList } from "./components/ProvinceList";
 import { ResourceBar } from "./components/ResourceBar";
 import { RulerPanel } from "./components/RulerPanel";
 import { SuccessionScreen } from "./components/SuccessionScreen";
 import { useGameStore } from "./state/store";
 
+type Tab = "royaume" | "carte";
+
 function App() {
   const game = useGameStore((s) => s.game);
   const nextTurn = useGameStore((s) => s.nextTurn);
+  const [tab, setTab] = useState<Tab>("royaume");
 
   const canAdvance = game.phase === "playing" && !game.pendingEvent;
 
@@ -26,16 +31,37 @@ function App() {
 
       <ResourceBar game={game} />
 
-      <main className="app-grid">
-        <div className="column">
-          <RulerPanel game={game} />
-          <DiplomacyPanel game={game} />
-        </div>
-        <div className="column">
-          <ProvinceList game={game} />
-          <Chronicle game={game} />
-        </div>
-      </main>
+      <nav className="tabs">
+        <button
+          className={`tab-btn${tab === "royaume" ? " active" : ""}`}
+          onClick={() => setTab("royaume")}
+        >
+          Royaume
+        </button>
+        <button
+          className={`tab-btn${tab === "carte" ? " active" : ""}`}
+          onClick={() => setTab("carte")}
+        >
+          Carte d'Orion
+        </button>
+      </nav>
+
+      {tab === "royaume" ? (
+        <main className="app-grid">
+          <div className="column">
+            <RulerPanel game={game} />
+            <DiplomacyPanel game={game} />
+          </div>
+          <div className="column">
+            <ProvinceList game={game} />
+            <Chronicle game={game} />
+          </div>
+        </main>
+      ) : (
+        <main>
+          <MapView game={game} />
+        </main>
+      )}
 
       <footer className="app-footer">
         <button className="btn primary" disabled={!canAdvance} onClick={nextTurn}>

@@ -73,6 +73,8 @@ export interface Province {
   population: number;
   buildings: BuildingId[];
   foundedYear: number;
+  x: number;
+  y: number;
 }
 
 export interface Neighbor {
@@ -82,6 +84,9 @@ export interface Neighbor {
   strength: number; // relative military power
   atWar: boolean;
   isVassal: boolean;
+  capitalX: number;
+  capitalY: number;
+  territory: { x: number; y: number }[];
 }
 
 export type LogKind =
@@ -150,4 +155,5 @@ export interface GameState {
   phase: GamePhase;
   reignCount: number;
   nextId: number;
+  knownTiles: string[];
 }

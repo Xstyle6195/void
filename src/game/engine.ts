@@ -8,6 +8,13 @@ import {
   TRAITS,
 } from "./data";
 import { EVENTS, pickEvent, resolveChoice } from "./events";
+import {
+  buildTerritory,
+  findExpansionTile,
+  findNeighborCapital,
+  findStartingCapital,
+  revealAround,
+} from "./mapPlacement";
 import type {
   BuildingId,
   EventContext,
@@ -20,6 +27,7 @@ import type {
   TraitId,
 } from "./types";
 import { chance, clamp, log, nextId, pick, randInt } from "./utils";
+import { getOrionWorld } from "./worldgen";
 
 const OPPOSITE_TRAITS: Partial<Record<TraitId, TraitId>> = {
   brave: "cowardly",
@@ -112,12 +120,16 @@ export function createInitialState(): GameState {
     phase: "playing",
     reignCount: 1,
     nextId: 0,
+    knownTiles: [],
   };
 
   const founder = createPerson(state, "M", startYear - randInt(22, 35), null);
   state.ruler = founder;
   state.dynastyName = `${founder.name}ides`;
   state.kingdomName = randomKingdomName();
+
+  const world = getOrionWorld();
+  const capitalPos = findStartingCapital(world);
 
   const capital: Province = {
     id: nextId(state, "province"),
@@ -126,11 +138,20 @@ export function createInitialState(): GameState {
     population: 200,
     buildings: ["hall"],
     foundedYear: startYear,
+    x: capitalPos.x,
+    y: capitalPos.y,
   };
   state.provinces.push(capital);
 
+  const known = new Set<string>();
+  revealAround(known, world, capitalPos.x, capitalPos.y, 4);
+
   const neighborNames = [...NEIGHBOR_NAME_POOL].sort(() => Math.random() - 0.5).slice(0, 3);
+  const takenSpots = [capitalPos];
   for (const name of neighborNames) {
+    const neighborCapital = findNeighborCapital(world, takenSpots, capitalPos, 6, 16);
+    takenSpots.push(neighborCapital);
+    const territory = buildTerritory(world, neighborCapital, randInt(3, 6));
     const neighbor: Neighbor = {
       id: nextId(state, "neighbor"),
       name,
@@ -138,9 +159,15 @@ export function createInitialState(): GameState {
       strength: randInt(15, 35),
       atWar: false,
       isVassal: false,
+      capitalX: neighborCapital.x,
+      capitalY: neighborCapital.y,
+      territory,
     };
     state.neighbors.push(neighbor);
+    for (const t of territory) revealAround(known, world, t.x, t.y, 1);
   }
+
+  state.knownTiles = Array.from(known);
 
   log(state, "province", `Fondation de ${state.kingdomName} par ${founder.name}, l'an ${startYear}.`);
   return state;
@@ -152,6 +179,12 @@ export function foundProvince(state: GameState): GameState {
   const s = structuredClone(state);
   const cost = 120 + s.provinces.length * 40;
   if (s.resources.gold < cost) return s;
+  const world = getOrionWorld();
+  const spot = findExpansionTile(
+    world,
+    s.provinces.map((p) => ({ x: p.x, y: p.y })),
+  );
+  if (!spot) return s;
   s.resources.gold -= cost;
   const kind = s.provinces.length < 2 ? "town" : "frontier";
   const province: Province = {
@@ -161,8 +194,13 @@ export function foundProvince(state: GameState): GameState {
     population: 40,
     buildings: [],
     foundedYear: s.year,
+    x: spot.x,
+    y: spot.y,
   };
   s.provinces.push(province);
+  const known = new Set(s.knownTiles);
+  revealAround(known, world, spot.x, spot.y, 3);
+  s.knownTiles = Array.from(known);
   log(s, "province", `Une nouvelle province, ${province.name}, rejoint le royaume.`);
   return s;
 }
