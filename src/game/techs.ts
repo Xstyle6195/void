@@ -143,6 +143,15 @@ export function researchTech(state: GameState, techId: string): GameState {
   return s;
 }
 
+// les technologies non encore recherchées dont tous les prérequis sont
+// satisfaits : la ou les prochaines avancées possibles pour le joueur.
+// Le reste de l'arbre reste caché tant qu'il n'est pas atteignable.
+export function nextAvailableTechs(state: GameState): Technology[] {
+  return TECHS.filter(
+    (t) => !isResearched(state, t.id) && t.requires.every((r) => isResearched(state, r)),
+  );
+}
+
 export function techUnlocks(techId: string): { buildings: BuildingType[]; units: UnitTypeDef[] } {
   return {
     buildings: Object.values(BUILDINGS).filter((b) => b.requiresTech === techId),
