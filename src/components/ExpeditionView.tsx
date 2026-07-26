@@ -74,6 +74,9 @@ export function ExpeditionView({ game }: { game: GameState }) {
                       </strong>{" "}
                       <span className="tag">{KIND_LABEL[offer.kind]}</span>
                       {offer.colonize && <span className="tag ally">Colonisation</span>}
+                      {offer.tollAmount > 0 && (
+                        <span className="tag war">Péage {offer.tollAmount} or</span>
+                      )}
                       <div className="muted">{offer.explorerName}</div>
                       <div className="muted">{offer.description}</div>
                       <div className="muted">

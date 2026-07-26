@@ -1,3 +1,4 @@
+import type { Neighbor } from "./types";
 import { randInt } from "./utils";
 import { isLand, isSettleable, type WorldMap } from "./worldgen";
 
@@ -8,6 +9,39 @@ export interface TilePos {
 
 export function tileKey(x: number, y: number): string {
   return `${x},${y}`;
+}
+
+function distanceToSegment(
+  p: TilePos,
+  a: TilePos,
+  b: TilePos,
+): number {
+  const dx = b.x - a.x;
+  const dy = b.y - a.y;
+  const lengthSq = dx * dx + dy * dy;
+  if (lengthSq === 0) return Math.hypot(p.x - a.x, p.y - a.y);
+  let t = ((p.x - a.x) * dx + (p.y - a.y) * dy) / lengthSq;
+  t = Math.max(0, Math.min(1, t));
+  const projX = a.x + t * dx;
+  const projY = a.y + t * dy;
+  return Math.hypot(p.x - projX, p.y - projY);
+}
+
+const CROSSING_RADIUS = 2;
+
+export function findTerritoryCrossing(
+  capital: TilePos,
+  target: TilePos,
+  neighbors: Neighbor[],
+): Neighbor | null {
+  for (const n of neighbors) {
+    for (const t of n.territory) {
+      if (distanceToSegment(t, capital, target) <= CROSSING_RADIUS) {
+        return n;
+      }
+    }
+  }
+  return null;
 }
 
 export function revealAround(

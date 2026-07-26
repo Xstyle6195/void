@@ -8,7 +8,12 @@ import {
   PROSPECTOR_TITLES_FEMALE,
   PROSPECTOR_TITLES_MALE,
 } from "./data";
-import { findExpeditionTarget, revealAround, type TilePos } from "./mapPlacement";
+import {
+  findExpeditionTarget,
+  findTerritoryCrossing,
+  revealAround,
+  type TilePos,
+} from "./mapPlacement";
 import { SATISFACTION_START } from "./satisfaction";
 import type {
   Ambition,
@@ -74,6 +79,28 @@ const BASE_COST: Record<ExpeditionKind, number> = {
 const COLONIZE_SURCHARGE = 90;
 const COLONIZE_CHANCE: Record<Ambition, number> = { 1: 0.2, 2: 0.4, 3: 0.6 };
 
+const TOLL_PER_AMBITION = 18;
+
+interface CrossingResult {
+  tollAmount: number;
+  tollNeighborId: string | null;
+}
+
+function resolveCrossing(
+  state: GameState,
+  capital: TilePos,
+  target: TilePos,
+  ambition: Ambition,
+): CrossingResult | null {
+  const crossing = findTerritoryCrossing(capital, target, state.neighbors);
+  if (!crossing) return { tollAmount: 0, tollNeighborId: null };
+  if (!crossing.allied) return null;
+  return {
+    tollAmount: TOLL_PER_AMBITION * ambition + randInt(0, 10),
+    tollNeighborId: crossing.id,
+  };
+}
+
 const DIRECTIONS = [
   "l'est",
   "le sud-est",
@@ -123,16 +150,28 @@ function buildGeographicOffer(state: GameState, id: string): ExpeditionOffer | n
     colonize,
   );
   if (!target) return null;
+  const crossing = resolveCrossing(state, capital, target, ambition);
+  if (!crossing) return null;
   const dir = directionFrom(capital, target);
-  const cost = Math.round(BASE_COST.geographic * cfg.costMult) + (colonize ? COLONIZE_SURCHARGE : 0);
+  const baseCost =
+    Math.round(BASE_COST.geographic * cfg.costMult) + (colonize ? COLONIZE_SURCHARGE : 0);
+  const cost = baseCost + crossing.tollAmount;
+  const tollNeighbor = crossing.tollNeighborId
+    ? state.neighbors.find((n) => n.id === crossing.tollNeighborId)
+    : null;
+  const tollNote = tollNeighbor
+    ? ` L'itinéraire traverse le territoire allié de ${tollNeighbor.name} : une redevance de ${crossing.tollAmount} or leur sera versée au passage.`
+    : "";
   return {
     id,
     kind: "geographic",
     explorerName: explorerName("geographic"),
     title: colonize ? `Expédition de colonisation vers ${dir}` : `Cartographier ${dir}`,
-    description: colonize
-      ? `Explorer les terres inconnues vers ${dir} et y fonder une colonie si elles se prêtent à l'installation.`
-      : `Repousser les frontières de la carte connue vers ${dir} : montagnes, îles ou nouveaux rivages.`,
+    description:
+      (colonize
+        ? `Explorer les terres inconnues vers ${dir} et y fonder une colonie si elles se prêtent à l'installation.`
+        : `Repousser les frontières de la carte connue vers ${dir} : montagnes, îles ou nouveaux rivages.`) +
+      tollNote,
     cost,
     duration: cfg.duration,
     ambition,
@@ -146,6 +185,8 @@ function buildGeographicOffer(state: GameState, id: string): ExpeditionOffer | n
     rewardGold: 0,
     rewardFood: 0,
     rewardPrestige: 2 * ambition,
+    tollAmount: crossing.tollAmount,
+    tollNeighborId: crossing.tollNeighborId,
   };
 }
 
@@ -175,6 +216,8 @@ function buildMercantileOffer(state: GameState, id: string): ExpeditionOffer | n
     rewardGold: 0,
     rewardFood: 0,
     rewardPrestige: ambition,
+    tollAmount: 0,
+    tollNeighborId: null,
   };
 }
 
@@ -194,16 +237,27 @@ function buildResourceOffer(state: GameState, id: string): ExpeditionOffer | nul
     true,
   );
   if (!target) return null;
+  const crossing = resolveCrossing(state, capital, target, ambition);
+  if (!crossing) return null;
   const dir = directionFrom(capital, target);
-  const cost = Math.round(BASE_COST.resource * cfg.costMult) + (colonize ? COLONIZE_SURCHARGE : 0);
+  const baseCost =
+    Math.round(BASE_COST.resource * cfg.costMult) + (colonize ? COLONIZE_SURCHARGE : 0);
+  const cost = baseCost + crossing.tollAmount;
+  const tollNeighbor = crossing.tollNeighborId
+    ? state.neighbors.find((n) => n.id === crossing.tollNeighborId)
+    : null;
+  const tollNote = tollNeighbor
+    ? ` L'itinéraire traverse le territoire allié de ${tollNeighbor.name} : une redevance de ${crossing.tollAmount} or leur sera versée au passage.`
+    : "";
   return {
     id,
     kind: "resource",
     explorerName: explorerName("resource"),
     title: colonize ? `Exploiter des richesses vers ${dir}` : `Prospection vers ${dir}`,
-    description: colonize
-      ? `Fonder une colonie pour exploiter durablement un site riche en ressources vers ${dir}.`
-      : `Ramener une cargaison de vivres et de richesses découvertes vers ${dir}.`,
+    description:
+      (colonize
+        ? `Fonder une colonie pour exploiter durablement un site riche en ressources vers ${dir}.`
+        : `Ramener une cargaison de vivres et de richesses découvertes vers ${dir}.`) + tollNote,
     cost,
     duration: cfg.duration,
     ambition,
@@ -217,6 +271,8 @@ function buildResourceOffer(state: GameState, id: string): ExpeditionOffer | nul
     rewardGold: colonize ? 0 : 30 * ambition + randInt(0, 20),
     rewardFood: colonize ? 0 : 20 * ambition + randInt(0, 15),
     rewardPrestige: ambition,
+    tollAmount: crossing.tollAmount,
+    tollNeighborId: crossing.tollNeighborId,
   };
 }
 

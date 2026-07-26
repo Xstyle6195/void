@@ -238,6 +238,8 @@ export interface ExpeditionOffer {
   rewardGold: number;
   rewardFood: number;
   rewardPrestige: number;
+  tollAmount: number;
+  tollNeighborId: string | null;
 }
 
 export interface ActiveExpedition {
