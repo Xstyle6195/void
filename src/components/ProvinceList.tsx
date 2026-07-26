@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { BUILDINGS } from "../game/data";
+import { provinceFoundingCost } from "../game/engine";
 import { TECHS } from "../game/techs";
 import type { BuildingCategory, BuildingId, GameState } from "../game/types";
 import { useGameStore } from "../state/store";
@@ -41,7 +42,7 @@ export function ProvinceList({ game }: { game: GameState }) {
   const expandKingdom = useGameStore((s) => s.expandKingdom);
   const [openProvince, setOpenProvince] = useState<string | null>(null);
 
-  const expandCost = 120 + game.provinces.length * 40;
+  const expandCost = provinceFoundingCost(game);
 
   return (
     <section className="panel">

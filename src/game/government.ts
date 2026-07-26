@@ -33,15 +33,105 @@ interface GovernmentModifiers {
   prestigeMult: number;
   // bonus/malus appliqué chaque tour aux relations avec les voisins
   relationDrift: number;
+  // multiplicateur sur la croissance démographique
+  populationGrowthMult: number;
+  // multiplicateur sur la puissance militaire totale
+  militaryPowerMult: number;
+  // multiplicateur sur le coût de fondation d'une nouvelle province
+  provinceCostMult: number;
+  // multiplicateur sur les revenus tirés du commerce (alliances, routes commerciales)
+  tradeGoldMult: number;
+  // multiplicateur sur les points de recherche produits
+  researchMult: number;
+  // multiplicateur sur le risque de sécession/révolution (< 1 = plus stable)
+  unrestResistanceMult: number;
+  // si vrai, le peuple ne peut jamais atteindre le palier de satisfaction "Ravi"
+  capHappiness: boolean;
 }
 
 export const GOVERNMENT_MODIFIERS: Record<GovernmentType, GovernmentModifiers> = {
-  clan: { stabilityDrift: 0, prestigeMult: 1, relationDrift: 0 },
-  kingdom: { stabilityDrift: 0, prestigeMult: 1, relationDrift: 0 },
-  empire: { stabilityDrift: 0, prestigeMult: 1.15, relationDrift: -0.3 },
-  constitutional_monarchy: { stabilityDrift: 0.3, prestigeMult: 1, relationDrift: 0.2 },
-  republic: { stabilityDrift: 0.5, prestigeMult: 0.9, relationDrift: 0.4 },
-  dictatorship: { stabilityDrift: 0.5, prestigeMult: 1, relationDrift: -0.8 },
+  clan: {
+    stabilityDrift: 0,
+    prestigeMult: 1,
+    relationDrift: 0,
+    populationGrowthMult: 1.2,
+    militaryPowerMult: 1,
+    provinceCostMult: 1,
+    tradeGoldMult: 1,
+    researchMult: 1,
+    unrestResistanceMult: 1,
+    capHappiness: false,
+  },
+  kingdom: {
+    stabilityDrift: 0,
+    prestigeMult: 1,
+    relationDrift: 0,
+    populationGrowthMult: 1,
+    militaryPowerMult: 1,
+    provinceCostMult: 1,
+    tradeGoldMult: 1,
+    researchMult: 1,
+    unrestResistanceMult: 1,
+    capHappiness: false,
+  },
+  empire: {
+    stabilityDrift: 0,
+    prestigeMult: 1.15,
+    relationDrift: -0.3,
+    populationGrowthMult: 1,
+    militaryPowerMult: 1.15,
+    provinceCostMult: 0.85,
+    tradeGoldMult: 1,
+    researchMult: 1,
+    unrestResistanceMult: 1,
+    capHappiness: false,
+  },
+  constitutional_monarchy: {
+    stabilityDrift: 0.3,
+    prestigeMult: 1,
+    relationDrift: 0.2,
+    populationGrowthMult: 1,
+    militaryPowerMult: 1,
+    provinceCostMult: 1,
+    tradeGoldMult: 1.15,
+    researchMult: 1,
+    unrestResistanceMult: 1,
+    capHappiness: false,
+  },
+  republic: {
+    stabilityDrift: 0.5,
+    prestigeMult: 0.9,
+    relationDrift: 0.4,
+    populationGrowthMult: 1,
+    militaryPowerMult: 1,
+    provinceCostMult: 1,
+    tradeGoldMult: 1,
+    researchMult: 1.25,
+    unrestResistanceMult: 1,
+    capHappiness: false,
+  },
+  dictatorship: {
+    stabilityDrift: 0.5,
+    prestigeMult: 1,
+    relationDrift: -0.8,
+    populationGrowthMult: 1,
+    militaryPowerMult: 1.2,
+    provinceCostMult: 1,
+    tradeGoldMult: 1,
+    researchMult: 1,
+    unrestResistanceMult: 0.5,
+    capHappiness: true,
+  },
+};
+
+export const GOVERNMENT_BONUS_LABEL: Record<GovernmentType, string> = {
+  clan: "+20% croissance démographique.",
+  kingdom: "Régime de référence, sans bonus ni malus particulier.",
+  empire: "+15% puissance militaire, -15% coût de fondation de nouvelles provinces.",
+  constitutional_monarchy: "+15% or issu du commerce et des routes commerciales.",
+  republic: "+25% points de recherche produits.",
+  dictatorship:
+    "+20% puissance militaire, révoltes deux fois moins fréquentes, mais le peuple ne peut jamais être \"Ravi\".",
 };
 
 export function rulerTitle(government: GovernmentType, sex: Sex): string {

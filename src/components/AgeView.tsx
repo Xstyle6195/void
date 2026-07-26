@@ -2,6 +2,7 @@ import { AGE_DESCRIPTION, AGE_LABEL, AGE_ORDER } from "../game/ages";
 import {
   CITIES_TO_CAPTURE,
   CLANS_TO_ABSORB,
+  GOVERNMENT_BONUS_LABEL,
   GOVERNMENT_DESCRIPTION,
   GOVERNMENT_LABEL,
 } from "../game/government";
@@ -51,6 +52,9 @@ export function AgeView({ game }: { game: GameState }) {
       </div>
       <p className="muted">{AGE_DESCRIPTION[game.age]}</p>
       <p className="muted">{GOVERNMENT_DESCRIPTION[game.government]}</p>
+      <p className="muted">
+        <strong>Avantage actuel :</strong> {GOVERNMENT_BONUS_LABEL[game.government]}
+      </p>
       <GovernmentProgress game={game} />
 
       <div className="age-timeline">

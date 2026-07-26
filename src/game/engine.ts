@@ -238,9 +238,15 @@ export function createInitialState(): GameState {
 
 // ---- Player actions ----
 
+export function provinceFoundingCost(state: GameState): number {
+  return Math.round(
+    (120 + state.provinces.length * 40) * GOVERNMENT_MODIFIERS[state.government].provinceCostMult,
+  );
+}
+
 export function foundProvince(state: GameState): GameState {
   const s = structuredClone(state);
-  const cost = 120 + s.provinces.length * 40;
+  const cost = provinceFoundingCost(s);
   if (s.resources.gold < cost) return s;
   const world = getOrionWorld();
   const spot = findExpansionTile(
@@ -502,7 +508,7 @@ function totalMilitary(state: GameState): number {
     if (n.allied && !n.atWar) military += Math.round(n.strength * 0.15);
   }
   military += totalArmyPower(state);
-  return military;
+  return Math.round(military * GOVERNMENT_MODIFIERS[state.government].militaryPowerMult);
 }
 
 function handleProduction(state: GameState): void {
@@ -531,11 +537,15 @@ function handleProduction(state: GameState): void {
       state.resources.prestige += (effects.prestige ?? 0) * 0.1 * govMods.prestigeMult;
     }
 
-    const tier = satisfactionTier(p.satisfaction);
+    const rawTier = satisfactionTier(p.satisfaction);
+    const tier = govMods.capHappiness && rawTier === "delighted" ? "content" : rawTier;
     food += Math.round(pFood * productionMultiplier(tier));
     gold += Math.round(pGold * productionMultiplier(tier));
-    research += Math.round(pResearch * productionMultiplier(tier));
-    p.population += Math.max(1, Math.floor(p.population * growthRate * growthMultiplier(tier)));
+    research += Math.round(pResearch * productionMultiplier(tier) * govMods.researchMult);
+    p.population += Math.max(
+      1,
+      Math.floor(p.population * growthRate * growthMultiplier(tier) * govMods.populationGrowthMult),
+    );
 
     p.satisfaction = clamp(
       p.satisfaction +
@@ -548,10 +558,12 @@ function handleProduction(state: GameState): void {
   }
   const upkeep = Math.floor(state.provinces.length * 5 + state.resources.food * 0.15);
   state.resources.food = Math.max(0, state.resources.food + food - upkeep);
-  const tradeBonus = state.neighbors.filter((n) => n.allied).length * 8;
-  const routeBonus = state.neighbors
-    .filter((n) => !n.atWar)
-    .reduce((sum, n) => sum + n.tradeRouteLevel * 6, 0);
+  const tradeBonus = Math.round(state.neighbors.filter((n) => n.allied).length * 8 * govMods.tradeGoldMult);
+  const routeBonus = Math.round(
+    state.neighbors
+      .filter((n) => !n.atWar)
+      .reduce((sum, n) => sum + n.tradeRouteLevel * 6, 0) * govMods.tradeGoldMult,
+  );
   const armyUpkeep = totalArmyUpkeep(state);
   state.resources.gold = Math.max(
     0,
@@ -700,10 +712,11 @@ const SECESSION_CHANCE = 0.08;
 const REVOLUTION_CHANCE = 0.05;
 
 function handleUnrest(state: GameState): boolean {
+  const unrestResistance = GOVERNMENT_MODIFIERS[state.government].unrestResistanceMult;
   for (const p of [...state.provinces]) {
     if (p.kind === "capital") continue;
     if (satisfactionTier(p.satisfaction) !== "furious") continue;
-    if (!chance(SECESSION_CHANCE)) continue;
+    if (!chance(SECESSION_CHANCE * unrestResistance)) continue;
     state.provinces = state.provinces.filter((x) => x.id !== p.id);
     if (state.neighbors.length > 0 && chance(0.5)) {
       const neighbor = pick(state.neighbors);
@@ -714,7 +727,10 @@ function handleUnrest(state: GameState): boolean {
     }
   }
 
-  if (satisfactionTier(state.resources.stability) === "furious" && chance(REVOLUTION_CHANCE)) {
+  if (
+    satisfactionTier(state.resources.stability) === "furious" &&
+    chance(REVOLUTION_CHANCE * unrestResistance)
+  ) {
     log(state, "revolt", "Le mécontentement général dégénère en révolte ouverte !");
     handleSuccession(
       state,
