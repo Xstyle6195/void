@@ -1,5 +1,11 @@
 import type { GovernmentType, Sex } from "./types";
 
+// nombre de clans rivaux à absorber entièrement pour passer de Clan à Royaume
+export const CLANS_TO_ABSORB = 3;
+// nombre de villes à capturer à un royaume rival pour passer de Royaume à Empire
+// (nécessite en plus la technologie "Les Balbutiements de la Vapeur")
+export const CITIES_TO_CAPTURE = 2;
+
 export const GOVERNMENT_LABEL: Record<GovernmentType, string> = {
   clan: "Clan",
   kingdom: "Royaume",

@@ -8,7 +8,7 @@ import {
 } from "./data";
 import { EVENTS, pickEvent, resolveChoice } from "./events";
 import { resolveExpeditions, topUpExpeditionOffers } from "./expeditions";
-import { GOVERNMENT_MODIFIERS } from "./government";
+import { CITIES_TO_CAPTURE, CLANS_TO_ABSORB, GOVERNMENT_MODIFIERS } from "./government";
 import {
   buildTerritory,
   findExpansionTile,
@@ -148,7 +148,9 @@ export function createInitialState(): GameState {
     politicalRequests: [],
     age: "medieval",
     researchedTechs: [],
-    government: "kingdom",
+    government: "clan",
+    absorbedClans: 0,
+    capturedCities: 0,
   };
 
   const founder = createPerson(state, "M", startYear - randInt(22, 35), null, null);
@@ -574,6 +576,42 @@ function resolveBattleRound(
     state.resources.gold += 20;
     neighbor.strength = Math.max(5, neighbor.strength - 3);
     log(state, "war", `Victoire contre ${neighbor.name} ! Butin et prestige gagnés.`);
+
+    // les cases hors capitale sont prises en priorité ; la capitale ne tombe
+    // qu'en dernier, scellant l'absorption complète du voisin
+    const outskirts = neighbor.territory.filter(
+      (t) => !(t.x === neighbor.capitalX && t.y === neighbor.capitalY),
+    );
+    const capturable = outskirts.length > 0 ? outskirts : neighbor.territory;
+    if (capturable.length > 0 && chance(0.3)) {
+      const tile = pick(capturable);
+      neighbor.territory = neighbor.territory.filter((t) => t !== tile);
+      const province: Province = {
+        id: nextId(state, "province"),
+        name: randomKingdomName(),
+        kind: "frontier",
+        population: 35,
+        buildings: [],
+        foundedYear: state.year,
+        x: tile.x,
+        y: tile.y,
+        satisfaction: SATISFACTION_START,
+      };
+      state.provinces.push(province);
+      state.capturedCities += 1;
+      log(
+        state,
+        "war",
+        `${state.kingdomName} s'empare d'une ville de ${neighbor.name} : ${province.name} rejoint le royaume !`,
+      );
+      if (neighbor.territory.length === 0) {
+        state.absorbedClans += 1;
+        state.neighbors = state.neighbors.filter((n) => n.id !== neighbor.id);
+        log(state, "war", `${neighbor.name} est entièrement absorbé par ${state.kingdomName} !`);
+        return;
+      }
+    }
+
     if (chance(0.2)) {
       neighbor.atWar = false;
       neighbor.relation = -20;
@@ -612,6 +650,29 @@ function handleWars(state: GameState): void {
       continue;
     }
     resolveBattleRound(state, neighbor, myMilitary, 0);
+  }
+}
+
+function handleGovernmentProgress(state: GameState): void {
+  if (state.government === "clan" && state.absorbedClans >= CLANS_TO_ABSORB) {
+    state.government = "kingdom";
+    log(
+      state,
+      "politics",
+      `${state.kingdomName} unifie les clans conquis sous une seule bannière : le royaume est proclamé !`,
+    );
+  }
+  if (
+    state.government === "kingdom" &&
+    state.researchedTechs.includes("steam_dawn") &&
+    state.capturedCities >= CITIES_TO_CAPTURE
+  ) {
+    state.government = "empire";
+    log(
+      state,
+      "politics",
+      `Fort de ses conquêtes et de son industrie naissante, ${state.kingdomName} devient un Empire !`,
+    );
   }
 }
 
@@ -728,6 +789,7 @@ export function processTurn(state: GameState): GameState {
   s.year += 1;
   handleProduction(s);
   handleWars(s);
+  handleGovernmentProgress(s);
   handleNeighborPolitics(s);
   resolveExpeditions(s);
   topUpExpeditionOffers(s);

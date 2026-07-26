@@ -1,5 +1,10 @@
 import { AGE_DESCRIPTION, AGE_LABEL, AGE_ORDER } from "../game/ages";
-import { GOVERNMENT_DESCRIPTION, GOVERNMENT_LABEL } from "../game/government";
+import {
+  CITIES_TO_CAPTURE,
+  CLANS_TO_ABSORB,
+  GOVERNMENT_DESCRIPTION,
+  GOVERNMENT_LABEL,
+} from "../game/government";
 import type { GameState } from "../game/types";
 
 const AGE_ICON: Record<string, string> = {
@@ -9,6 +14,29 @@ const AGE_ICON: Record<string, string> = {
   modern: "✈️",
   future: "🚀",
 };
+
+function GovernmentProgress({ game }: { game: GameState }) {
+  if (game.government === "clan") {
+    return (
+      <p className="muted">
+        Absorbez entièrement au moins {CLANS_TO_ABSORB} clans rivaux par la
+        conquête pour proclamer un royaume ({game.absorbedClans}/{CLANS_TO_ABSORB} absorbés).
+      </p>
+    );
+  }
+  if (game.government === "kingdom") {
+    const techDone = game.researchedTechs.includes("steam_dawn");
+    return (
+      <p className="muted">
+        Pour proclamer un Empire : rechercher « Les Balbutiements de la Vapeur »
+        ({techDone ? "✔ acquise" : "non acquise"}) et capturer au moins{" "}
+        {CITIES_TO_CAPTURE} villes à un royaume rival (
+        {game.capturedCities}/{CITIES_TO_CAPTURE} capturées).
+      </p>
+    );
+  }
+  return null;
+}
 
 export function AgeView({ game }: { game: GameState }) {
   const idx = AGE_ORDER.indexOf(game.age);
@@ -23,6 +51,7 @@ export function AgeView({ game }: { game: GameState }) {
       </div>
       <p className="muted">{AGE_DESCRIPTION[game.age]}</p>
       <p className="muted">{GOVERNMENT_DESCRIPTION[game.government]}</p>
+      <GovernmentProgress game={game} />
 
       <div className="age-timeline">
         {AGE_ORDER.map((a, i) => (

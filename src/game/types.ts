@@ -312,4 +312,8 @@ export interface GameState {
   age: Age;
   researchedTechs: string[];
   government: GovernmentType;
+  // clans rivaux entièrement conquis (territoire annexé en totalité)
+  absorbedClans: number;
+  // villes/provinces individuellement capturées à des royaumes rivaux
+  capturedCities: number;
 }
