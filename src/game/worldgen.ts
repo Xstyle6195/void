@@ -14,9 +14,13 @@ export interface WorldMap {
   tiles: Biome[][]; // [y][x]
 }
 
-export const WORLD_WIDTH = 96;
-export const WORLD_HEIGHT = 56;
+export const WORLD_WIDTH = 288;
+export const WORLD_HEIGHT = 168;
 export const ORION_SEED = 133742;
+// scale factor relative to the original 96x56 baseline, used to keep
+// distance-based gameplay constants (exploration radii, expedition range,
+// neighbor placement) proportionate when the world grid size changes
+export const WORLD_SCALE = WORLD_WIDTH / 96;
 
 function hash2(x: number, y: number, seed: number): number {
   let h = seed;
@@ -189,25 +193,40 @@ function buildIslands(
 
   // scattered open-ocean islands, kept clear of the continents themselves
   let scattered = 0;
-  for (let attempt = 0; attempt < 400 && scattered < 16; attempt++) {
+  for (let attempt = 0; attempt < 1200 && scattered < 46; attempt++) {
     const cx = 3 + rng() * (W - 6);
     const cy = 3 + rng() * (H - 6);
     const tooClose = centers.some((c) => Math.hypot(c.cx - cx, c.cy - cy) < Math.min(W, H) * 0.16);
     if (tooClose) continue;
-    addIsland(cx, cy, 1.1, 2.6);
+    addIsland(cx, cy, 1.1 * WORLD_SCALE, 2.6 * WORLD_SCALE);
     scattered += 1;
   }
 
   // small archipelago in the strait between the two northern horns
-  for (let i = 0; i < 5; i++) {
-    addIsland(0.4 * W + rng() * 0.2 * W, 0.04 * H + rng() * 0.2 * H, 0.9, 1.8);
+  for (let i = 0; i < 14; i++) {
+    addIsland(
+      0.4 * W + rng() * 0.2 * W,
+      0.04 * H + rng() * 0.2 * H,
+      0.9 * WORLD_SCALE,
+      1.8 * WORLD_SCALE,
+    );
   }
   // tiny clusters near the bottom-left and bottom-right corners
-  for (let i = 0; i < 3; i++) {
-    addIsland(0.03 * W + rng() * 0.12 * W, 0.78 * H + rng() * 0.18 * H, 0.9, 1.7);
+  for (let i = 0; i < 9; i++) {
+    addIsland(
+      0.03 * W + rng() * 0.12 * W,
+      0.78 * H + rng() * 0.18 * H,
+      0.9 * WORLD_SCALE,
+      1.7 * WORLD_SCALE,
+    );
   }
-  for (let i = 0; i < 3; i++) {
-    addIsland(0.9 * W + rng() * 0.08 * W, 0.1 * H + rng() * 0.15 * H, 0.9, 1.7);
+  for (let i = 0; i < 9; i++) {
+    addIsland(
+      0.9 * W + rng() * 0.08 * W,
+      0.1 * H + rng() * 0.15 * H,
+      0.9 * WORLD_SCALE,
+      1.7 * WORLD_SCALE,
+    );
   }
 
   return islands;
@@ -238,8 +257,15 @@ export function generateWorld(seed: number = ORION_SEED): WorldMap {
       const edgeFalloff = landMask > 0 ? smoothstep(Math.min(1, landMask)) : 0;
       const peakFalloff = peakMask > 0 ? smoothstep(Math.min(1, peakMask)) : 0;
       const detail = fbm(x, y, seed + 11, 5, 0.5, 0.05) - 0.5;
+      // extra high-frequency jitter concentrated right at the coastline to break
+      // it up into the fractal capes, inlets and skerries seen along real coasts
+      const fineDetail = fbm(x, y, seed + 977, 4, 0.55, 0.16) - 0.5;
+      const coastJitterWeight = 4 * edgeFalloff * (1 - edgeFalloff);
       row.push(
-        edgeFalloff * LAND_MULT + peakFalloff * PEAK_MULT + detail * DETAIL_MULT * edgeFalloff,
+        edgeFalloff * LAND_MULT +
+          peakFalloff * PEAK_MULT +
+          detail * DETAIL_MULT * edgeFalloff +
+          fineDetail * 0.24 * coastJitterWeight,
       );
     }
     elevation.push(row);
@@ -254,8 +280,13 @@ export function generateWorld(seed: number = ORION_SEED): WorldMap {
     moisture.push(row);
   }
 
-  // only the top of the map carries arctic cold; the southern landmass stays temperate
-  const coldnessAt = (y: number) => Math.max(0, 1 - y / (H * 0.62));
+  // only the top of the map carries arctic cold; the southern landmass stays temperate.
+  // a noise term is mixed in so the snowline meanders instead of forming a ruler-straight edge
+  const coldnessAt = (x: number, y: number) => {
+    const base = Math.max(0, 1 - y / (H * 0.62));
+    const wobble = fbm(x, y, seed + 777, 3, 0.5, 0.045) - 0.5;
+    return base + wobble * 0.22;
+  };
   const FROZEN_THRESH = 0.5;
   const SNOW_PEAK_THRESH = 0.38;
   const MOIST_BIAS_RANGE = 0.3 * W;
@@ -276,8 +307,8 @@ export function generateWorld(seed: number = ORION_SEED): WorldMap {
   const tiles: Biome[][] = [];
   for (let y = 0; y < H; y++) {
     const row: Biome[] = [];
-    const coldness = coldnessAt(y);
     for (let x = 0; x < W; x++) {
+      const coldness = coldnessAt(x, y);
       const elev = elevation[y][x];
       if (elev <= SEA_LEVEL) {
         row.push("ocean");
@@ -304,6 +335,35 @@ export function generateWorld(seed: number = ORION_SEED): WorldMap {
       }
     }
     tiles.push(row);
+  }
+
+  // a handful of small interior lakes per continent, for extra visual variety
+  for (const c of continents) {
+    const lakeCount = 3 + Math.floor(rng() * 4);
+    for (let i = 0; i < lakeCount; i++) {
+      const anchor = c.body[0];
+      for (let attempt = 0; attempt < 50; attempt++) {
+        const cx = Math.round(anchor.cx + (rng() - 0.5) * anchor.rx * 1.3);
+        const cy = Math.round(anchor.cy + (rng() - 0.5) * anchor.ry * 1.3);
+        if (cx < 2 || cy < 2 || cx >= W - 2 || cy >= H - 2) continue;
+        const centerBiome = tiles[cy][cx];
+        if (centerBiome === "ocean" || centerBiome === "mountain" || centerBiome === "frozen") {
+          continue;
+        }
+        const r = Math.round((1 + Math.floor(rng() * 2)) * WORLD_SCALE * 0.4);
+        for (let dy = -r; dy <= r; dy++) {
+          for (let dx = -r; dx <= r; dx++) {
+            if (dx * dx + dy * dy > r * r + 0.5) continue;
+            const nx = cx + dx;
+            const ny = cy + dy;
+            if (nx < 0 || ny < 0 || nx >= W || ny >= H) continue;
+            const b = tiles[ny][nx];
+            if (b !== "mountain" && b !== "frozen") tiles[ny][nx] = "ocean";
+          }
+        }
+        break;
+      }
+    }
   }
 
   const wasOcean = tiles.map((row) => row.map((b) => b === "ocean"));

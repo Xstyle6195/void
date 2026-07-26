@@ -25,7 +25,7 @@ import type {
   Sex,
 } from "./types";
 import { chance, clamp, log, nextId, pick, randInt, randomKingdomName } from "./utils";
-import { getOrionWorld, isSettleable } from "./worldgen";
+import { getOrionWorld, isSettleable, WORLD_SCALE } from "./worldgen";
 
 const MAX_OFFERS = 4;
 const MAX_ACTIVE = 3;
@@ -46,27 +46,27 @@ const AMBITION_CONFIG: Record<Ambition, AmbitionConfig> = {
     costMult: 1,
     duration: 1,
     successChance: 0.85,
-    revealRadius: 3,
-    minDist: 3,
-    maxDist: 14,
+    revealRadius: Math.round(3 * WORLD_SCALE),
+    minDist: Math.round(3 * WORLD_SCALE),
+    maxDist: Math.round(14 * WORLD_SCALE),
   },
   2: {
     label: "Ambitieuse",
     costMult: 2.2,
     duration: 2,
     successChance: 0.7,
-    revealRadius: 5,
-    minDist: 10,
-    maxDist: 28,
+    revealRadius: Math.round(5 * WORLD_SCALE),
+    minDist: Math.round(10 * WORLD_SCALE),
+    maxDist: Math.round(28 * WORLD_SCALE),
   },
   3: {
     label: "Légendaire",
     costMult: 4,
     duration: 3,
     successChance: 0.5,
-    revealRadius: 8,
-    minDist: 20,
-    maxDist: 48,
+    revealRadius: Math.round(8 * WORLD_SCALE),
+    minDist: Math.round(20 * WORLD_SCALE),
+    maxDist: Math.round(48 * WORLD_SCALE),
   },
 };
 
@@ -335,7 +335,7 @@ function resolveGeographic(s: GameState, offer: ExpeditionOffer): string {
       satisfaction: SATISFACTION_START,
     };
     s.provinces.push(province);
-    revealAround(known, world, offer.targetX, offer.targetY, 3);
+    revealAround(known, world, offer.targetX, offer.targetY, Math.round(3 * WORLD_SCALE));
     text += ` Une colonie est fondée : ${province.name}.`;
   }
   s.knownTiles = Array.from(known);
@@ -354,7 +354,7 @@ function resolveMercantile(s: GameState, offer: ExpeditionOffer): string {
 function resolveResource(s: GameState, offer: ExpeditionOffer): string {
   const world = getOrionWorld();
   const known = new Set(s.knownTiles);
-  revealAround(known, world, offer.targetX, offer.targetY, 2);
+  revealAround(known, world, offer.targetX, offer.targetY, Math.round(2 * WORLD_SCALE));
   s.knownTiles = Array.from(known);
   s.resources.prestige += offer.rewardPrestige;
   if (offer.colonize && isSettleable(world.tiles[offer.targetY][offer.targetX])) {

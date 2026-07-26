@@ -1,6 +1,6 @@
 import type { Neighbor } from "./types";
 import { randInt } from "./utils";
-import { isLand, isSettleable, type WorldMap } from "./worldgen";
+import { isLand, isSettleable, WORLD_SCALE, type WorldMap } from "./worldgen";
 
 export interface TilePos {
   x: number;
@@ -27,7 +27,7 @@ function distanceToSegment(
   return Math.hypot(p.x - projX, p.y - projY);
 }
 
-const CROSSING_RADIUS = 2;
+const CROSSING_RADIUS = 2 * WORLD_SCALE;
 
 export function findTerritoryCrossing(
   capital: TilePos,

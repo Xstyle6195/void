@@ -39,7 +39,7 @@ import type {
   TraitId,
 } from "./types";
 import { chance, clamp, log, nextId, pick, randInt, randomKingdomName } from "./utils";
-import { getOrionWorld } from "./worldgen";
+import { getOrionWorld, WORLD_SCALE } from "./worldgen";
 
 const OPPOSITE_TRAITS: Partial<Record<TraitId, TraitId>> = {
   brave: "cowardly",
@@ -169,14 +169,24 @@ export function createInitialState(): GameState {
   state.provinces.push(capital);
 
   const known = new Set<string>();
-  revealAround(known, world, capitalPos.x, capitalPos.y, 4);
+  revealAround(known, world, capitalPos.x, capitalPos.y, Math.round(4 * WORLD_SCALE));
 
   const neighborNames = [...NEIGHBOR_NAME_POOL].sort(() => Math.random() - 0.5).slice(0, 3);
   const takenSpots = [capitalPos];
   for (const name of neighborNames) {
-    const neighborCapital = findNeighborCapital(world, takenSpots, capitalPos, 6, 16);
+    const neighborCapital = findNeighborCapital(
+      world,
+      takenSpots,
+      capitalPos,
+      Math.round(6 * WORLD_SCALE),
+      Math.round(16 * WORLD_SCALE),
+    );
     takenSpots.push(neighborCapital);
-    const territory = buildTerritory(world, neighborCapital, randInt(3, 6));
+    const territory = buildTerritory(
+      world,
+      neighborCapital,
+      randInt(Math.round(3 * WORLD_SCALE), Math.round(6 * WORLD_SCALE)),
+    );
     const neighbor: Neighbor = {
       id: nextId(state, "neighbor"),
       name,
@@ -247,7 +257,7 @@ export function foundProvince(state: GameState): GameState {
   };
   s.provinces.push(province);
   const known = new Set(s.knownTiles);
-  revealAround(known, world, spot.x, spot.y, 3);
+  revealAround(known, world, spot.x, spot.y, Math.round(3 * WORLD_SCALE));
   s.knownTiles = Array.from(known);
   log(s, "province", `Une nouvelle province, ${province.name}, rejoint le royaume.`);
   return s;
@@ -406,7 +416,7 @@ function tryDowryLand(s: GameState, neighbor: Neighbor): string | null {
   };
   s.provinces.push(province);
   const known = new Set(s.knownTiles);
-  revealAround(known, getOrionWorld(), tile.x, tile.y, 2);
+  revealAround(known, getOrionWorld(), tile.x, tile.y, Math.round(2 * WORLD_SCALE));
   s.knownTiles = Array.from(known);
   return province.name;
 }
