@@ -16,6 +16,12 @@ import {
   revealAround,
 } from "./mapPlacement";
 import {
+  checkGoals,
+  expireStaleRequests,
+  topUpGoals,
+  topUpPoliticalRequests,
+} from "./politics";
+import {
   growthMultiplier,
   productionMultiplier,
   SATISFACTION_START,
@@ -137,6 +143,8 @@ export function createInitialState(): GameState {
       readinessBonus: 0,
       readinessExpiresYear: 0,
     },
+    goals: [],
+    politicalRequests: [],
   };
 
   const founder = createPerson(state, "M", startYear - randInt(22, 35), null, null);
@@ -206,6 +214,8 @@ export function createInitialState(): GameState {
 
   state.knownTiles = Array.from(known);
   topUpExpeditionOffers(state);
+  topUpGoals(state);
+  topUpPoliticalRequests(state);
 
   log(state, "province", `Fondation de ${state.kingdomName} par ${founder.name}, l'an ${startYear}.`);
   return state;
@@ -698,6 +708,9 @@ export function processTurn(state: GameState): GameState {
   handleNeighborPolitics(s);
   resolveExpeditions(s);
   topUpExpeditionOffers(s);
+  checkGoals(s);
+  topUpPoliticalRequests(s);
+  expireStaleRequests(s);
 
   if (handleUnrest(s)) {
     return s;

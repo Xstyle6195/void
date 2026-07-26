@@ -163,6 +163,8 @@ export type LogKind =
   | "expedition"
   | "army"
   | "revolt"
+  | "politics"
+  | "goal"
   | "gameover";
 
 export interface LogEntry {
@@ -201,6 +203,17 @@ export type GamePhase = "playing" | "succession" | "gameover";
 
 export interface PendingEvent {
   eventId: string;
+}
+
+export interface ActiveGoal {
+  defId: string;
+  assignedYear: number;
+}
+
+export interface ActivePoliticalRequest {
+  requestId: string;
+  assignedYear: number;
+  expiresYear: number;
 }
 
 export type ExpeditionKind = "geographic" | "mercantile" | "resource";
@@ -255,4 +268,6 @@ export interface GameState {
   expeditionOffers: ExpeditionOffer[];
   activeExpeditions: ActiveExpedition[];
   army: ArmyState;
+  goals: ActiveGoal[];
+  politicalRequests: ActivePoliticalRequest[];
 }

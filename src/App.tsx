@@ -7,10 +7,12 @@ import { EventModal } from "./components/EventModal";
 import { ExpeditionView } from "./components/ExpeditionView";
 import { FamilyTree } from "./components/FamilyTree";
 import { GameOverScreen } from "./components/GameOverScreen";
+import { GoalsView } from "./components/GoalsView";
 import { MapView } from "./components/MapView";
 import { MarriageSection } from "./components/MarriageSection";
 import { PeopleView } from "./components/PeopleView";
 import { ProvinceList } from "./components/ProvinceList";
+import { RequestsView } from "./components/RequestsView";
 import { ResourceBar } from "./components/ResourceBar";
 import { RulerPanel } from "./components/RulerPanel";
 import { SuccessionScreen } from "./components/SuccessionScreen";
@@ -102,8 +104,10 @@ function App() {
         <main className="app-grid">
           <div className="column">
             <PeopleView game={game} />
+            <GoalsView game={game} />
           </div>
           <div className="column">
+            <RequestsView game={game} />
             <ProvinceList game={game} />
           </div>
         </main>

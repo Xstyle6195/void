@@ -16,6 +16,7 @@ import {
 } from "../game/engine";
 import { conductExercises, equipUnit, recruitMen } from "../game/army";
 import { launchExpedition } from "../game/expeditions";
+import { resolvePoliticalRequest } from "../game/politics";
 import type { BuildingId, CorpsType, GameState } from "../game/types";
 
 const SAVE_KEY = "dynastie-save-v1";
@@ -56,6 +57,7 @@ interface Store {
   attack: (neighborId: string) => void;
   exercise: () => void;
   joinWar: (allyId: string, enemyId: string) => void;
+  resolveRequest: (requestId: string, choiceId: string) => void;
   restart: () => void;
 }
 
@@ -138,6 +140,11 @@ export const useGameStore = create<Store>((set, get) => ({
   },
   joinWar: (allyId, enemyId) => {
     const updated = joinAllyWar(get().game, allyId, enemyId);
+    persist(updated);
+    set({ game: updated });
+  },
+  resolveRequest: (requestId, choiceId) => {
+    const updated = resolvePoliticalRequest(get().game, requestId, choiceId);
     persist(updated);
     set({ game: updated });
   },

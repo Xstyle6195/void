@@ -423,6 +423,14 @@
   border-left-color: var(--bad);
 }
 
+.log-goal {
+  border-left-color: var(--good);
+}
+
+.log-politics {
+  border-left-color: var(--accent-soft);
+}
+
 .tier-text {
   font-size: 0.9em;
 }
