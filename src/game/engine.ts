@@ -8,6 +8,7 @@ import {
 } from "./data";
 import { EVENTS, pickEvent, resolveChoice } from "./events";
 import { resolveExpeditions, topUpExpeditionOffers } from "./expeditions";
+import { GOVERNMENT_MODIFIERS } from "./government";
 import {
   buildTerritory,
   findExpansionTile,
@@ -147,6 +148,7 @@ export function createInitialState(): GameState {
     politicalRequests: [],
     age: "medieval",
     researchedTechs: [],
+    government: "kingdom",
   };
 
   const founder = createPerson(state, "M", startYear - randInt(22, 35), null, null);
@@ -505,6 +507,7 @@ function handleProduction(state: GameState): void {
   let food = 10;
   let gold = 10;
   let research = 0;
+  const govMods = GOVERNMENT_MODIFIERS[state.government];
   for (const p of state.provinces) {
     let pFood = Math.floor(p.population / 20) + (p.bonusFood ?? 0);
     let pGold = Math.floor(p.population / 30) + (p.bonusGold ?? 0);
@@ -523,7 +526,7 @@ function handleProduction(state: GameState): void {
         0,
         100,
       );
-      state.resources.prestige += (effects.prestige ?? 0) * 0.1;
+      state.resources.prestige += (effects.prestige ?? 0) * 0.1 * govMods.prestigeMult;
     }
 
     const tier = satisfactionTier(p.satisfaction);
@@ -555,6 +558,7 @@ function handleProduction(state: GameState): void {
   if (state.resources.food === 0) {
     state.resources.stability = clamp(state.resources.stability - 5, 0, 100);
   }
+  state.resources.stability = clamp(state.resources.stability + govMods.stabilityDrift, 0, 100);
   state.resources.research = Math.max(0, state.resources.research + research);
 }
 
@@ -748,9 +752,10 @@ export function processTurn(state: GameState): GameState {
     0,
   );
   const rulerDiplomacyDrift = Math.round((statsWithTraits(s.ruler).diplomacy - 10) / 4);
+  const governmentRelationDrift = GOVERNMENT_MODIFIERS[s.government].relationDrift;
   for (const neighbor of s.neighbors) {
     neighbor.relation = clamp(
-      neighbor.relation + randInt(-2, 2) + embassyBonus + rulerDiplomacyDrift,
+      neighbor.relation + randInt(-2, 2) + embassyBonus + rulerDiplomacyDrift + governmentRelationDrift,
       -100,
       100,
     );

@@ -1,4 +1,5 @@
 import { AGE_DESCRIPTION, AGE_LABEL, AGE_ORDER } from "../game/ages";
+import { GOVERNMENT_DESCRIPTION, GOVERNMENT_LABEL } from "../game/government";
 import type { GameState } from "../game/types";
 
 const AGE_ICON: Record<string, string> = {
@@ -18,8 +19,10 @@ export function AgeView({ game }: { game: GameState }) {
         <h2>
           {AGE_ICON[game.age]} {AGE_LABEL[game.age]}
         </h2>
+        <span className="tag">{GOVERNMENT_LABEL[game.government]}</span>
       </div>
       <p className="muted">{AGE_DESCRIPTION[game.age]}</p>
+      <p className="muted">{GOVERNMENT_DESCRIPTION[game.government]}</p>
 
       <div className="age-timeline">
         {AGE_ORDER.map((a, i) => (

@@ -335,6 +335,47 @@ export const EVENTS: GameEvent[] = [
       },
     ],
   },
+  {
+    id: "choose_government",
+    title: "Un nouveau régime pour Orion",
+    body: "L'Empire entre dans l'âge moderne. Le temps est venu de décider quelle forme de gouvernement mènera votre nation vers l'avenir.",
+    // ne fait jamais partie de la pioche aléatoire : déclenché uniquement
+    // par la recherche de la technologie "L'Aube de la Modernité"
+    condition: () => false,
+    choices: [
+      {
+        id: "pick_monarchy",
+        label: "Instaurer une monarchie constitutionnelle",
+        apply: (ctx) => {
+          ctx.state.government = "constitutional_monarchy";
+          res(ctx).stability = clamp(res(ctx).stability + 5, 0, 100);
+          return "La couronne accepte de partager le pouvoir avec un parlement élu. La transition se fait dans la continuité.";
+        },
+      },
+      {
+        id: "pick_republic",
+        label: "Proclamer la République",
+        apply: (ctx) => {
+          ctx.state.government = "republic";
+          res(ctx).stability = clamp(res(ctx).stability - 5, 0, 100);
+          res(ctx).prestige += 5;
+          return "La couronne s'efface devant la volonté du peuple. La République est proclamée, non sans quelques remous.";
+        },
+      },
+      {
+        id: "pick_dictatorship",
+        label: "Instaurer une dictature",
+        apply: (ctx) => {
+          ctx.state.government = "dictatorship";
+          res(ctx).stability = clamp(res(ctx).stability + 10, 0, 100);
+          ctx.state.neighbors.forEach((n) => {
+            n.relation = clamp(n.relation - 10, -100, 100);
+          });
+          return "Un pouvoir fort s'impose sans partage. L'ordre règne, mais les voisins observent votre nation avec méfiance.";
+        },
+      },
+    ],
+  },
 ];
 
 export function pickEvent(ctx: EventContext): GameEvent | null {

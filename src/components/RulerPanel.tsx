@@ -1,5 +1,6 @@
 import { TRAITS } from "../game/data";
 import { statsWithTraits } from "../game/engine";
+import { rulerTitle } from "../game/government";
 import type { GameState } from "../game/types";
 
 export function RulerPanel({ game }: { game: GameState }) {
@@ -11,7 +12,7 @@ export function RulerPanel({ game }: { game: GameState }) {
     <section className="panel ruler-panel">
       <h2>{ruler.name}</h2>
       <p className="ruler-subtitle">
-        {ruler.sex === "M" ? "Roi" : "Reine"} de {game.kingdomName} · {age} ans ·
+        {rulerTitle(game.government, ruler.sex)} de {game.kingdomName} · {age} ans ·
         Dynastie des {game.dynastyName}
       </p>
 

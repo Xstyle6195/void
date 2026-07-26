@@ -2,6 +2,14 @@ export type Sex = "M" | "F";
 
 export type Age = "stone" | "medieval" | "steam" | "modern" | "future";
 
+export type GovernmentType =
+  | "clan"
+  | "kingdom"
+  | "empire"
+  | "constitutional_monarchy"
+  | "republic"
+  | "dictatorship";
+
 export type TraitId =
   | "brave"
   | "cowardly"
@@ -303,4 +311,5 @@ export interface GameState {
   politicalRequests: ActivePoliticalRequest[];
   age: Age;
   researchedTechs: string[];
+  government: GovernmentType;
 }

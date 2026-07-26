@@ -1,5 +1,5 @@
 import { BUILDINGS, UNIT_TYPES } from "./data";
-import type { Age, BuildingType, GameState, UnitTypeDef } from "./types";
+import type { Age, BuildingType, GameState, GovernmentType, UnitTypeDef } from "./types";
 import { log } from "./utils";
 
 export interface Technology {
@@ -11,6 +11,10 @@ export interface Technology {
   requires: string[];
   // si présent, achever cette recherche fait entrer Orion dans cette époque
   setsAge?: Age;
+  // si présent, fait automatiquement basculer le régime politique (transition sans choix)
+  setsGovernment?: GovernmentType;
+  // si vrai, ouvre une décision bloquante pour choisir le nouveau régime politique
+  triggersGovernmentChoice?: boolean;
 }
 
 export const TECHS: Technology[] = [
@@ -23,6 +27,7 @@ export const TECHS: Technology[] = [
     cost: 40,
     requires: [],
     setsAge: "steam",
+    setsGovernment: "empire",
   },
   {
     id: "steam_metallurgy",
@@ -58,6 +63,7 @@ export const TECHS: Technology[] = [
     cost: 80,
     requires: ["steam_metallurgy", "steam_naval", "steam_academia"],
     setsAge: "modern",
+    triggersGovernmentChoice: true,
   },
   {
     id: "modern_aviation",
@@ -139,7 +145,9 @@ export function researchTech(state: GameState, techId: string): GameState {
   s.resources.research -= tech.cost;
   s.researchedTechs.push(techId);
   if (tech.setsAge) s.age = tech.setsAge;
+  if (tech.setsGovernment) s.government = tech.setsGovernment;
   log(s, tech.setsAge ? "age" : "tech", `Recherche achevée : ${tech.name}. ${tech.description}`);
+  if (tech.triggersGovernmentChoice) s.pendingEvent = { eventId: "choose_government" };
   return s;
 }
 
