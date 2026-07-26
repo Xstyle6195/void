@@ -185,6 +185,7 @@ function buildGeographicOffer(state: GameState, id: string): ExpeditionOffer | n
     rewardGold: 0,
     rewardFood: 0,
     rewardPrestige: 2 * ambition,
+    rewardResearch: 4 * ambition,
     tollAmount: crossing.tollAmount,
     tollNeighborId: crossing.tollNeighborId,
   };
@@ -216,6 +217,7 @@ function buildMercantileOffer(state: GameState, id: string): ExpeditionOffer | n
     rewardGold: 0,
     rewardFood: 0,
     rewardPrestige: ambition,
+    rewardResearch: ambition,
     tollAmount: 0,
     tollNeighborId: null,
   };
@@ -271,6 +273,7 @@ function buildResourceOffer(state: GameState, id: string): ExpeditionOffer | nul
     rewardGold: colonize ? 0 : 30 * ambition + randInt(0, 20),
     rewardFood: colonize ? 0 : 20 * ambition + randInt(0, 15),
     rewardPrestige: ambition,
+    rewardResearch: 2 * ambition,
     tollAmount: crossing.tollAmount,
     tollNeighborId: crossing.tollNeighborId,
   };
@@ -321,7 +324,8 @@ function resolveGeographic(s: GameState, offer: ExpeditionOffer): string {
   const known = new Set(s.knownTiles);
   revealAround(known, world, offer.targetX, offer.targetY, AMBITION_CONFIG[offer.ambition].revealRadius);
   s.resources.prestige += offer.rewardPrestige;
-  let text = `${offer.explorerName} revient triomphant : de nouvelles terres sont cartographiées.`;
+  s.resources.research += offer.rewardResearch;
+  let text = `${offer.explorerName} revient triomphant : de nouvelles terres sont cartographiées (+${offer.rewardResearch} recherche).`;
   if (offer.colonize && isSettleable(world.tiles[offer.targetY][offer.targetX])) {
     const province: Province = {
       id: nextId(s, "province"),
@@ -348,6 +352,7 @@ function resolveMercantile(s: GameState, offer: ExpeditionOffer): string {
   neighbor.tradeRouteLevel = Math.max(neighbor.tradeRouteLevel, offer.tradeLevel);
   neighbor.relation = clamp(neighbor.relation + 10, -100, 100);
   s.resources.prestige += offer.rewardPrestige;
+  s.resources.research += offer.rewardResearch;
   return `${offer.explorerName} établit une route commerciale avec ${neighbor.name} (niveau ${neighbor.tradeRouteLevel}/3).`;
 }
 
@@ -357,6 +362,7 @@ function resolveResource(s: GameState, offer: ExpeditionOffer): string {
   revealAround(known, world, offer.targetX, offer.targetY, Math.round(2 * WORLD_SCALE));
   s.knownTiles = Array.from(known);
   s.resources.prestige += offer.rewardPrestige;
+  s.resources.research += offer.rewardResearch;
   if (offer.colonize && isSettleable(world.tiles[offer.targetY][offer.targetX])) {
     const province: Province = {
       id: nextId(s, "province"),
@@ -376,7 +382,7 @@ function resolveResource(s: GameState, offer: ExpeditionOffer): string {
   }
   s.resources.gold += offer.rewardGold;
   s.resources.food += offer.rewardFood;
-  return `${offer.explorerName} rapporte ${offer.rewardGold} or et ${offer.rewardFood} vivres.`;
+  return `${offer.explorerName} rapporte ${offer.rewardGold} or, ${offer.rewardFood} vivres et ${offer.rewardResearch} points de recherche.`;
 }
 
 export function resolveExpeditions(state: GameState): void {

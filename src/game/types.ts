@@ -97,9 +97,10 @@ export interface BuildingType {
   id: BuildingId;
   name: string;
   category: BuildingCategory;
-  age: Age;
   cost: number;
   description: string;
+  // id de la technologie qui débloque ce bâtiment ; absent = disponible dès le Moyen Âge
+  requiresTech?: string;
   effects: {
     food?: number;
     gold?: number;
@@ -109,6 +110,7 @@ export interface BuildingType {
     defense?: number;
     populationGrowth?: number;
     relationBonus?: number;
+    research?: number;
   };
 }
 
@@ -134,12 +136,13 @@ export interface UnitTypeDef {
   id: string;
   name: string;
   corps: CorpsType;
-  age: Age;
   description: string;
   equipCostPerMan: number;
   upkeepPerMan: number;
   power: number;
   requiresBuilding: BuildingId | null;
+  // id de la technologie qui débloque cette unité ; absent = disponible dès le Moyen Âge
+  requiresTech?: string;
 }
 
 export interface ArmyUnitStack {
@@ -188,6 +191,7 @@ export type LogKind =
   | "politics"
   | "goal"
   | "age"
+  | "tech"
   | "gameover";
 
 export interface LogEntry {
@@ -220,6 +224,7 @@ export interface Resources {
   food: number;
   stability: number; // 0-100
   prestige: number;
+  research: number; // points de recherche, dépensés dans l'arbre technologique
 }
 
 export type GamePhase = "playing" | "succession" | "gameover";
@@ -261,6 +266,7 @@ export interface ExpeditionOffer {
   rewardGold: number;
   rewardFood: number;
   rewardPrestige: number;
+  rewardResearch: number;
   tollAmount: number;
   tollNeighborId: string | null;
 }
@@ -296,5 +302,5 @@ export interface GameState {
   goals: ActiveGoal[];
   politicalRequests: ActivePoliticalRequest[];
   age: Age;
-  techProgress: number;
+  researchedTechs: string[];
 }

@@ -1,4 +1,3 @@
-import { ageAtLeast } from "./ages";
 import { RECRUIT_BATCH, RECRUIT_COST_PER_MAN, UNIT_TYPES } from "./data";
 import type { CorpsType, GameState } from "./types";
 import { log } from "./utils";
@@ -95,7 +94,7 @@ export function equipUnit(state: GameState, unitId: string): GameState {
   const s = structuredClone(state);
   const def = UNIT_TYPES.find((u) => u.id === unitId);
   if (!def) return s;
-  if (!ageAtLeast(s.age, def.age)) return s;
+  if (def.requiresTech && !s.researchedTechs.includes(def.requiresTech)) return s;
   const available = s.army.recruits[def.corps];
   const amount = Math.min(RECRUIT_BATCH, available);
   if (amount <= 0) return s;

@@ -216,7 +216,8 @@ export const POLITICAL_REQUESTS: GameEvent[] = [
         apply: (ctx) => {
           spend(ctx, 60);
           res(ctx).stability = clamp(res(ctx).stability + 8, 0, 100);
-          return "Des écoles ouvrent leurs portes, au grand bonheur des familles.";
+          res(ctx).research += 8;
+          return "Des écoles ouvrent leurs portes, au grand bonheur des familles (+8 recherche).";
         },
       },
       {
@@ -225,7 +226,8 @@ export const POLITICAL_REQUESTS: GameEvent[] = [
         apply: (ctx) => {
           spend(ctx, 25);
           res(ctx).stability = clamp(res(ctx).stability + 3, 0, 100);
-          return "Un effort limité, mais apprécié.";
+          res(ctx).research += 3;
+          return "Un effort limité, mais apprécié (+3 recherche).";
         },
       },
       {
@@ -600,6 +602,39 @@ export const POLITICAL_REQUESTS: GameEvent[] = [
           res(ctx).stability = clamp(res(ctx).stability - 4, 0, 100);
           res(ctx).prestige += 3;
           return "Le trône réaffirme son autorité pleine et entière.";
+        },
+      },
+    ],
+  },
+  {
+    id: "traveling_scholar",
+    title: "Un érudit itinérant",
+    body: "Un savant de passage propose de mener des recherches sous votre patronage, moyennant un financement.",
+    choices: [
+      {
+        id: "fund_scholar_generous",
+        label: "Financer généreusement ses travaux (70 or)",
+        apply: (ctx) => {
+          spend(ctx, 70);
+          res(ctx).research += 15;
+          return "L'érudit s'installe à la cour et fait progresser le savoir du royaume (+15 recherche).";
+        },
+      },
+      {
+        id: "fund_scholar_modest",
+        label: "Lui offrir un soutien modeste (30 or)",
+        apply: (ctx) => {
+          spend(ctx, 30);
+          res(ctx).research += 6;
+          return "L'érudit poursuit ses travaux avec des moyens limités (+6 recherche).";
+        },
+      },
+      {
+        id: "turn_away_scholar",
+        label: "L'éconduire, le trésor a d'autres priorités",
+        apply: (ctx) => {
+          res(ctx).stability = clamp(res(ctx).stability - 1, 0, 100);
+          return "L'érudit repart chercher un mécène ailleurs.";
         },
       },
     ],

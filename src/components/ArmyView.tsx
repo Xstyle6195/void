@@ -1,4 +1,3 @@
-import { ageAtLeast, AGE_LABEL } from "../game/ages";
 import {
   activeReadinessBonus,
   CORPS_BUILDING,
@@ -11,8 +10,14 @@ import {
   unitsForCorps,
 } from "../game/army";
 import { BUILDINGS, RECRUIT_BATCH, RECRUIT_COST_PER_MAN } from "../game/data";
+import { TECHS } from "../game/techs";
 import type { CorpsType, GameState } from "../game/types";
 import { useGameStore } from "../state/store";
+
+function techName(techId?: string): string {
+  if (!techId) return "";
+  return TECHS.find((t) => t.id === techId)?.name ?? techId;
+}
 
 const ATTACK_COST = 40;
 
@@ -35,8 +40,8 @@ function CorpsSection({ game, corps }: { game: GameState; corps: CorpsType }) {
     ? game.provinces.filter((p) => p.buildings.includes(buildingId))
     : [];
   const buildingName = buildingId ? BUILDINGS[buildingId].name : "";
-  const buildingRequiredAge = buildingId ? BUILDINGS[buildingId].age : "medieval";
-  const buildingLocked = !ageAtLeast(game.age, buildingRequiredAge);
+  const buildingRequiredTech = buildingId ? BUILDINGS[buildingId].requiresTech : undefined;
+  const buildingLocked = !!buildingRequiredTech && !game.researchedTechs.includes(buildingRequiredTech);
 
   return (
     <section className="panel">
@@ -47,8 +52,8 @@ function CorpsSection({ game, corps }: { game: GameState; corps: CorpsType }) {
       {buildingLocked ? (
         <p className="muted">
           {corps === "air"
-            ? `Le corps aérien nécessite une avancée technologique : atteignez l'époque ${AGE_LABEL[buildingRequiredAge]} pour pouvoir construire un(e) ${buildingName} et recruter vos premiers aviateurs.`
-            : `Nécessite l'époque ${AGE_LABEL[buildingRequiredAge]}.`}
+            ? `Le corps aérien nécessite une avancée technologique : recherchez « ${techName(buildingRequiredTech)} » pour pouvoir construire un(e) ${buildingName} et recruter vos premiers aviateurs.`
+            : `Nécessite la recherche : ${techName(buildingRequiredTech)}.`}
         </p>
       ) : (
         <>
@@ -99,10 +104,10 @@ function CorpsSection({ game, corps }: { game: GameState; corps: CorpsType }) {
               const equipped = stack?.count ?? 0;
               const amount = Math.min(RECRUIT_BATCH, recruits);
               const cost = Math.round(amount * u.equipCostPerMan);
-              const locked = !ageAtLeast(game.age, u.age);
+              const locked = !!u.requiresTech && !game.researchedTechs.includes(u.requiresTech);
               const disabled = locked || amount <= 0 || game.resources.gold < cost;
               const reason = locked
-                ? `Nécessite l'époque ${AGE_LABEL[u.age]}`
+                ? `Nécessite la recherche : ${techName(u.requiresTech)}`
                 : amount <= 0
                   ? "Aucune recrue disponible"
                   : game.resources.gold < cost

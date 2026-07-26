@@ -1,4 +1,3 @@
-import { ageAtLeast, handleAgeProgress } from "./ages";
 import { totalArmyPower, totalArmyUpkeep } from "./army";
 import {
   BUILDINGS,
@@ -128,7 +127,7 @@ export function createInitialState(): GameState {
     deceased: [],
     familyMembers: [],
     provinces: [],
-    resources: { gold: 80, food: 60, stability: 60, prestige: 5 },
+    resources: { gold: 80, food: 60, stability: 60, prestige: 5, research: 0 },
     neighbors: [],
     log: [],
     pendingEvent: null,
@@ -147,7 +146,7 @@ export function createInitialState(): GameState {
     goals: [],
     politicalRequests: [],
     age: "medieval",
-    techProgress: 0,
+    researchedTechs: [],
   };
 
   const founder = createPerson(state, "M", startYear - randInt(22, 35), null, null);
@@ -275,7 +274,9 @@ export function buildBuilding(
   const province = s.provinces.find((p) => p.id === provinceId);
   const buildingType = BUILDINGS[buildingId];
   if (!province || !buildingType) return s;
-  if (!ageAtLeast(s.age, buildingType.age)) return s;
+  if (buildingType.requiresTech && !s.researchedTechs.includes(buildingType.requiresTech)) {
+    return s;
+  }
   if (province.buildings.includes(buildingId)) return s;
   if (s.resources.gold < buildingType.cost) return s;
   s.resources.gold -= buildingType.cost;
@@ -503,15 +504,18 @@ function totalMilitary(state: GameState): number {
 function handleProduction(state: GameState): void {
   let food = 10;
   let gold = 10;
+  let research = 0;
   for (const p of state.provinces) {
     let pFood = Math.floor(p.population / 20) + (p.bonusFood ?? 0);
     let pGold = Math.floor(p.population / 30) + (p.bonusGold ?? 0);
+    let pResearch = 0;
     let growthRate = 0.03;
     let localStabilityEffect = 0;
     for (const b of p.buildings) {
       const effects = BUILDINGS[b].effects;
       pFood += effects.food ?? 0;
       pGold += effects.gold ?? 0;
+      pResearch += effects.research ?? 0;
       growthRate += effects.populationGrowth ?? 0;
       localStabilityEffect += effects.stability ?? 0;
       state.resources.stability = clamp(
@@ -525,6 +529,7 @@ function handleProduction(state: GameState): void {
     const tier = satisfactionTier(p.satisfaction);
     food += Math.round(pFood * productionMultiplier(tier));
     gold += Math.round(pGold * productionMultiplier(tier));
+    research += Math.round(pResearch * productionMultiplier(tier));
     p.population += Math.max(1, Math.floor(p.population * growthRate * growthMultiplier(tier)));
 
     p.satisfaction = clamp(
@@ -550,6 +555,7 @@ function handleProduction(state: GameState): void {
   if (state.resources.food === 0) {
     state.resources.stability = clamp(state.resources.stability - 5, 0, 100);
   }
+  state.resources.research = Math.max(0, state.resources.research + research);
 }
 
 function resolveBattleRound(
@@ -721,7 +727,6 @@ export function processTurn(state: GameState): GameState {
   handleNeighborPolitics(s);
   resolveExpeditions(s);
   topUpExpeditionOffers(s);
-  handleAgeProgress(s);
   checkGoals(s);
   topUpPoliticalRequests(s);
   expireStaleRequests(s);

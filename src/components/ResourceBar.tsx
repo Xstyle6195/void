@@ -24,6 +24,10 @@ export function ResourceBar({ game }: { game: GameState }) {
         <span className="resource-icon">✨</span>
         <span>{Math.round(r.prestige)} prestige</span>
       </div>
+      <div className="resource">
+        <span className="resource-icon">🔬</span>
+        <span>{Math.floor(r.research)} recherche</span>
+      </div>
     </section>
   );
 }

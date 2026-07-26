@@ -17,6 +17,7 @@ import { RequestsView } from "./components/RequestsView";
 import { ResourceBar } from "./components/ResourceBar";
 import { RulerPanel } from "./components/RulerPanel";
 import { SuccessionScreen } from "./components/SuccessionScreen";
+import { TechTreeView } from "./components/TechTreeView";
 import { useGameStore } from "./state/store";
 
 type Tab =
@@ -105,6 +106,7 @@ function App() {
         <main className="app-grid">
           <div className="column">
             <AgeView game={game} />
+            <TechTreeView game={game} />
             <PeopleView game={game} />
             <GoalsView game={game} />
           </div>

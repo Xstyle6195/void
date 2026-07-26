@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { ageAtLeast, AGE_LABEL } from "../game/ages";
 import { BUILDINGS } from "../game/data";
+import { TECHS } from "../game/techs";
 import type { BuildingCategory, BuildingId, GameState } from "../game/types";
 import { useGameStore } from "../state/store";
 
@@ -94,9 +94,12 @@ export function ProvinceList({ game }: { game: GameState }) {
                       <div className="build-menu">
                         {buildings.map((b) => {
                           const built = p.buildings.includes(b.id as BuildingId);
-                          const locked = !ageAtLeast(game.age, b.age);
+                          const locked =
+                            !!b.requiresTech && !game.researchedTechs.includes(b.requiresTech);
                           const title = locked
-                            ? `Nécessite l'époque : ${AGE_LABEL[b.age]}`
+                            ? `Nécessite la recherche : ${
+                                TECHS.find((t) => t.id === b.requiresTech)?.name ?? b.requiresTech
+                              }`
                             : b.description;
                           return (
                             <button
