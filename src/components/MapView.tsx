@@ -6,13 +6,14 @@ import { getOrionWorld, type Biome } from "../game/worldgen";
 const TILE = 10;
 
 const BIOME_COLORS: Record<Biome, string> = {
-  ocean: "#1c3a52",
-  coast: "#3f7089",
-  plains: "#93a84f",
-  forest: "#3c6b3f",
-  mountain: "#7c7168",
-  desert: "#d8bd76",
-  frozen: "#e7eff2",
+  ocean: "#164a63",
+  coast: "#2f88a0",
+  plains: "#a3a555",
+  forest: "#2e5c37",
+  mountain: "#83786a",
+  desert: "#dcbb70",
+  badlands: "#b5602f",
+  frozen: "#edf5f6",
 };
 
 const FOG_COLOR = "#0b0e13";
@@ -89,6 +90,7 @@ export function MapView({ game }: { game: GameState }) {
         <LegendSwatch color={BIOME_COLORS.forest} label="Forêt" />
         <LegendSwatch color={BIOME_COLORS.mountain} label="Montagnes" />
         <LegendSwatch color={BIOME_COLORS.desert} label="Désert" />
+        <LegendSwatch color={BIOME_COLORS.badlands} label="Terres arides" />
         <LegendSwatch color={BIOME_COLORS.frozen} label="Glace éternelle" />
         <LegendSwatch color={BIOME_COLORS.coast} label="Côte" />
         <LegendSwatch color={BIOME_COLORS.ocean} label="Océan" />

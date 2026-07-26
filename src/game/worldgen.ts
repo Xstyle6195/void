@@ -5,6 +5,7 @@ export type Biome =
   | "forest"
   | "mountain"
   | "desert"
+  | "badlands"
   | "frozen";
 
 export interface WorldMap {
@@ -90,6 +91,12 @@ function blobInfluence(x: number, y: number, blob: Blob): number {
   return Math.max(0, blob.strength * (1 - d));
 }
 
+function maxInfluence(x: number, y: number, blobs: Blob[]): number {
+  let mask = 0;
+  for (const b of blobs) mask = Math.max(mask, blobInfluence(x, y, b));
+  return mask;
+}
+
 function mulberry32(seed: number): () => number {
   let a = seed;
   return function () {
@@ -101,57 +108,139 @@ function mulberry32(seed: number): () => number {
   };
 }
 
+interface ContinentDef {
+  // silhouette blobs making up the landmass shape
+  body: Blob[];
+  // smaller, stronger blobs that push elevation into mountain range (spines/peaks)
+  peaks: Blob[];
+  // reference point used for the west(moist)/east(dry) climate gradient of this landmass
+  centerX: number;
+  // which dry biome this continent uses on its rain-shadow (east) side
+  dryBiome: "desert" | "badlands";
+}
+
+function jitterBlob(b: Blob, rng: () => number, amount: number): Blob {
+  return {
+    ...b,
+    rx: b.rx * (1 - amount / 2 + rng() * amount),
+    ry: b.ry * (1 - amount / 2 + rng() * amount),
+    rot: b.rot + (rng() - 0.5) * 0.3,
+  };
+}
+
+function buildContinents(W: number, H: number, rng: () => number): ContinentDef[] {
+  const jitter = (b: Blob) => jitterBlob(b, rng, 0.14);
+
+  // --- Continent A: north-west "horn" -- icy peak tapering into forest, plains, desert ---
+  const aBody: Blob[] = [
+    { cx: 0.23 * W, cy: 0.43 * H, rx: 0.2 * W, ry: 0.3 * H, rot: 0.25, strength: 1 },
+    { cx: 0.09 * W, cy: 0.3 * H, rx: 0.11 * W, ry: 0.17 * H, rot: -0.2, strength: 1 },
+    { cx: 0.17 * W, cy: 0.62 * H, rx: 0.11 * W, ry: 0.12 * H, rot: 0.1, strength: 1 },
+    { cx: 0.24 * W, cy: 0.1 * H, rx: 0.12 * W, ry: 0.14 * H, rot: 0.1, strength: 1 },
+    { cx: 0.235 * W, cy: 0.24 * H, rx: 0.1 * W, ry: 0.14 * H, rot: 0.1, strength: 1 },
+  ].map(jitter);
+  const aPeaks: Blob[] = [
+    { cx: 0.24 * W, cy: 0.15 * H, rx: 0.045 * W, ry: 0.11 * H, rot: 0.15, strength: 1 },
+    { cx: 0.2 * W, cy: 0.3 * H, rx: 0.04 * W, ry: 0.1 * H, rot: 0.0, strength: 1 },
+  ].map(jitter);
+
+  // --- Continent B: north-east "horn", mirrored copy of A ---
+  const mirrorX = (x: number) => W - 1 - x;
+  const mirrorBlob = (b: Blob): Blob => ({ ...b, cx: mirrorX(b.cx), rot: -b.rot });
+  const bBody = aBody.map(mirrorBlob);
+  const bPeaks = aPeaks.map(mirrorBlob);
+
+  // --- Continent C: southern landmass with forested west and rocky badlands east ---
+  const cBody: Blob[] = [
+    { cx: 0.53 * W, cy: 0.73 * H, rx: 0.16 * W, ry: 0.18 * H, rot: 0.05, strength: 1 },
+    { cx: 0.62 * W, cy: 0.7 * H, rx: 0.1 * W, ry: 0.11 * H, rot: -0.1, strength: 1 },
+    { cx: 0.44 * W, cy: 0.76 * H, rx: 0.1 * W, ry: 0.11 * H, rot: 0.1, strength: 1 },
+  ].map(jitter);
+  const cPeaks: Blob[] = [
+    { cx: 0.51 * W, cy: 0.63 * H, rx: 0.045 * W, ry: 0.08 * H, rot: -0.1, strength: 1 },
+  ].map(jitter);
+
+  return [
+    { body: aBody, peaks: aPeaks, centerX: 0.23 * W, dryBiome: "desert" },
+    { body: bBody, peaks: bPeaks, centerX: mirrorX(0.23 * W), dryBiome: "desert" },
+    { body: cBody, peaks: cPeaks, centerX: 0.53 * W, dryBiome: "badlands" },
+  ];
+}
+
+function buildIslands(
+  W: number,
+  H: number,
+  rng: () => number,
+  continents: ContinentDef[],
+): Blob[] {
+  const islands: Blob[] = [];
+  const centers = continents.map((c) => ({ cx: c.centerX, cy: 0.5 * H }));
+
+  const addIsland = (cx: number, cy: number, minR: number, maxR: number) => {
+    islands.push({
+      cx,
+      cy,
+      rx: minR + rng() * (maxR - minR),
+      ry: minR + rng() * (maxR - minR),
+      rot: rng() * Math.PI,
+      strength: 0.92,
+    });
+  };
+
+  // scattered open-ocean islands, kept clear of the continents themselves
+  let scattered = 0;
+  for (let attempt = 0; attempt < 400 && scattered < 16; attempt++) {
+    const cx = 3 + rng() * (W - 6);
+    const cy = 3 + rng() * (H - 6);
+    const tooClose = centers.some((c) => Math.hypot(c.cx - cx, c.cy - cy) < Math.min(W, H) * 0.16);
+    if (tooClose) continue;
+    addIsland(cx, cy, 1.1, 2.6);
+    scattered += 1;
+  }
+
+  // small archipelago in the strait between the two northern horns
+  for (let i = 0; i < 5; i++) {
+    addIsland(0.4 * W + rng() * 0.2 * W, 0.04 * H + rng() * 0.2 * H, 0.9, 1.8);
+  }
+  // tiny clusters near the bottom-left and bottom-right corners
+  for (let i = 0; i < 3; i++) {
+    addIsland(0.03 * W + rng() * 0.12 * W, 0.78 * H + rng() * 0.18 * H, 0.9, 1.7);
+  }
+  for (let i = 0; i < 3; i++) {
+    addIsland(0.9 * W + rng() * 0.08 * W, 0.1 * H + rng() * 0.15 * H, 0.9, 1.7);
+  }
+
+  return islands;
+}
+
 export function generateWorld(seed: number = ORION_SEED): WorldMap {
   const rng = mulberry32(seed);
   const W = WORLD_WIDTH;
   const H = WORLD_HEIGHT;
 
-  const continentCenters = [
-    { cx: W * 0.18, cy: H * 0.24 },
-    { cx: W * 0.52, cy: H * 0.55 },
-    { cx: W * 0.82, cy: H * 0.78 },
-  ];
+  const continents = buildContinents(W, H, rng);
+  const islands = buildIslands(W, H, rng, continents);
+  const landBlobs = [...continents.flatMap((c) => c.body), ...islands];
+  const peakBlobs = continents.flatMap((c) => c.peaks);
 
-  const blobs: Blob[] = continentCenters.map(({ cx, cy }) => ({
-    cx,
-    cy,
-    rx: W * (0.17 + rng() * 0.06),
-    ry: H * (0.2 + rng() * 0.08),
-    rot: rng() * Math.PI,
-    strength: 1,
-  }));
-
-  const islandCount = 12;
-  for (let i = 0; i < islandCount; i++) {
-    let placed = false;
-    for (let attempt = 0; attempt < 30 && !placed; attempt++) {
-      const cx = 4 + rng() * (W - 8);
-      const cy = 4 + rng() * (H - 8);
-      const tooClose = continentCenters.some(
-        (c) => Math.hypot(c.cx - cx, c.cy - cy) < Math.min(W, H) * 0.22,
-      );
-      if (tooClose) continue;
-      blobs.push({
-        cx,
-        cy,
-        rx: 1.2 + rng() * 2.2,
-        ry: 1.2 + rng() * 2.2,
-        rot: rng() * Math.PI,
-        strength: 0.9,
-      });
-      placed = true;
-    }
-  }
+  const SEA_LEVEL = 0.3;
+  const MOUNTAIN_LEVEL = 0.75;
+  const LAND_MULT = 0.62;
+  const PEAK_MULT = 0.6;
+  const DETAIL_MULT = 0.18;
 
   const elevation: number[][] = [];
   for (let y = 0; y < H; y++) {
     const row: number[] = [];
     for (let x = 0; x < W; x++) {
-      let mask = 0;
-      for (const b of blobs) mask = Math.max(mask, blobInfluence(x, y, b));
-      const detail = fbm(x, y, seed + 11, 5, 0.5, 0.045) - 0.5;
-      const edgeFalloff = mask > 0 ? smoothstep(Math.min(1, mask)) : 0;
-      row.push(edgeFalloff + detail * 0.55 * edgeFalloff + detail * 0.06);
+      const landMask = maxInfluence(x, y, landBlobs);
+      const peakMask = maxInfluence(x, y, peakBlobs);
+      const edgeFalloff = landMask > 0 ? smoothstep(Math.min(1, landMask)) : 0;
+      const peakFalloff = peakMask > 0 ? smoothstep(Math.min(1, peakMask)) : 0;
+      const detail = fbm(x, y, seed + 11, 5, 0.5, 0.05) - 0.5;
+      row.push(
+        edgeFalloff * LAND_MULT + peakFalloff * PEAK_MULT + detail * DETAIL_MULT * edgeFalloff,
+      );
     }
     elevation.push(row);
   }
@@ -165,12 +254,29 @@ export function generateWorld(seed: number = ORION_SEED): WorldMap {
     moisture.push(row);
   }
 
-  const SEA_LEVEL = 0.3;
-  const MOUNTAIN_LEVEL = 0.76;
+  // only the top of the map carries arctic cold; the southern landmass stays temperate
+  const coldnessAt = (y: number) => Math.max(0, 1 - y / (H * 0.62));
+  const FROZEN_THRESH = 0.5;
+  const SNOW_PEAK_THRESH = 0.38;
+  const MOIST_BIAS_RANGE = 0.3 * W;
+
+  const nearestContinentIdx = (x: number): number => {
+    let best = 0;
+    let bestDist = Infinity;
+    continents.forEach((c, i) => {
+      const d = Math.abs(x - c.centerX);
+      if (d < bestDist) {
+        bestDist = d;
+        best = i;
+      }
+    });
+    return best;
+  };
 
   const tiles: Biome[][] = [];
   for (let y = 0; y < H; y++) {
     const row: Biome[] = [];
+    const coldness = coldnessAt(y);
     for (let x = 0; x < W; x++) {
       const elev = elevation[y][x];
       if (elev <= SEA_LEVEL) {
@@ -178,17 +284,20 @@ export function generateWorld(seed: number = ORION_SEED): WorldMap {
         continue;
       }
       if (elev >= MOUNTAIN_LEVEL) {
-        row.push("mountain");
+        row.push(coldness > SNOW_PEAK_THRESH ? "frozen" : "mountain");
         continue;
       }
-      const latNorm = y / (H - 1);
-      const coldness = Math.abs(latNorm - 0.5) * 2;
-      const moist = moisture[y][x];
-      if (coldness > 0.7) {
+      if (coldness > FROZEN_THRESH) {
         row.push("frozen");
-      } else if (coldness < 0.32 && moist < 0.4) {
-        row.push("desert");
-      } else if (moist > 0.58) {
+        continue;
+      }
+      const idx = nearestContinentIdx(x);
+      const continent = continents[idx];
+      const bias = -((x - continent.centerX) / MOIST_BIAS_RANGE) * 0.3;
+      const moist = clampNum(moisture[y][x] + bias, 0, 1);
+      if (moist < 0.32) {
+        row.push(continent.dryBiome);
+      } else if (moist > 0.56) {
         row.push("forest");
       } else {
         row.push("plains");
@@ -217,6 +326,10 @@ export function generateWorld(seed: number = ORION_SEED): WorldMap {
   return { width: W, height: H, tiles };
 }
 
+function clampNum(v: number, min: number, max: number): number {
+  return Math.max(min, Math.min(max, v));
+}
+
 let cachedWorld: WorldMap | null = null;
 export function getOrionWorld(): WorldMap {
   if (!cachedWorld) cachedWorld = generateWorld(ORION_SEED);
@@ -228,5 +341,5 @@ export function isLand(biome: Biome): boolean {
 }
 
 export function isSettleable(biome: Biome): boolean {
-  return biome === "plains" || biome === "forest" || biome === "desert";
+  return biome === "plains" || biome === "forest" || biome === "desert" || biome === "badlands";
 }
