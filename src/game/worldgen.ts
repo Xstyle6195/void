@@ -133,40 +133,50 @@ function jitterBlob(b: Blob, rng: () => number, amount: number): Blob {
 }
 
 function buildContinents(W: number, H: number, rng: () => number): ContinentDef[] {
-  const jitter = (b: Blob) => jitterBlob(b, rng, 0.14);
+  const jitter = (b: Blob) => jitterBlob(b, rng, 0.16);
 
   // --- Continent A: north-west "horn" -- icy peak tapering into forest, plains, desert ---
   const aBody: Blob[] = [
-    { cx: 0.23 * W, cy: 0.43 * H, rx: 0.2 * W, ry: 0.3 * H, rot: 0.25, strength: 1 },
-    { cx: 0.09 * W, cy: 0.3 * H, rx: 0.11 * W, ry: 0.17 * H, rot: -0.2, strength: 1 },
-    { cx: 0.17 * W, cy: 0.62 * H, rx: 0.11 * W, ry: 0.12 * H, rot: 0.1, strength: 1 },
-    { cx: 0.24 * W, cy: 0.1 * H, rx: 0.12 * W, ry: 0.14 * H, rot: 0.1, strength: 1 },
-    { cx: 0.235 * W, cy: 0.24 * H, rx: 0.1 * W, ry: 0.14 * H, rot: 0.1, strength: 1 },
+    { cx: 0.21 * W, cy: 0.42 * H, rx: 0.22 * W, ry: 0.33 * H, rot: 0.25, strength: 1 },
+    { cx: 0.06 * W, cy: 0.28 * H, rx: 0.13 * W, ry: 0.2 * H, rot: -0.2, strength: 1 },
+    { cx: 0.12 * W, cy: 0.62 * H, rx: 0.13 * W, ry: 0.14 * H, rot: 0.1, strength: 1 },
+    { cx: 0.22 * W, cy: 0.09 * H, rx: 0.14 * W, ry: 0.17 * H, rot: 0.1, strength: 1 },
+    { cx: 0.215 * W, cy: 0.235 * H, rx: 0.115 * W, ry: 0.16 * H, rot: 0.1, strength: 1 },
   ].map(jitter);
   const aPeaks: Blob[] = [
-    { cx: 0.24 * W, cy: 0.15 * H, rx: 0.045 * W, ry: 0.11 * H, rot: 0.15, strength: 1 },
-    { cx: 0.2 * W, cy: 0.3 * H, rx: 0.04 * W, ry: 0.1 * H, rot: 0.0, strength: 1 },
+    { cx: 0.22 * W, cy: 0.15 * H, rx: 0.05 * W, ry: 0.125 * H, rot: 0.15, strength: 1 },
+    { cx: 0.18 * W, cy: 0.3 * H, rx: 0.045 * W, ry: 0.11 * H, rot: 0.0, strength: 1 },
+    { cx: 0.15 * W, cy: 0.44 * H, rx: 0.035 * W, ry: 0.09 * H, rot: -0.1, strength: 1 },
   ].map(jitter);
 
-  // --- Continent B: north-east "horn", mirrored copy of A ---
-  const mirrorX = (x: number) => W - 1 - x;
-  const mirrorBlob = (b: Blob): Blob => ({ ...b, cx: mirrorX(b.cx), rot: -b.rot });
-  const bBody = aBody.map(mirrorBlob);
-  const bPeaks = aPeaks.map(mirrorBlob);
+  // --- Continent B: north-east "horn" -- a distinct silhouette, not a mirror of A ---
+  const bBody: Blob[] = [
+    { cx: 0.79 * W, cy: 0.4 * H, rx: 0.23 * W, ry: 0.31 * H, rot: -0.2, strength: 1 },
+    { cx: 0.94 * W, cy: 0.33 * H, rx: 0.13 * W, ry: 0.2 * H, rot: 0.2, strength: 1 },
+    { cx: 0.83 * W, cy: 0.67 * H, rx: 0.15 * W, ry: 0.15 * H, rot: -0.05, strength: 1 },
+    { cx: 0.78 * W, cy: 0.08 * H, rx: 0.15 * W, ry: 0.17 * H, rot: -0.1, strength: 1 },
+    { cx: 0.785 * W, cy: 0.22 * H, rx: 0.115 * W, ry: 0.16 * H, rot: -0.05, strength: 1 },
+    { cx: 0.7 * W, cy: 0.5 * H, rx: 0.08 * W, ry: 0.09 * H, rot: 0.2, strength: 1 },
+  ].map(jitter);
+  const bPeaks: Blob[] = [
+    { cx: 0.78 * W, cy: 0.14 * H, rx: 0.055 * W, ry: 0.13 * H, rot: -0.1, strength: 1 },
+    { cx: 0.82 * W, cy: 0.28 * H, rx: 0.048 * W, ry: 0.11 * H, rot: 0.08, strength: 1 },
+    { cx: 0.73 * W, cy: 0.39 * H, rx: 0.038 * W, ry: 0.085 * H, rot: 0.15, strength: 1 },
+  ].map(jitter);
 
   // --- Continent C: southern landmass with forested west and rocky badlands east ---
   const cBody: Blob[] = [
-    { cx: 0.53 * W, cy: 0.73 * H, rx: 0.16 * W, ry: 0.18 * H, rot: 0.05, strength: 1 },
-    { cx: 0.62 * W, cy: 0.7 * H, rx: 0.1 * W, ry: 0.11 * H, rot: -0.1, strength: 1 },
-    { cx: 0.44 * W, cy: 0.76 * H, rx: 0.1 * W, ry: 0.11 * H, rot: 0.1, strength: 1 },
+    { cx: 0.53 * W, cy: 0.72 * H, rx: 0.208 * W, ry: 0.234 * H, rot: 0.05, strength: 1 },
+    { cx: 0.63 * W, cy: 0.69 * H, rx: 0.13 * W, ry: 0.143 * H, rot: -0.1, strength: 1 },
+    { cx: 0.46 * W, cy: 0.76 * H, rx: 0.13 * W, ry: 0.143 * H, rot: 0.1, strength: 1 },
   ].map(jitter);
   const cPeaks: Blob[] = [
-    { cx: 0.51 * W, cy: 0.63 * H, rx: 0.045 * W, ry: 0.08 * H, rot: -0.1, strength: 1 },
+    { cx: 0.51 * W, cy: 0.6 * H, rx: 0.0585 * W, ry: 0.104 * H, rot: -0.1, strength: 1 },
   ].map(jitter);
 
   return [
-    { body: aBody, peaks: aPeaks, centerX: 0.23 * W, dryBiome: "desert" },
-    { body: bBody, peaks: bPeaks, centerX: mirrorX(0.23 * W), dryBiome: "desert" },
+    { body: aBody, peaks: aPeaks, centerX: 0.21 * W, dryBiome: "desert" },
+    { body: bBody, peaks: bPeaks, centerX: 0.79 * W, dryBiome: "desert" },
     { body: cBody, peaks: cPeaks, centerX: 0.53 * W, dryBiome: "badlands" },
   ];
 }
@@ -242,11 +252,11 @@ export function generateWorld(seed: number = ORION_SEED): WorldMap {
   const landBlobs = [...continents.flatMap((c) => c.body), ...islands];
   const peakBlobs = continents.flatMap((c) => c.peaks);
 
-  const SEA_LEVEL = 0.3;
+  const SEA_LEVEL = 0.28;
   const MOUNTAIN_LEVEL = 0.75;
-  const LAND_MULT = 0.62;
+  const LAND_MULT = 0.64;
   const PEAK_MULT = 0.6;
-  const DETAIL_MULT = 0.18;
+  const DETAIL_MULT = 0.24;
 
   const elevation: number[][] = [];
   for (let y = 0; y < H; y++) {
@@ -257,15 +267,18 @@ export function generateWorld(seed: number = ORION_SEED): WorldMap {
       const edgeFalloff = landMask > 0 ? smoothstep(Math.min(1, landMask)) : 0;
       const peakFalloff = peakMask > 0 ? smoothstep(Math.min(1, peakMask)) : 0;
       const detail = fbm(x, y, seed + 11, 5, 0.5, 0.05) - 0.5;
-      // extra high-frequency jitter concentrated right at the coastline to break
-      // it up into the fractal capes, inlets and skerries seen along real coasts
-      const fineDetail = fbm(x, y, seed + 977, 4, 0.55, 0.16) - 0.5;
+      // high-frequency jitter concentrated right at the coastline to break it up
+      // into fractal capes, inlets and skerries instead of a smooth ellipse edge
+      const fineDetail = fbm(x, y, seed + 977, 4, 0.55, 0.22) - 0.5;
+      // ultra-fine layer adds tiny pixel-scale notches for a busier, less regular coast
+      const microDetail = fbm(x, y, seed + 5555, 3, 0.5, 0.4) - 0.5;
       const coastJitterWeight = 4 * edgeFalloff * (1 - edgeFalloff);
       row.push(
         edgeFalloff * LAND_MULT +
           peakFalloff * PEAK_MULT +
           detail * DETAIL_MULT * edgeFalloff +
-          fineDetail * 0.24 * coastJitterWeight,
+          fineDetail * 0.4 * coastJitterWeight +
+          microDetail * 0.16 * coastJitterWeight,
       );
     }
     elevation.push(row);
