@@ -1,5 +1,7 @@
 export type Sex = "M" | "F";
 
+export type Age = "stone" | "medieval" | "steam" | "modern" | "future";
+
 export type TraitId =
   | "brave"
   | "cowardly"
@@ -64,7 +66,25 @@ export type BuildingId =
   | "palace"
   | "parliament"
   | "embassy"
-  | "shipyard";
+  | "shipyard"
+  // --- Ère de la Vapeur ---
+  | "arsenal_vapeur"
+  | "usine_vapeur"
+  | "universite"
+  | "grand_theatre"
+  | "chambre_industrielle"
+  // --- Ère Moderne ---
+  | "aeroport"
+  | "hopital"
+  | "centre_recherche"
+  | "opera"
+  | "ministere"
+  // --- Ère Future ---
+  | "base_orbitale"
+  | "reacteur_fusion"
+  | "centre_spatial"
+  | "archives_numeriques"
+  | "ia_gouvernementale";
 
 export type BuildingCategory =
   | "military"
@@ -77,6 +97,7 @@ export interface BuildingType {
   id: BuildingId;
   name: string;
   category: BuildingCategory;
+  age: Age;
   cost: number;
   description: string;
   effects: {
@@ -113,6 +134,7 @@ export interface UnitTypeDef {
   id: string;
   name: string;
   corps: CorpsType;
+  age: Age;
   description: string;
   equipCostPerMan: number;
   upkeepPerMan: number;
@@ -165,6 +187,7 @@ export type LogKind =
   | "revolt"
   | "politics"
   | "goal"
+  | "age"
   | "gameover";
 
 export interface LogEntry {
@@ -272,4 +295,6 @@ export interface GameState {
   army: ArmyState;
   goals: ActiveGoal[];
   politicalRequests: ActivePoliticalRequest[];
+  age: Age;
+  techProgress: number;
 }

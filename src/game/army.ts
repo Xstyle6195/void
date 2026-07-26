@@ -1,11 +1,12 @@
+import { ageAtLeast } from "./ages";
 import { RECRUIT_BATCH, RECRUIT_COST_PER_MAN, UNIT_TYPES } from "./data";
 import type { CorpsType, GameState } from "./types";
 import { log } from "./utils";
 
-export const CORPS_BUILDING: Record<CorpsType, "barracks" | "shipyard" | null> = {
+export const CORPS_BUILDING: Record<CorpsType, "barracks" | "shipyard" | "aeroport" | null> = {
   land: "barracks",
   naval: "shipyard",
-  air: null,
+  air: "aeroport",
 };
 
 export const CORPS_LABEL: Record<CorpsType, string> = {
@@ -94,6 +95,7 @@ export function equipUnit(state: GameState, unitId: string): GameState {
   const s = structuredClone(state);
   const def = UNIT_TYPES.find((u) => u.id === unitId);
   if (!def) return s;
+  if (!ageAtLeast(s.age, def.age)) return s;
   const available = s.army.recruits[def.corps];
   const amount = Math.min(RECRUIT_BATCH, available);
   if (amount <= 0) return s;

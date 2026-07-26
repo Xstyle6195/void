@@ -318,6 +318,13 @@
   margin-top: 6px;
 }
 
+.age-timeline {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
 .bar.relation {
   max-width: 200px;
 }
@@ -429,6 +436,10 @@
 
 .log-politics {
   border-left-color: var(--accent-soft);
+}
+
+.log-age {
+  border-left-color: var(--gold);
 }
 
 .tier-text {

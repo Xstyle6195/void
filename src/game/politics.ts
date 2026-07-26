@@ -1,5 +1,6 @@
+import { ageAtLeast } from "./ages";
 import { totalArmyUnits } from "./army";
-import type { EventChoice, EventContext, GameEvent, GameState } from "./types";
+import type { Age, EventChoice, EventContext, GameEvent, GameState } from "./types";
 import { chance, clamp, log, pick, randInt } from "./utils";
 
 // ---- Objectifs du peuple ----
@@ -12,6 +13,8 @@ export interface GoalDef {
   rewardGold: number;
   rewardPrestige: number;
   rewardStability: number;
+  // n'apparaît qu'à partir de cette époque
+  minAge?: Age;
 }
 
 export const MAX_ACTIVE_GOALS = 3;
@@ -90,11 +93,43 @@ export const GOALS: GoalDef[] = [
     rewardPrestige: 4,
     rewardStability: 6,
   },
+  {
+    id: "industrialize",
+    title: "Industrialiser le royaume",
+    description: "Construire une usine à vapeur pour entrer dans l'ère industrielle.",
+    check: (s) => s.provinces.some((p) => p.buildings.includes("usine_vapeur")),
+    rewardGold: 60,
+    rewardPrestige: 6,
+    rewardStability: 6,
+    minAge: "steam",
+  },
+  {
+    id: "take_to_skies",
+    title: "Conquérir les cieux",
+    description: "Équiper au moins un avion de chasse pour doter le royaume d'un corps aérien.",
+    check: (s) => (s.army.units.find((u) => u.unitId === "fighter")?.count ?? 0) > 0,
+    rewardGold: 50,
+    rewardPrestige: 10,
+    rewardStability: 6,
+    minAge: "modern",
+  },
+  {
+    id: "reach_orbit",
+    title: "Atteindre l'orbite d'Orion",
+    description: "Construire un centre spatial pour ouvrir la conquête de l'espace.",
+    check: (s) => s.provinces.some((p) => p.buildings.includes("centre_spatial")),
+    rewardGold: 80,
+    rewardPrestige: 14,
+    rewardStability: 6,
+    minAge: "future",
+  },
 ];
 
 export function topUpGoals(state: GameState): void {
   const activeIds = new Set(state.goals.map((g) => g.defId));
-  const candidates = GOALS.filter((g) => !activeIds.has(g.id));
+  const candidates = GOALS.filter(
+    (g) => !activeIds.has(g.id) && (!g.minAge || ageAtLeast(state.age, g.minAge)),
+  );
   while (state.goals.length < MAX_ACTIVE_GOALS && candidates.length > 0) {
     const idx = randInt(0, candidates.length - 1);
     const def = candidates.splice(idx, 1)[0];
@@ -462,6 +497,109 @@ export const POLITICAL_REQUESTS: GameEvent[] = [
           res(ctx).gold += 20;
           res(ctx).stability = clamp(res(ctx).stability + 2, 0, 100);
           return "Justice et trésor y trouvent leur compte.";
+        },
+      },
+    ],
+  },
+  {
+    id: "workers_rights",
+    title: "Le droit des ouvriers",
+    body: "Les ouvriers des nouvelles usines réclament de meilleures conditions de travail.",
+    condition: (s) => s.age === "steam",
+    choices: [
+      {
+        id: "grant_rights",
+        label: "Accorder des droits et un salaire décent (50 or)",
+        apply: (ctx) => {
+          spend(ctx, 50);
+          res(ctx).stability = clamp(res(ctx).stability + 8, 0, 100);
+          return "Les usines tournent dans un calme social retrouvé.";
+        },
+      },
+      {
+        id: "partial_rights",
+        label: "Concéder des aménagements mineurs (20 or)",
+        apply: (ctx) => {
+          spend(ctx, 20);
+          res(ctx).stability = clamp(res(ctx).stability + 3, 0, 100);
+          return "Un geste modeste, accueilli sans enthousiasme.";
+        },
+      },
+      {
+        id: "refuse_rights",
+        label: "Refuser, la production ne doit pas ralentir",
+        apply: (ctx) => {
+          res(ctx).gold += 25;
+          res(ctx).stability = clamp(res(ctx).stability - 8, 0, 100);
+          return "Le trésor s'enrichit, la colère ouvrière gronde.";
+        },
+      },
+    ],
+  },
+  {
+    id: "electoral_reform",
+    title: "Des voix réclament une réforme",
+    body: "Journaux et clubs politiques réclament un parlement élu pour partager le pouvoir.",
+    condition: (s) => s.age === "modern",
+    choices: [
+      {
+        id: "embrace_reform",
+        label: "Instaurer des élections consultatives",
+        apply: (ctx) => {
+          res(ctx).stability = clamp(res(ctx).stability + 9, 0, 100);
+          res(ctx).prestige += 3;
+          return "Le royaume entre dans la modernité politique.";
+        },
+      },
+      {
+        id: "limited_reform",
+        label: "Élargir prudemment le conseil royal",
+        apply: (ctx) => {
+          res(ctx).stability = clamp(res(ctx).stability + 4, 0, 100);
+          return "Un compromis qui satisfait les modérés.";
+        },
+      },
+      {
+        id: "refuse_reform",
+        label: "Refuser, le trône ne se partage pas",
+        apply: (ctx) => {
+          res(ctx).stability = clamp(res(ctx).stability - 9, 0, 100);
+          res(ctx).prestige += 2;
+          return "L'autorité royale reste intacte, mais contestée.";
+        },
+      },
+    ],
+  },
+  {
+    id: "ai_governance",
+    title: "Le débat sur l'intelligence artificielle",
+    body: "Des voix s'élèvent pour encadrer le rôle grandissant de l'intelligence artificielle dans la gouvernance.",
+    condition: (s) => s.age === "future",
+    choices: [
+      {
+        id: "embrace_ai",
+        label: "Confier davantage de décisions à l'IA",
+        apply: (ctx) => {
+          res(ctx).stability = clamp(res(ctx).stability + 10, 0, 100);
+          res(ctx).prestige += 2;
+          return "La gouvernance gagne en efficacité, au prix d'un malaise diffus.";
+        },
+      },
+      {
+        id: "balance_ai",
+        label: "Encadrer strictement son usage",
+        apply: (ctx) => {
+          res(ctx).stability = clamp(res(ctx).stability + 5, 0, 100);
+          return "Un équilibre prudent entre tradition et progrès.";
+        },
+      },
+      {
+        id: "reject_ai",
+        label: "Rejeter toute délégation à une machine",
+        apply: (ctx) => {
+          res(ctx).stability = clamp(res(ctx).stability - 4, 0, 100);
+          res(ctx).prestige += 3;
+          return "Le trône réaffirme son autorité pleine et entière.";
         },
       },
     ],

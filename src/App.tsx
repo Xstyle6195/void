@@ -1,5 +1,6 @@
 import { useState } from "react";
 import "./App.css";
+import { AgeView } from "./components/AgeView";
 import { ArmyView } from "./components/ArmyView";
 import { Chronicle } from "./components/Chronicle";
 import { DiplomacyPanel } from "./components/DiplomacyPanel";
@@ -103,6 +104,7 @@ function App() {
       {tab === "politique" && (
         <main className="app-grid">
           <div className="column">
+            <AgeView game={game} />
             <PeopleView game={game} />
             <GoalsView game={game} />
           </div>

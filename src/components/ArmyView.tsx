@@ -1,3 +1,4 @@
+import { ageAtLeast, AGE_LABEL } from "../game/ages";
 import {
   activeReadinessBonus,
   CORPS_BUILDING,
@@ -33,6 +34,9 @@ function CorpsSection({ game, corps }: { game: GameState; corps: CorpsType }) {
   const eligibleProvinces = buildingId
     ? game.provinces.filter((p) => p.buildings.includes(buildingId))
     : [];
+  const buildingName = buildingId ? BUILDINGS[buildingId].name : "";
+  const buildingRequiredAge = buildingId ? BUILDINGS[buildingId].age : "medieval";
+  const buildingLocked = !ageAtLeast(game.age, buildingRequiredAge);
 
   return (
     <section className="panel">
@@ -40,11 +44,11 @@ function CorpsSection({ game, corps }: { game: GameState; corps: CorpsType }) {
         {CORPS_ICON[corps]} {CORPS_LABEL[corps]}
       </h2>
 
-      {corps === "air" ? (
+      {buildingLocked ? (
         <p className="muted">
-          Le corps aérien n'existe pas encore : il nécessitera une avancée
-          technologique future. De quoi s'occuper une fois que les
-          fondations du royaume seront bien établies.
+          {corps === "air"
+            ? `Le corps aérien nécessite une avancée technologique : atteignez l'époque ${AGE_LABEL[buildingRequiredAge]} pour pouvoir construire un(e) ${buildingName} et recruter vos premiers aviateurs.`
+            : `Nécessite l'époque ${AGE_LABEL[buildingRequiredAge]}.`}
         </p>
       ) : (
         <>
@@ -57,8 +61,8 @@ function CorpsSection({ game, corps }: { game: GameState; corps: CorpsType }) {
           </div>
           {eligibleProvinces.length === 0 ? (
             <p className="muted">
-              Construisez un(e) {buildingId ? BUILDINGS[buildingId].name : ""}{" "}
-              dans une province pour pouvoir y recruter.
+              Construisez un(e) {buildingName} dans une province pour pouvoir y
+              recruter.
             </p>
           ) : (
             <div className="build-menu">
@@ -95,14 +99,23 @@ function CorpsSection({ game, corps }: { game: GameState; corps: CorpsType }) {
               const equipped = stack?.count ?? 0;
               const amount = Math.min(RECRUIT_BATCH, recruits);
               const cost = Math.round(amount * u.equipCostPerMan);
-              const disabled = amount <= 0 || game.resources.gold < cost;
-              const reason =
-                amount <= 0 ? "Aucune recrue disponible" : game.resources.gold < cost ? "Or insuffisant" : "";
+              const locked = !ageAtLeast(game.age, u.age);
+              const disabled = locked || amount <= 0 || game.resources.gold < cost;
+              const reason = locked
+                ? `Nécessite l'époque ${AGE_LABEL[u.age]}`
+                : amount <= 0
+                  ? "Aucune recrue disponible"
+                  : game.resources.gold < cost
+                    ? "Or insuffisant"
+                    : "";
               return (
                 <li key={u.id} className="marriage-item">
                   <div className="province-row">
                     <div>
-                      <strong>{u.name}</strong>{" "}
+                      <strong>
+                        {locked ? "🔒 " : ""}
+                        {u.name}
+                      </strong>{" "}
                       <span className="tag">{equipped} en service</span>
                       <div className="muted">{u.description}</div>
                       <div className="muted">

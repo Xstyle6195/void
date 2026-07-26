@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { ageAtLeast, AGE_LABEL } from "../game/ages";
 import { BUILDINGS } from "../game/data";
 import type { BuildingCategory, BuildingId, GameState } from "../game/types";
 import { useGameStore } from "../state/store";
@@ -93,15 +94,19 @@ export function ProvinceList({ game }: { game: GameState }) {
                       <div className="build-menu">
                         {buildings.map((b) => {
                           const built = p.buildings.includes(b.id as BuildingId);
+                          const locked = !ageAtLeast(game.age, b.age);
+                          const title = locked
+                            ? `Nécessite l'époque : ${AGE_LABEL[b.age]}`
+                            : b.description;
                           return (
                             <button
                               key={b.id}
                               className="btn small"
-                              disabled={built || game.resources.gold < b.cost}
+                              disabled={built || locked || game.resources.gold < b.cost}
                               onClick={() => buildAt(p.id, b.id as BuildingId)}
-                              title={b.description}
+                              title={title}
                             >
-                              {built ? "✔ " : ""}
+                              {built ? "✔ " : locked ? "🔒 " : ""}
                               {b.name} ({b.cost} or)
                             </button>
                           );

@@ -1,3 +1,4 @@
+import { ageAtLeast, handleAgeProgress } from "./ages";
 import { totalArmyPower, totalArmyUpkeep } from "./army";
 import {
   BUILDINGS,
@@ -145,6 +146,8 @@ export function createInitialState(): GameState {
     },
     goals: [],
     politicalRequests: [],
+    age: "medieval",
+    techProgress: 0,
   };
 
   const founder = createPerson(state, "M", startYear - randInt(22, 35), null, null);
@@ -272,6 +275,7 @@ export function buildBuilding(
   const province = s.provinces.find((p) => p.id === provinceId);
   const buildingType = BUILDINGS[buildingId];
   if (!province || !buildingType) return s;
+  if (!ageAtLeast(s.age, buildingType.age)) return s;
   if (province.buildings.includes(buildingId)) return s;
   if (s.resources.gold < buildingType.cost) return s;
   s.resources.gold -= buildingType.cost;
@@ -717,6 +721,7 @@ export function processTurn(state: GameState): GameState {
   handleNeighborPolitics(s);
   resolveExpeditions(s);
   topUpExpeditionOffers(s);
+  handleAgeProgress(s);
   checkGoals(s);
   topUpPoliticalRequests(s);
   expireStaleRequests(s);
