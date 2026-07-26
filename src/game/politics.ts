@@ -1,6 +1,6 @@
 import { totalArmyUnits } from "./army";
 import type { EventChoice, EventContext, GameEvent, GameState } from "./types";
-import { clamp, log, pick, randInt } from "./utils";
+import { chance, clamp, log, pick, randInt } from "./utils";
 
 // ---- Objectifs du peuple ----
 
@@ -468,20 +468,22 @@ export const POLITICAL_REQUESTS: GameEvent[] = [
   },
 ];
 
+const NEW_REQUEST_CHANCE = 0.3;
+
 export function topUpPoliticalRequests(state: GameState): void {
+  if (state.politicalRequests.length >= MAX_ACTIVE_REQUESTS) return;
+  if (!chance(NEW_REQUEST_CHANCE)) return;
   const activeIds = new Set(state.politicalRequests.map((r) => r.requestId));
   const candidates = POLITICAL_REQUESTS.filter(
     (r) => !activeIds.has(r.id) && (!r.condition || r.condition(state)),
   );
-  while (state.politicalRequests.length < MAX_ACTIVE_REQUESTS && candidates.length > 0) {
-    const def = pick(candidates);
-    candidates.splice(candidates.indexOf(def), 1);
-    state.politicalRequests.push({
-      requestId: def.id,
-      assignedYear: state.year,
-      expiresYear: state.year + REQUEST_LIFESPAN,
-    });
-  }
+  if (candidates.length === 0) return;
+  const def = pick(candidates);
+  state.politicalRequests.push({
+    requestId: def.id,
+    assignedYear: state.year,
+    expiresYear: state.year + REQUEST_LIFESPAN,
+  });
 }
 
 export function expireStaleRequests(state: GameState): void {

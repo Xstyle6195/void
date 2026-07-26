@@ -215,7 +215,6 @@ export function createInitialState(): GameState {
   state.knownTiles = Array.from(known);
   topUpExpeditionOffers(state);
   topUpGoals(state);
-  topUpPoliticalRequests(state);
 
   log(state, "province", `Fondation de ${state.kingdomName} par ${founder.name}, l'an ${startYear}.`);
   return state;
