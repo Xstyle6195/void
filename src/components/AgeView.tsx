@@ -6,7 +6,7 @@ import {
   GOVERNMENT_DESCRIPTION,
   GOVERNMENT_LABEL,
 } from "../game/government";
-import type { GameState } from "../game/types";
+import type { GameState, GovernmentType } from "../game/types";
 
 const AGE_ICON: Record<string, string> = {
   stone: "🪨",
@@ -15,6 +15,26 @@ const AGE_ICON: Record<string, string> = {
   modern: "✈️",
   future: "🚀",
 };
+
+// le régime politique progresse indépendamment de l'époque technologique :
+// Clan → Royaume → Empire par la conquête, puis un choix à l'Ère Moderne
+const GOVERNMENT_STAGE_ORDER: GovernmentType[] = ["clan", "kingdom", "empire"];
+const MODERN_GOVERNMENTS: GovernmentType[] = [
+  "constitutional_monarchy",
+  "republic",
+  "dictatorship",
+];
+const GOVERNMENT_STAGE_ICON: Record<string, string> = {
+  clan: "🏕️",
+  kingdom: "👑",
+  empire: "🦅",
+  modern: "🏛️",
+};
+
+function governmentStageIndex(government: GovernmentType): number {
+  const idx = GOVERNMENT_STAGE_ORDER.indexOf(government);
+  return idx >= 0 ? idx : GOVERNMENT_STAGE_ORDER.length;
+}
 
 function GovernmentProgress({ game }: { game: GameState }) {
   if (game.government === "clan") {
@@ -41,6 +61,7 @@ function GovernmentProgress({ game }: { game: GameState }) {
 
 export function AgeView({ game }: { game: GameState }) {
   const idx = AGE_ORDER.indexOf(game.age);
+  const govStage = governmentStageIndex(game.government);
 
   return (
     <section className="panel">
@@ -51,12 +72,11 @@ export function AgeView({ game }: { game: GameState }) {
         <span className="tag">{GOVERNMENT_LABEL[game.government]}</span>
       </div>
       <p className="muted">{AGE_DESCRIPTION[game.age]}</p>
-      <p className="muted">{GOVERNMENT_DESCRIPTION[game.government]}</p>
-      <p className="muted">
-        <strong>Avantage actuel :</strong> {GOVERNMENT_BONUS_LABEL[game.government]}
-      </p>
-      <GovernmentProgress game={game} />
 
+      <div className="muted" style={{ marginBottom: "4px" }}>
+        L'époque (technologie) et le régime politique (gouvernance) progressent
+        indépendamment l'un de l'autre.
+      </div>
       <div className="age-timeline">
         {AGE_ORDER.map((a, i) => (
           <span
@@ -68,6 +88,37 @@ export function AgeView({ game }: { game: GameState }) {
           </span>
         ))}
       </div>
+
+      <div className="age-timeline">
+        {GOVERNMENT_STAGE_ORDER.map((g, i) => (
+          <span
+            key={g}
+            className={`tag${i < govStage ? " tier-tag-content" : ""}${i === govStage ? " tier-tag-delighted" : ""}`}
+            title={GOVERNMENT_LABEL[g]}
+          >
+            {GOVERNMENT_STAGE_ICON[g]} {GOVERNMENT_LABEL[g]}
+          </span>
+        ))}
+        <span
+          className={`tag${govStage === 3 ? " tier-tag-delighted" : ""}`}
+          title={
+            MODERN_GOVERNMENTS.includes(game.government)
+              ? GOVERNMENT_LABEL[game.government]
+              : "Régime moderne (choix à venir)"
+          }
+        >
+          {GOVERNMENT_STAGE_ICON.modern}{" "}
+          {MODERN_GOVERNMENTS.includes(game.government)
+            ? GOVERNMENT_LABEL[game.government]
+            : "Régime moderne"}
+        </span>
+      </div>
+
+      <p className="muted">{GOVERNMENT_DESCRIPTION[game.government]}</p>
+      <p className="muted">
+        <strong>Avantage actuel :</strong> {GOVERNMENT_BONUS_LABEL[game.government]}
+      </p>
+      <GovernmentProgress game={game} />
     </section>
   );
 }
