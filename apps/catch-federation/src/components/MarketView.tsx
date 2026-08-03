@@ -1,3 +1,4 @@
+import { labelDivision } from "../game/divisions"
 import { useFederation, useStore } from "../state/store"
 
 export function MarketView() {
@@ -18,6 +19,7 @@ export function MarketView() {
                   {w.alignment === "face" ? "Face" : "Heel"}
                 </span>
                 <span className="badge badge-style">{w.style}</span>
+                <span className="badge">{labelDivision(w.division)}</span>
               </div>
             </div>
             <p className="texte-muted">

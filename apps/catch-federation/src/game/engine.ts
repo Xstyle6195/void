@@ -6,7 +6,7 @@ import type {
   ShowResult,
   Wrestler,
 } from "./types"
-import { generateWrestler } from "./wrestlers"
+import { genererAgentLibre } from "./wrestlers"
 
 const PRIX_BILLET = 18
 const FRAIS_SALLE = 2200
@@ -18,7 +18,7 @@ const SEUIL_FAILLITE_PAR_DIFFICULTE: Record<Difficulte, number> = {
 }
 
 function clamp(value: number, min = 0, max = 100): number {
-  return Math.max(min, Math.min(max, value))
+  return Math.round(Math.max(min, Math.min(max, value)))
 }
 
 function randInt(min: number, max: number): number {
@@ -194,8 +194,8 @@ export function jouerSemaine(state: FederationState): FederationState {
   if (state.semaine % 3 === 0) {
     freeAgents = [
       ...state.freeAgents.slice(-4),
-      generateWrestler(),
-      generateWrestler(),
+      genererAgentLibre(),
+      genererAgentLibre(),
     ]
   }
 

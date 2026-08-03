@@ -2,9 +2,12 @@ export type Alignment = "face" | "heel"
 
 export type MoveStyle = "technique" | "puissance" | "aérien" | "hardcore" | "catch-mental"
 
+export type Division = "masculine" | "feminine" | "equipe" | "jeune_talent"
+
 export interface Wrestler {
   id: string
   name: string
+  division: Division
   alignment: Alignment
   style: MoveStyle
   charisme: number
@@ -23,6 +26,7 @@ export interface Wrestler {
 export interface Title {
   id: string
   name: string
+  division: Division
   prestige: number
   championId: string | null
 }
@@ -31,6 +35,7 @@ export type MatchStipulation = "normal" | "titre" | "no-dq" | "échelles"
 
 export interface BookedMatch {
   id: string
+  division: Division
   participantIds: string[]
   stipulation: MatchStipulation
   titleId: string | null
@@ -59,6 +64,7 @@ export type Screen =
   | "resultats"
   | "titres"
   | "marche"
+  | "divisions"
 
 export type Difficulte = "facile" | "normal" | "difficile"
 
@@ -71,6 +77,7 @@ export interface FederationState {
   roster: Wrestler[]
   freeAgents: Wrestler[]
   titles: Title[]
+  divisionsDebloquees: Division[]
   card: BookedMatch[]
   dernierResultat: ShowResult | null
   historique: ShowResult[]

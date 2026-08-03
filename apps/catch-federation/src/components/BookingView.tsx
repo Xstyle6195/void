@@ -1,4 +1,5 @@
-import type { BookedMatch, MatchStipulation } from "../game/types"
+import { labelDivision } from "../game/divisions"
+import type { BookedMatch, Division, MatchStipulation } from "../game/types"
 import { useFederation, useStore } from "../state/store"
 
 const STIPULATIONS: { value: MatchStipulation; label: string }[] = [
@@ -13,20 +14,24 @@ function MatchCard({ match }: { match: BookedMatch }) {
   const toggleParticipant = useStore((s) => s.toggleParticipant)
   const definirStipulation = useStore((s) => s.definirStipulation)
   const definirTitre = useStore((s) => s.definirTitre)
+  const definirDivisionMatch = useStore((s) => s.definirDivisionMatch)
   const supprimerMatch = useStore((s) => s.supprimerMatch)
 
-  const lutteursDisponibles = federation.roster.filter((w) => w.blessureSemaines === 0)
+  const lutteursDisponibles = federation.roster.filter(
+    (w) => w.division === match.division && w.blessureSemaines === 0,
+  )
+  const titresDivision = federation.titles.filter((t) => t.division === match.division)
 
   return (
     <div className="carte-match">
       <div className="carte-match-entete">
         <select
-          value={match.stipulation}
-          onChange={(e) => definirStipulation(match.id, e.target.value as MatchStipulation)}
+          value={match.division}
+          onChange={(e) => definirDivisionMatch(match.id, e.target.value as Division)}
         >
-          {STIPULATIONS.map((s) => (
-            <option key={s.value} value={s.value}>
-              {s.label}
+          {federation.divisionsDebloquees.map((d) => (
+            <option key={d} value={d}>
+              {labelDivision(d)}
             </option>
           ))}
         </select>
@@ -35,13 +40,24 @@ function MatchCard({ match }: { match: BookedMatch }) {
         </button>
       </div>
 
+      <select
+        value={match.stipulation}
+        onChange={(e) => definirStipulation(match.id, e.target.value as MatchStipulation)}
+      >
+        {STIPULATIONS.map((s) => (
+          <option key={s.value} value={s.value}>
+            {s.label}
+          </option>
+        ))}
+      </select>
+
       {match.stipulation === "titre" && (
         <select
           value={match.titleId ?? ""}
           onChange={(e) => definirTitre(match.id, e.target.value || null)}
         >
           <option value="">Choisir un titre…</option>
-          {federation.titles.map((t) => (
+          {titresDivision.map((t) => (
             <option key={t.id} value={t.id}>
               {t.name}
             </option>

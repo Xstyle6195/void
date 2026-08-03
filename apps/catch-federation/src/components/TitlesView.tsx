@@ -1,3 +1,4 @@
+import { labelDivision } from "../game/divisions"
 import { useFederation } from "../state/store"
 
 export function TitlesView() {
@@ -11,6 +12,7 @@ export function TitlesView() {
           return (
             <div key={t.id} className="carte-titre">
               <h3>{t.name}</h3>
+              <span className="badge">{labelDivision(t.division)}</span>
               <span className="top-bar-label">Prestige {t.prestige}</span>
               <p>{champion ? `Détenu par ${champion.name}` : "Vacant"}</p>
             </div>

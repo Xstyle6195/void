@@ -1,13 +1,16 @@
 import { create } from "zustand"
 import { jouerSemaine } from "../game/engine"
+import { infoDivision } from "../game/divisions"
 import type {
   BookedMatch,
   Difficulte,
+  Division,
   FederationState,
   MatchStipulation,
   Screen,
+  Title,
 } from "../game/types"
-import { creerMarcheTransferts, creerRosterInitial } from "../game/wrestlers"
+import { creerDivision, creerMarcheTransferts, creerRosterInitial } from "../game/wrestlers"
 
 const COUT_RENOUVELLEMENT = 500
 const BONUS_SIGNATURE = 300
@@ -19,15 +22,21 @@ const PARAMETRES_DIFFICULTE: Record<Difficulte, { argent: number; popularite: nu
   difficile: { argent: 8000, popularite: 10 },
 }
 
+const TAILLE_NOUVELLE_DIVISION = 6
+
 function idMatch(): string {
   return `m-${Date.now()}-${Math.round(Math.random() * 10000)}`
 }
 
+function nouveauTitre(division: Division, name: string, prestige: number): Title {
+  return { id: `t-${division}-${Date.now()}`, name, division, prestige, championId: null }
+}
+
 function etatInitial(nom: string, difficulte: Difficulte): FederationState {
-  const roster = creerRosterInitial(10)
+  const roster = creerRosterInitial()
   const titles = [
-    { id: "t-monde", name: "Championnat du Monde", prestige: 100, championId: null },
-    { id: "t-inter", name: "Championnat Intercontinental", prestige: 60, championId: null },
+    nouveauTitre("masculine", "Championnat du Monde", 100),
+    nouveauTitre("feminine", "Championnat Mondial Féminin", 100),
   ]
   const { argent, popularite } = PARAMETRES_DIFFICULTE[difficulte]
   return {
@@ -39,6 +48,7 @@ function etatInitial(nom: string, difficulte: Difficulte): FederationState {
     roster,
     freeAgents: creerMarcheTransferts(6),
     titles,
+    divisionsDebloquees: ["masculine", "feminine"],
     card: [],
     dernierResultat: null,
     historique: [],
@@ -59,6 +69,8 @@ interface Store {
   toggleParticipant: (matchId: string, wrestlerId: string) => void
   definirStipulation: (matchId: string, stipulation: MatchStipulation) => void
   definirTitre: (matchId: string, titleId: string | null) => void
+  definirDivisionMatch: (matchId: string, division: Division) => void
+  debloquerDivision: (division: Division) => void
   lancerShow: () => void
   signerAgentLibre: (id: string) => void
   libererLutteur: (id: string) => void
@@ -86,6 +98,7 @@ export const useStore = create<Store>((set) => ({
       if (state.federation.card.length >= 5) return state
       const nouveauMatch: BookedMatch = {
         id: idMatch(),
+        division: state.federation.divisionsDebloquees[0] ?? "masculine",
         participantIds: [],
         stipulation: "normal",
         titleId: null,
@@ -148,6 +161,42 @@ export const useStore = create<Store>((set) => ({
         federation: {
           ...state.federation,
           card: state.federation.card.map((m) => (m.id === matchId ? { ...m, titleId } : m)),
+        },
+      }
+    }),
+
+  definirDivisionMatch: (matchId, division) =>
+    set((state) => {
+      if (!state.federation) return state
+      return {
+        federation: {
+          ...state.federation,
+          card: state.federation.card.map((m) =>
+            m.id === matchId ? { ...m, division, participantIds: [], titleId: null } : m,
+          ),
+        },
+      }
+    }),
+
+  debloquerDivision: (division) =>
+    set((state) => {
+      if (!state.federation) return state
+      const info = infoDivision(division)
+      if (state.federation.divisionsDebloquees.includes(division)) return state
+      if (state.federation.argent < info.cout) return state
+      if (state.federation.semaine < info.semaineMinimum) return state
+      const nouveauxLutteurs = creerDivision(division, TAILLE_NOUVELLE_DIVISION)
+      const titre =
+        division === "equipe"
+          ? nouveauTitre("equipe", "Championnat par Équipes", 80)
+          : nouveauTitre("jeune_talent", "Championnat Jeune Talent", 40)
+      return {
+        federation: {
+          ...state.federation,
+          argent: state.federation.argent - info.cout,
+          divisionsDebloquees: [...state.federation.divisionsDebloquees, division],
+          roster: [...state.federation.roster, ...nouveauxLutteurs],
+          titles: [...state.federation.titles, titre],
         },
       }
     }),

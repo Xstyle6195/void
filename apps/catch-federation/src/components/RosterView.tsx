@@ -1,5 +1,7 @@
-import { useFederation, useStore } from "../state/store"
+import { useState } from "react"
+import { labelDivision } from "../game/divisions"
 import type { Wrestler } from "../game/types"
+import { useFederation, useStore } from "../state/store"
 
 function StatBar({ label, value }: { label: string; value: number }) {
   return (
@@ -55,11 +57,29 @@ function WrestlerCard({ w }: { w: Wrestler }) {
 
 export function RosterView() {
   const federation = useFederation()
+  const [filtre, setFiltre] = useState(federation.divisionsDebloquees[0])
+
+  const divisionActive = federation.divisionsDebloquees.includes(filtre)
+    ? filtre
+    : federation.divisionsDebloquees[0]
+  const rosterFiltre = federation.roster.filter((w) => w.division === divisionActive)
+
   return (
     <div className="vue">
       <h2>Effectif ({federation.roster.length})</h2>
+      <div className="filtre-division">
+        {federation.divisionsDebloquees.map((d) => (
+          <button
+            key={d}
+            className={divisionActive === d ? "actif" : ""}
+            onClick={() => setFiltre(d)}
+          >
+            {labelDivision(d)}
+          </button>
+        ))}
+      </div>
       <div className="liste-lutteurs">
-        {federation.roster.map((w) => (
+        {rosterFiltre.map((w) => (
           <WrestlerCard key={w.id} w={w} />
         ))}
       </div>

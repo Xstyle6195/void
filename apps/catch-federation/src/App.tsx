@@ -5,6 +5,7 @@ import { BookingView } from "./components/BookingView"
 import { ResultsView } from "./components/ResultsView"
 import { TitlesView } from "./components/TitlesView"
 import { MarketView } from "./components/MarketView"
+import { DivisionsView } from "./components/DivisionsView"
 import { StartScreen } from "./components/StartScreen"
 import { useEcran, useFederation, usePhase, useStore } from "./state/store"
 import type { Screen } from "./game/types"
@@ -15,6 +16,7 @@ const ONGLETS: { value: Screen; label: string }[] = [
   { value: "resultats", label: "Résultats" },
   { value: "titres", label: "Titres" },
   { value: "marche", label: "Marché" },
+  { value: "divisions", label: "Divisions" },
 ]
 
 function ContenuEcran({ ecran }: { ecran: Screen }) {
@@ -29,6 +31,8 @@ function ContenuEcran({ ecran }: { ecran: Screen }) {
       return <TitlesView />
     case "marche":
       return <MarketView />
+    case "divisions":
+      return <DivisionsView />
     default:
       return null
   }
