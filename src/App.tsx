@@ -1,163 +1,76 @@
-import { useState } from "react";
-import "./App.css";
-import { AgeView } from "./components/AgeView";
-import { ArmyView } from "./components/ArmyView";
-import { Chronicle } from "./components/Chronicle";
-import { DiplomacyPanel } from "./components/DiplomacyPanel";
-import { EventModal } from "./components/EventModal";
-import { ExpeditionView } from "./components/ExpeditionView";
-import { FamilyTree } from "./components/FamilyTree";
-import { GameOverScreen } from "./components/GameOverScreen";
-import { GoalsView } from "./components/GoalsView";
-import { MapView } from "./components/MapView";
-import { MarriageSection } from "./components/MarriageSection";
-import { PeopleView } from "./components/PeopleView";
-import { ProvinceList } from "./components/ProvinceList";
-import { RequestsView } from "./components/RequestsView";
-import { ResourceBar } from "./components/ResourceBar";
-import { RulerPanel } from "./components/RulerPanel";
-import { SuccessionScreen } from "./components/SuccessionScreen";
-import { TechTreeView } from "./components/TechTreeView";
-import { useGameStore } from "./state/store";
+import "./App.css"
+import { TopBar } from "./components/TopBar"
+import { RosterView } from "./components/RosterView"
+import { BookingView } from "./components/BookingView"
+import { ResultsView } from "./components/ResultsView"
+import { TitlesView } from "./components/TitlesView"
+import { MarketView } from "./components/MarketView"
+import { useEcran, useFederation, useStore } from "./state/store"
+import type { Screen } from "./game/types"
 
-type Tab =
-  | "royaume"
-  | "politique"
-  | "carte"
-  | "expedition"
-  | "armee"
-  | "diplomatie"
-  | "dynastie";
+const ONGLETS: { value: Screen; label: string }[] = [
+  { value: "effectif", label: "Effectif" },
+  { value: "booking", label: "Booking" },
+  { value: "resultats", label: "Résultats" },
+  { value: "titres", label: "Titres" },
+  { value: "marche", label: "Marché" },
+]
+
+function ContenuEcran({ ecran }: { ecran: Screen }) {
+  switch (ecran) {
+    case "effectif":
+      return <RosterView />
+    case "booking":
+      return <BookingView />
+    case "resultats":
+      return <ResultsView />
+    case "titres":
+      return <TitlesView />
+    case "marche":
+      return <MarketView />
+    default:
+      return null
+  }
+}
 
 function App() {
-  const game = useGameStore((s) => s.game);
-  const nextTurn = useGameStore((s) => s.nextTurn);
-  const [tab, setTab] = useState<Tab>("royaume");
+  const [ecran, setEcran] = useEcran()
+  const federation = useFederation()
+  const recommencer = useStore((s) => s.recommencer)
 
-  const canAdvance = game.phase === "playing" && !game.pendingEvent;
+  if (federation.gameOver) {
+    return (
+      <div className="app app-game-over">
+        <h1>Faillite</h1>
+        <p>
+          La fédération {federation.nom} a fait faillite à la semaine {federation.semaine}.
+        </p>
+        <button className="primaire" onClick={recommencer}>
+          Recommencer
+        </button>
+      </div>
+    )
+  }
 
   return (
     <div className="app">
-      <header className="app-header">
-        <h1>Dynastie</h1>
-        <p className="tagline">
-          Fondez un royaume, régnez, et transmettez-le à travers les âges.
-        </p>
-      </header>
-
-      <ResourceBar game={game} />
-
-      <nav className="tabs">
-        <button
-          className={`tab-btn${tab === "royaume" ? " active" : ""}`}
-          onClick={() => setTab("royaume")}
-        >
-          Royaume
-        </button>
-        <button
-          className={`tab-btn${tab === "politique" ? " active" : ""}`}
-          onClick={() => setTab("politique")}
-        >
-          Politique
-        </button>
-        <button
-          className={`tab-btn${tab === "carte" ? " active" : ""}`}
-          onClick={() => setTab("carte")}
-        >
-          Carte d'Orion
-        </button>
-        <button
-          className={`tab-btn${tab === "expedition" ? " active" : ""}`}
-          onClick={() => setTab("expedition")}
-        >
-          Expéditions
-        </button>
-        <button
-          className={`tab-btn${tab === "armee" ? " active" : ""}`}
-          onClick={() => setTab("armee")}
-        >
-          Armée
-        </button>
-        <button
-          className={`tab-btn${tab === "diplomatie" ? " active" : ""}`}
-          onClick={() => setTab("diplomatie")}
-        >
-          Diplomatie
-        </button>
-        <button
-          className={`tab-btn${tab === "dynastie" ? " active" : ""}`}
-          onClick={() => setTab("dynastie")}
-        >
-          Dynastie
-        </button>
+      <TopBar />
+      <main className="contenu">
+        <ContenuEcran ecran={ecran} />
+      </main>
+      <nav className="onglets">
+        {ONGLETS.map((o) => (
+          <button
+            key={o.value}
+            className={`onglet ${ecran === o.value ? "actif" : ""}`}
+            onClick={() => setEcran(o.value)}
+          >
+            {o.label}
+          </button>
+        ))}
       </nav>
-
-      {tab === "royaume" && (
-        <main className="app-grid">
-          <div className="column">
-            <RulerPanel game={game} />
-          </div>
-          <div className="column">
-            <Chronicle game={game} />
-          </div>
-        </main>
-      )}
-      {tab === "politique" && (
-        <main className="app-grid">
-          <div className="column">
-            <AgeView game={game} />
-            <TechTreeView game={game} />
-            <PeopleView game={game} />
-            <GoalsView game={game} />
-          </div>
-          <div className="column">
-            <RequestsView game={game} />
-            <ProvinceList game={game} />
-          </div>
-        </main>
-      )}
-      {tab === "carte" && (
-        <main>
-          <MapView game={game} />
-        </main>
-      )}
-      {tab === "expedition" && (
-        <main>
-          <ExpeditionView game={game} />
-        </main>
-      )}
-      {tab === "armee" && (
-        <main>
-          <ArmyView game={game} />
-        </main>
-      )}
-      {tab === "diplomatie" && (
-        <main className="app-grid">
-          <div className="column">
-            <DiplomacyPanel game={game} />
-          </div>
-          <div className="column">
-            <MarriageSection game={game} />
-          </div>
-        </main>
-      )}
-      {tab === "dynastie" && (
-        <main>
-          <FamilyTree game={game} />
-        </main>
-      )}
-
-      <footer className="app-footer">
-        <button className="btn primary" disabled={!canAdvance} onClick={nextTurn}>
-          Passer à l'année suivante
-        </button>
-      </footer>
-
-      {game.pendingEvent && <EventModal game={game} />}
-      {game.phase === "succession" && <SuccessionScreen game={game} />}
-      {game.phase === "gameover" && <GameOverScreen game={game} />}
     </div>
-  );
+  )
 }
 
-export default App;
+export default App

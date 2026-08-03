@@ -1,319 +1,75 @@
-export type Sex = "M" | "F";
+export type Alignment = "face" | "heel"
 
-export type Age = "stone" | "medieval" | "steam" | "modern" | "future";
+export type MoveStyle = "technique" | "puissance" | "aérien" | "hardcore" | "catch-mental"
 
-export type GovernmentType =
-  | "clan"
-  | "kingdom"
-  | "empire"
-  | "constitutional_monarchy"
-  | "republic"
-  | "dictatorship";
-
-export type TraitId =
-  | "brave"
-  | "cowardly"
-  | "wise"
-  | "foolish"
-  | "just"
-  | "cruel"
-  | "generous"
-  | "greedy"
-  | "pious"
-  | "impious"
-  | "charismatic"
-  | "frail"
-  | "hale"
-  | "ambitious";
-
-export interface Trait {
-  id: TraitId;
-  name: string;
-  description: string;
-  effects: Partial<Stats>;
+export interface Wrestler {
+  id: string
+  name: string
+  alignment: Alignment
+  style: MoveStyle
+  charisme: number
+  technique: number
+  force: number
+  popularite: number
+  moral: number
+  forme: number
+  age: number
+  salaire: number
+  contratSemaines: number
+  blessureSemaines: number
+  titreId: string | null
 }
 
-export interface Stats {
-  martial: number;
-  diplomacy: number;
-  stewardship: number;
-  piety: number;
+export interface Title {
+  id: string
+  name: string
+  prestige: number
+  championId: string | null
 }
 
-export interface Person {
-  id: string;
-  name: string;
-  sex: Sex;
-  birthYear: number;
-  deathYear: number | null;
-  traits: TraitId[];
-  stats: Stats;
-  health: number; // 0-100
-  fatherId: string | null;
-  motherId: string | null;
-  spouseId: string | null;
+export type MatchStipulation = "normal" | "titre" | "no-dq" | "échelles"
+
+export interface BookedMatch {
+  id: string
+  participantIds: string[]
+  stipulation: MatchStipulation
+  titleId: string | null
 }
 
-export type BuildingId =
-  | "farm"
-  | "market"
-  | "barracks"
-  | "temple"
-  | "walls"
-  | "hall"
-  | "arsenal"
-  | "garrison"
-  | "housing"
-  | "mine"
-  | "factory"
-  | "school"
-  | "laboratory"
-  | "observatory"
-  | "museum"
-  | "monument"
-  | "palace"
-  | "parliament"
-  | "embassy"
-  | "shipyard"
-  // --- Ère de la Vapeur ---
-  | "arsenal_vapeur"
-  | "usine_vapeur"
-  | "universite"
-  | "grand_theatre"
-  | "chambre_industrielle"
-  // --- Ère Moderne ---
-  | "aeroport"
-  | "hopital"
-  | "centre_recherche"
-  | "opera"
-  | "ministere"
-  // --- Ère Future ---
-  | "base_orbitale"
-  | "reacteur_fusion"
-  | "centre_spatial"
-  | "archives_numeriques"
-  | "ia_gouvernementale";
-
-export type BuildingCategory =
-  | "military"
-  | "civil"
-  | "scientific"
-  | "cultural"
-  | "political";
-
-export interface BuildingType {
-  id: BuildingId;
-  name: string;
-  category: BuildingCategory;
-  cost: number;
-  description: string;
-  // id de la technologie qui débloque ce bâtiment ; absent = disponible dès le Moyen Âge
-  requiresTech?: string;
-  effects: {
-    food?: number;
-    gold?: number;
-    stability?: number;
-    martial?: number;
-    prestige?: number;
-    defense?: number;
-    populationGrowth?: number;
-    relationBonus?: number;
-    research?: number;
-  };
+export interface MatchResult {
+  match: BookedMatch
+  winnerId: string
+  note: number
+  blesseId: string | null
 }
 
-export type ProvinceKind = "capital" | "town" | "village" | "frontier" | "colony";
-
-export interface Province {
-  id: string;
-  name: string;
-  kind: ProvinceKind;
-  population: number;
-  buildings: BuildingId[];
-  foundedYear: number;
-  x: number;
-  y: number;
-  bonusGold?: number;
-  bonusFood?: number;
-  satisfaction: number; // 0-100, local contentment of this province's people
+export interface ShowResult {
+  semaine: number
+  matches: MatchResult[]
+  note: number
+  spectateurs: number
+  revenus: number
+  depenses: number
+  popularitePost: number
 }
 
-export type CorpsType = "land" | "naval" | "air";
+export type Screen =
+  | "effectif"
+  | "booking"
+  | "resultats"
+  | "titres"
+  | "marche"
 
-export interface UnitTypeDef {
-  id: string;
-  name: string;
-  corps: CorpsType;
-  description: string;
-  equipCostPerMan: number;
-  upkeepPerMan: number;
-  power: number;
-  requiresBuilding: BuildingId | null;
-  // id de la technologie qui débloque cette unité ; absent = disponible dès le Moyen Âge
-  requiresTech?: string;
-}
-
-export interface ArmyUnitStack {
-  unitId: string;
-  count: number;
-}
-
-export interface ArmyState {
-  recruits: Record<CorpsType, number>;
-  units: ArmyUnitStack[];
-  readinessBonus: number;
-  readinessExpiresYear: number;
-}
-
-export interface Neighbor {
-  id: string;
-  name: string;
-  relation: number; // -100..100
-  strength: number; // relative military power
-  atWar: boolean;
-  isVassal: boolean;
-  allied: boolean;
-  tradeRouteLevel: number; // 0 = none, 1-3 = trade route quality
-  capitalX: number;
-  capitalY: number;
-  territory: { x: number; y: number }[];
-  alliesWith: string[]; // ids of other neighbors this kingdom is allied with
-  rivalsWith: string[]; // ids of other neighbors this kingdom is rivals with
-  warWith: string[]; // ids of other neighbors this kingdom is currently at war with
-}
-
-export type LogKind =
-  | "birth"
-  | "death"
-  | "succession"
-  | "war"
-  | "peace"
-  | "event"
-  | "building"
-  | "province"
-  | "diplomacy"
-  | "marriage"
-  | "expedition"
-  | "army"
-  | "revolt"
-  | "politics"
-  | "goal"
-  | "age"
-  | "tech"
-  | "gameover";
-
-export interface LogEntry {
-  year: number;
-  kind: LogKind;
-  text: string;
-}
-
-export interface EventChoice {
-  id: string;
-  label: string;
-  apply: (ctx: EventContext) => string; // returns result text, mutates via ctx
-}
-
-export interface EventContext {
-  state: GameState;
-}
-
-export interface GameEvent {
-  id: string;
-  title: string;
-  body: string;
-  condition?: (state: GameState) => boolean;
-  weight?: number;
-  choices: EventChoice[];
-}
-
-export interface Resources {
-  gold: number;
-  food: number;
-  stability: number; // 0-100
-  prestige: number;
-  research: number; // points de recherche, dépensés dans l'arbre technologique
-}
-
-export type GamePhase = "playing" | "succession" | "gameover";
-
-export interface PendingEvent {
-  eventId: string;
-}
-
-export interface ActiveGoal {
-  defId: string;
-  assignedYear: number;
-}
-
-export interface ActivePoliticalRequest {
-  requestId: string;
-  assignedYear: number;
-  expiresYear: number;
-}
-
-export type ExpeditionKind = "geographic" | "mercantile" | "resource";
-export type Ambition = 1 | 2 | 3;
-
-export interface ExpeditionOffer {
-  id: string;
-  kind: ExpeditionKind;
-  explorerName: string;
-  title: string;
-  description: string;
-  cost: number;
-  duration: number;
-  ambition: Ambition;
-  successChance: number;
-  colonize: boolean;
-  expiresYear: number;
-  targetX: number;
-  targetY: number;
-  neighborId: string | null;
-  tradeLevel: number;
-  rewardGold: number;
-  rewardFood: number;
-  rewardPrestige: number;
-  rewardResearch: number;
-  tollAmount: number;
-  tollNeighborId: string | null;
-}
-
-export interface ActiveExpedition {
-  id: string;
-  offer: ExpeditionOffer;
-  departureYear: number;
-  returnYear: number;
-}
-
-export interface GameState {
-  year: number;
-  dynastyName: string;
-  kingdomName: string;
-  foundingYear: number;
-  ruler: Person;
-  heirs: Person[];
-  deceased: Person[];
-  familyMembers: Person[];
-  provinces: Province[];
-  resources: Resources;
-  neighbors: Neighbor[];
-  log: LogEntry[];
-  pendingEvent: PendingEvent | null;
-  phase: GamePhase;
-  reignCount: number;
-  nextId: number;
-  knownTiles: string[];
-  expeditionOffers: ExpeditionOffer[];
-  activeExpeditions: ActiveExpedition[];
-  army: ArmyState;
-  goals: ActiveGoal[];
-  politicalRequests: ActivePoliticalRequest[];
-  age: Age;
-  researchedTechs: string[];
-  government: GovernmentType;
-  // clans rivaux entièrement conquis (territoire annexé en totalité)
-  absorbedClans: number;
-  // villes/provinces individuellement capturées à des royaumes rivaux
-  capturedCities: number;
+export interface FederationState {
+  nom: string
+  semaine: number
+  argent: number
+  popularite: number
+  roster: Wrestler[]
+  freeAgents: Wrestler[]
+  titles: Title[]
+  card: BookedMatch[]
+  dernierResultat: ShowResult | null
+  historique: ShowResult[]
+  gameOver: boolean
 }

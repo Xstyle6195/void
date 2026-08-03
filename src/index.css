@@ -1,37 +1,21 @@
 :root {
-  --bg: #f3ead9;
-  --bg-alt: #e9dcc0;
-  --panel: #fbf4e4;
-  --border: #c9b389;
-  --text: #3a2f22;
-  --text-muted: #7a6a51;
-  --accent: #8a1f1f;
-  --accent-soft: #b34747;
-  --gold: #a9791f;
-  --good: #3f6b3f;
-  --bad: #8a1f1f;
+  --bg: #121014;
+  --bg-alt: #1a171d;
+  --panel: #201c22;
+  --border: #322b34;
+  --text: #f2ede8;
+  --text-muted: #9b929c;
+  --accent: #d92b3f;
+  --accent-soft: #f0576a;
+  --gold: #e0a72b;
+  --good: #4caf6e;
+  --bad: #d92b3f;
 
-  font: 17px/1.5 Georgia, "Iowan Old Style", "Palatino Linotype", serif;
-  color-scheme: light dark;
+  font: 16px/1.45 "Segoe UI", system-ui, -apple-system, sans-serif;
+  color-scheme: dark;
   color: var(--text);
   background: var(--bg);
   -webkit-font-smoothing: antialiased;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #1c1712;
-    --bg-alt: #241d16;
-    --panel: #2a2219;
-    --border: #4a3c28;
-    --text: #ecdfc4;
-    --text-muted: #b3a488;
-    --accent: #c96a4c;
-    --accent-soft: #d98f76;
-    --gold: #d1a94a;
-    --good: #7fae7f;
-    --bad: #d1685f;
-  }
 }
 
 * {
@@ -52,7 +36,10 @@ body {
 h1,
 h2,
 h3 {
-  font-family: "Trajan Pro", Georgia, serif;
+  font-family: "Segoe UI", system-ui, sans-serif;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
   color: var(--text);
   margin: 0 0 8px;
 }
