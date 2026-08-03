@@ -8,11 +8,14 @@ export function DivisionsView() {
   return (
     <div className="vue">
       <h2>Divisions</h2>
+      <p className="texte-muted carte-division-fans-actuels">
+        {federation.fans.toLocaleString("fr-FR")} fans
+      </p>
       <div className="liste-divisions">
         {DIVISIONS_INFO.map((info) => {
           const debloquee = federation.divisionsDebloquees.includes(info.id)
           const effectif = federation.roster.filter((w) => w.division === info.id).length
-          const semaineOk = federation.semaine >= info.semaineMinimum
+          const fansOk = federation.fans >= info.fansMinimum
           const argentOk = federation.argent >= info.cout
 
           return (
@@ -28,16 +31,16 @@ export function DivisionsView() {
               ) : (
                 <>
                   <p className="carte-division-condition">
-                    Coût : {info.cout.toLocaleString("fr-FR")} € · Débloquable dès la semaine{" "}
-                    {info.semaineMinimum}
+                    Coût : {info.cout.toLocaleString("fr-FR")} € · Débloquable à partir de{" "}
+                    {info.fansMinimum.toLocaleString("fr-FR")} fans
                   </p>
                   <button
                     className="primaire"
                     onClick={() => debloquerDivision(info.id)}
-                    disabled={!semaineOk || !argentOk}
+                    disabled={!fansOk || !argentOk}
                   >
-                    {!semaineOk
-                      ? `Disponible semaine ${info.semaineMinimum}`
+                    {!fansOk
+                      ? `Encore ${(info.fansMinimum - federation.fans).toLocaleString("fr-FR")} fans`
                       : !argentOk
                         ? "Trésorerie insuffisante"
                         : "Débloquer"}

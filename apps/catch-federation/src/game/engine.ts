@@ -170,6 +170,8 @@ export function jouerSemaine(state: FederationState): FederationState {
     Math.round(state.popularite + (noteShow - state.popularite) * 0.18),
   )
 
+  const nouveauxFans = resultats.length > 0 ? Math.max(0, Math.round(spectateurs * 0.6)) : 0
+
   const resultatShow: ShowResult = {
     semaine: state.semaine,
     matches: resultats,
@@ -178,6 +180,7 @@ export function jouerSemaine(state: FederationState): FederationState {
     revenus,
     depenses,
     popularitePost,
+    nouveauxFans,
   }
 
   const rosterApresSemaine = roster
@@ -207,6 +210,7 @@ export function jouerSemaine(state: FederationState): FederationState {
     semaine: state.semaine + 1,
     argent,
     popularite: popularitePost,
+    fans: state.fans + nouveauxFans,
     roster: rosterApresSemaine,
     freeAgents,
     titles,

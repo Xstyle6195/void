@@ -18,6 +18,10 @@ export function TopBar() {
         <span className="top-bar-label">Popularité</span>
         <span className="top-bar-value">{federation.popularite}%</span>
       </div>
+      <div className="top-bar-item">
+        <span className="top-bar-label">Fans</span>
+        <span className="top-bar-value">{federation.fans.toLocaleString("fr-FR")}</span>
+      </div>
     </header>
   )
 }

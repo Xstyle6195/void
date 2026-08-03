@@ -45,6 +45,7 @@ function etatInitial(nom: string, difficulte: Difficulte): FederationState {
     semaine: 1,
     argent,
     popularite,
+    fans: 0,
     roster,
     freeAgents: creerMarcheTransferts(6),
     titles,
@@ -184,7 +185,7 @@ export const useStore = create<Store>((set) => ({
       const info = infoDivision(division)
       if (state.federation.divisionsDebloquees.includes(division)) return state
       if (state.federation.argent < info.cout) return state
-      if (state.federation.semaine < info.semaineMinimum) return state
+      if (state.federation.fans < info.fansMinimum) return state
       const nouveauxLutteurs = creerDivision(division, TAILLE_NOUVELLE_DIVISION)
       const titre =
         division === "equipe"

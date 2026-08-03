@@ -34,6 +34,14 @@ export function ResultsView() {
           <span className="top-bar-label">Dépenses</span>
           <span className="top-bar-value">{resultat.depenses.toLocaleString("fr-FR")} €</span>
         </div>
+        <div>
+          <span className="top-bar-label">Nouveaux fans</span>
+          <span className="top-bar-value">+{resultat.nouveauxFans.toLocaleString("fr-FR")}</span>
+        </div>
+        <div>
+          <span className="top-bar-label">Total fans</span>
+          <span className="top-bar-value">{federation.fans.toLocaleString("fr-FR")}</span>
+        </div>
       </div>
 
       <div className="liste-resultats-matches">

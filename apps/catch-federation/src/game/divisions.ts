@@ -5,7 +5,7 @@ export interface DivisionInfo {
   label: string
   description: string
   cout: number
-  semaineMinimum: number
+  fansMinimum: number
   debloqueeParDefaut: boolean
 }
 
@@ -15,7 +15,7 @@ export const DIVISIONS_INFO: DivisionInfo[] = [
     label: "Division Masculine",
     description: "Le roster principal masculin de la fédération.",
     cout: 0,
-    semaineMinimum: 1,
+    fansMinimum: 0,
     debloqueeParDefaut: true,
   },
   {
@@ -23,7 +23,7 @@ export const DIVISIONS_INFO: DivisionInfo[] = [
     label: "Division Féminine",
     description: "Le roster principal féminin de la fédération.",
     cout: 0,
-    semaineMinimum: 1,
+    fansMinimum: 0,
     debloqueeParDefaut: true,
   },
   {
@@ -31,7 +31,7 @@ export const DIVISIONS_INFO: DivisionInfo[] = [
     label: "Division par Équipes",
     description: "Des duos qui s'affrontent en tag team.",
     cout: 4000,
-    semaineMinimum: 5,
+    fansMinimum: 6000,
     debloqueeParDefaut: false,
   },
   {
@@ -39,7 +39,7 @@ export const DIVISIONS_INFO: DivisionInfo[] = [
     label: "Division Jeune Talent",
     description: "Des espoirs à faire progresser avant de les intégrer au roster principal.",
     cout: 3000,
-    semaineMinimum: 5,
+    fansMinimum: 3000,
     debloqueeParDefaut: false,
   },
 ]

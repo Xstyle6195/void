@@ -56,6 +56,7 @@ export interface ShowResult {
   revenus: number
   depenses: number
   popularitePost: number
+  nouveauxFans: number
 }
 
 export type Screen =
@@ -74,6 +75,7 @@ export interface FederationState {
   semaine: number
   argent: number
   popularite: number
+  fans: number
   roster: Wrestler[]
   freeAgents: Wrestler[]
   titles: Title[]
