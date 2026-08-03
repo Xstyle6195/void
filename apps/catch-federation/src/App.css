@@ -1,0 +1,347 @@
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100svh;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.app-game-over {
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 24px;
+  gap: 12px;
+}
+
+.top-bar {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: var(--panel);
+  border-bottom: 2px solid var(--accent);
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+
+.top-bar-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.top-bar-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+}
+
+.top-bar-value {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--gold);
+}
+
+.top-bar-value.negatif {
+  color: var(--bad);
+}
+
+.contenu {
+  flex: 1;
+  padding: 16px;
+  padding-bottom: 88px;
+  overflow-y: auto;
+}
+
+.onglets {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 480px;
+  display: flex;
+  background: var(--panel);
+  border-top: 1px solid var(--border);
+}
+
+.onglet {
+  flex: 1;
+  padding: 12px 4px;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.onglet.actif {
+  color: var(--gold);
+  border-top: 2px solid var(--accent);
+}
+
+.vue h2 {
+  font-size: 18px;
+  margin-bottom: 16px;
+}
+
+button {
+  cursor: pointer;
+  background: var(--bg-alt);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 6px;
+  padding: 8px 12px;
+}
+
+button.primaire {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  font-weight: 700;
+}
+
+button.danger {
+  border-color: var(--bad);
+  color: var(--bad);
+}
+
+button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+select {
+  background: var(--bg-alt);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 6px;
+  padding: 6px 8px;
+}
+
+.texte-muted {
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.liste-lutteurs {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.carte-lutteur {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+}
+
+.carte-lutteur-entete {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+
+.carte-lutteur-entete h3 {
+  font-size: 15px;
+  margin-bottom: 4px;
+}
+
+.badge {
+  display: inline-block;
+  font-size: 10px;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-right: 4px;
+  background: var(--bg-alt);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+}
+
+.badge-face {
+  color: var(--good);
+  border-color: var(--good);
+}
+
+.badge-heel {
+  color: var(--bad);
+  border-color: var(--bad);
+}
+
+.badge-titre {
+  color: var(--gold);
+  border-color: var(--gold);
+}
+
+.badge-blessure {
+  color: var(--bad);
+  border-color: var(--bad);
+}
+
+.stat-bar {
+  display: grid;
+  grid-template-columns: 70px 1fr 24px;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  margin-bottom: 3px;
+}
+
+.stat-bar-track {
+  background: var(--bg-alt);
+  border-radius: 4px;
+  height: 6px;
+  overflow: hidden;
+}
+
+.stat-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), var(--gold));
+}
+
+.stat-bar-value {
+  text-align: right;
+  color: var(--text-muted);
+}
+
+.carte-lutteur-pied {
+  display: flex;
+  gap: 10px;
+  font-size: 11px;
+  color: var(--text-muted);
+  margin: 8px 0;
+}
+
+.carte-lutteur-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.carte-lutteur-actions button {
+  flex: 1;
+  font-size: 12px;
+}
+
+.carte-match {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+  margin-bottom: 14px;
+}
+
+.carte-match-entete {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  gap: 8px;
+}
+
+.participants-choisis {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 8px 0;
+  min-height: 24px;
+}
+
+.jeton-participant {
+  background: var(--accent);
+  color: #fff;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.grille-selection {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+}
+
+.bouton-lutteur {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  text-align: left;
+}
+
+.bouton-lutteur.selectionne {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+.bouton-lutteur-pop {
+  color: var(--text-muted);
+}
+
+.actions-booking {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.actions-booking button {
+  flex: 1;
+}
+
+.resume-show {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+  margin-bottom: 16px;
+}
+
+.liste-resultats-matches {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.carte-resultat-match {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px;
+  font-size: 13px;
+}
+
+.texte-blessure {
+  color: var(--bad);
+  font-size: 12px;
+}
+
+.alerte-faillite {
+  background: rgba(217, 43, 63, 0.15);
+  border: 1px solid var(--bad);
+  border-radius: 10px;
+  padding: 12px;
+  text-align: center;
+}
+
+.liste-titres {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.carte-titre {
+  background: var(--panel);
+  border: 1px solid var(--gold);
+  border-radius: 10px;
+  padding: 14px;
+}
