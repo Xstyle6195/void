@@ -345,3 +345,79 @@ select {
   border-radius: 10px;
   padding: 14px;
 }
+
+.ecran-accueil {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 32px 20px;
+  min-height: 100svh;
+  justify-content: center;
+}
+
+.titre-accueil {
+  font-size: 28px;
+  text-align: center;
+  color: var(--gold);
+  margin-bottom: 0;
+}
+
+.ecran-accueil > .texte-muted {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.champ-label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  margin: 16px 0 6px;
+}
+
+.champ-nom {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 15px;
+}
+
+.selecteur-difficulte {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.carte-difficulte {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+  text-align: left;
+}
+
+.carte-difficulte.selectionnee {
+  border-color: var(--gold);
+}
+
+.carte-difficulte-titre {
+  font-weight: 700;
+  color: var(--text);
+}
+
+.carte-difficulte-description {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.bouton-demarrer {
+  margin-top: 28px;
+  padding: 14px;
+  font-size: 15px;
+}

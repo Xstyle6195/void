@@ -5,7 +5,8 @@ import { BookingView } from "./components/BookingView"
 import { ResultsView } from "./components/ResultsView"
 import { TitlesView } from "./components/TitlesView"
 import { MarketView } from "./components/MarketView"
-import { useEcran, useFederation, useStore } from "./state/store"
+import { StartScreen } from "./components/StartScreen"
+import { useEcran, useFederation, usePhase, useStore } from "./state/store"
 import type { Screen } from "./game/types"
 
 const ONGLETS: { value: Screen; label: string }[] = [
@@ -34,6 +35,20 @@ function ContenuEcran({ ecran }: { ecran: Screen }) {
 }
 
 function App() {
+  const phase = usePhase()
+
+  if (phase === "accueil") {
+    return (
+      <div className="app">
+        <StartScreen />
+      </div>
+    )
+  }
+
+  return <Jeu />
+}
+
+function Jeu() {
   const [ecran, setEcran] = useEcran()
   const federation = useFederation()
   const recommencer = useStore((s) => s.recommencer)

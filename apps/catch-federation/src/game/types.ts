@@ -60,8 +60,11 @@ export type Screen =
   | "titres"
   | "marche"
 
+export type Difficulte = "facile" | "normal" | "difficile"
+
 export interface FederationState {
   nom: string
+  difficulte: Difficulte
   semaine: number
   argent: number
   popularite: number

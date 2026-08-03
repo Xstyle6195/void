@@ -1,5 +1,6 @@
 import type {
   BookedMatch,
+  Difficulte,
   FederationState,
   MatchResult,
   ShowResult,
@@ -9,7 +10,12 @@ import { generateWrestler } from "./wrestlers"
 
 const PRIX_BILLET = 18
 const FRAIS_SALLE = 2200
-const SEUIL_FAILLITE = -8000
+
+const SEUIL_FAILLITE_PAR_DIFFICULTE: Record<Difficulte, number> = {
+  facile: -14000,
+  normal: -8000,
+  difficile: -4000,
+}
 
 function clamp(value: number, min = 0, max = 100): number {
   return Math.max(min, Math.min(max, value))
@@ -194,7 +200,7 @@ export function jouerSemaine(state: FederationState): FederationState {
   }
 
   const argent = state.argent + revenus - depenses
-  const gameOver = argent < SEUIL_FAILLITE
+  const gameOver = argent < SEUIL_FAILLITE_PAR_DIFFICULTE[state.difficulte]
 
   return {
     ...state,
