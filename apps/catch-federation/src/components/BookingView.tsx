@@ -1,23 +1,20 @@
 import { areneParId } from "../game/arenas"
+import { infoStipulation, STIPULATIONS } from "../game/stipulations"
 import type { BookedMatch, MatchStipulation } from "../game/types"
 import { useDivisionActive, useStore } from "../state/store"
 import { DivisionSwitcher } from "./DivisionSwitcher"
-
-const STIPULATIONS: { value: MatchStipulation; label: string }[] = [
-  { value: "normal", label: "Normal" },
-  { value: "titre", label: "Titre" },
-  { value: "no-dq", label: "No DQ" },
-  { value: "échelles", label: "Échelles" },
-]
 
 function MatchCard({ match }: { match: BookedMatch }) {
   const division = useDivisionActive()
   const toggleParticipant = useStore((s) => s.toggleParticipant)
   const definirStipulation = useStore((s) => s.definirStipulation)
+  const definirEstTitre = useStore((s) => s.definirEstTitre)
   const definirTitre = useStore((s) => s.definirTitre)
   const supprimerMatch = useStore((s) => s.supprimerMatch)
 
   const lutteursDisponibles = division.roster.filter((w) => w.blessureSemaines === 0)
+  const stip = infoStipulation(match.stipulation)
+  const complet = match.participantIds.length >= 2
 
   return (
     <div className="carte-match">
@@ -27,8 +24,8 @@ function MatchCard({ match }: { match: BookedMatch }) {
           onChange={(e) => definirStipulation(match.id, e.target.value as MatchStipulation)}
         >
           {STIPULATIONS.map((s) => (
-            <option key={s.value} value={s.value}>
-              {s.label}
+            <option key={s.id} value={s.id}>
+              {s.nom}
             </option>
           ))}
         </select>
@@ -37,7 +34,25 @@ function MatchCard({ match }: { match: BookedMatch }) {
         </button>
       </div>
 
-      {match.stipulation === "titre" && (
+      <p className="texte-muted texte-stipulation">
+        {stip.description} {stip.cout > 0 && `· Coût : ${stip.cout.toLocaleString("fr-FR")} €`}
+      </p>
+      {match.stipulation === "loser-leaves-town" && (
+        <p className="avertissement-stipulation">
+          ⚠️ Le perdant sera libéré de la fédération. Idéal pour clore une rivalité.
+        </p>
+      )}
+
+      <label className="case-titre">
+        <input
+          type="checkbox"
+          checked={match.estTitre}
+          onChange={(e) => definirEstTitre(match.id, e.target.checked)}
+        />
+        Match de titre
+      </label>
+
+      {match.estTitre && (
         <select
           value={match.titleId ?? ""}
           onChange={(e) => definirTitre(match.id, e.target.value || null)}
@@ -53,7 +68,7 @@ function MatchCard({ match }: { match: BookedMatch }) {
 
       <div className="participants-choisis">
         {match.participantIds.length === 0 && (
-          <span className="texte-muted">Aucun lutteur sélectionné</span>
+          <span className="texte-muted">Aucun lutteur sélectionné (1v1)</span>
         )}
         {match.participantIds.map((id) => {
           const w = division.roster.find((r) => r.id === id)
@@ -74,6 +89,7 @@ function MatchCard({ match }: { match: BookedMatch }) {
               key={w.id}
               className={`bouton-lutteur ${selectionne ? "selectionne" : ""}`}
               onClick={() => toggleParticipant(match.id, w.id)}
+              disabled={!selectionne && complet}
             >
               {w.name}
               <span className="bouton-lutteur-pop">{w.popularite}%</span>

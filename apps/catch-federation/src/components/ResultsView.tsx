@@ -1,4 +1,5 @@
 import { areneParId } from "../game/arenas"
+import { infoStipulation } from "../game/stipulations"
 import type { DivisionInstance } from "../game/types"
 import { useFederation, useStore } from "../state/store"
 
@@ -37,15 +38,20 @@ function BlocDivision({ division, semaine }: { division: DivisionInstance; semai
             {resultat.matches.map((m, i) => {
               const gagnant = division.roster.find((w) => w.id === m.winnerId)
               const blesse = division.roster.find((w) => w.id === m.blesseId)
+              const stip = infoStipulation(m.match.stipulation)
               return (
                 <div key={m.match.id} className="carte-resultat-match">
                   <span className="badge">
-                    Match {i + 1} · {m.match.stipulation}
+                    Match {i + 1} · {stip.nom}
+                    {m.match.estTitre ? " 🏆" : ""}
                   </span>
                   <p>
                     Vainqueur : <strong>{gagnant?.name ?? "?"}</strong> — note {m.note}/100
                   </p>
                   {blesse && <p className="texte-blessure">{blesse.name} a été blessé.</p>}
+                  {m.partiNom && (
+                    <p className="texte-blessure">{m.partiNom} quitte la fédération.</p>
+                  )}
                 </div>
               )
             })}

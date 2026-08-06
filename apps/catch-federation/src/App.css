@@ -651,3 +651,27 @@ select {
 .ligne-candidat button {
   font-size: 12px;
 }
+
+.texte-stipulation {
+  margin: 6px 0;
+}
+
+.avertissement-stipulation {
+  font-size: 12px;
+  color: var(--bad);
+  margin: 0 0 8px;
+}
+
+.case-titre {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  margin: 8px 0;
+  cursor: pointer;
+}
+
+.case-titre input {
+  width: 16px;
+  height: 16px;
+}

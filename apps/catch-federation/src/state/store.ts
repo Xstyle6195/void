@@ -96,6 +96,7 @@ interface Store {
   toggleParticipant: (matchId: string, wrestlerId: string) => void
   definirStipulation: (matchId: string, stipulation: MatchStipulation) => void
   definirTitre: (matchId: string, titleId: string | null) => void
+  definirEstTitre: (matchId: string, estTitre: boolean) => void
   lancerSemaine: () => void
   signerAgentLibre: (id: string, versDivisionId: string) => void
   libererLutteur: (id: string) => void
@@ -208,6 +209,7 @@ export const useStore = create<Store>((set) => ({
         id: idMatch(),
         participantIds: [],
         stipulation: "normal",
+        estTitre: false,
         titleId: null,
       }
       return {
@@ -252,7 +254,7 @@ export const useStore = create<Store>((set) => ({
                 if (dejaPresent) {
                   return { ...m, participantIds: m.participantIds.filter((id) => id !== wrestlerId) }
                 }
-                if (m.participantIds.length >= 4) return m
+                if (m.participantIds.length >= 2) return m
                 return { ...m, participantIds: [...m.participantIds, wrestlerId] }
               }),
             }
@@ -285,6 +287,26 @@ export const useStore = create<Store>((set) => ({
           divisions: state.federation.divisions.map((d) =>
             d.id === state.divisionActiveId
               ? { ...d, card: d.card.map((m) => (m.id === matchId ? { ...m, titleId } : m)) }
+              : d,
+          ),
+        },
+      }
+    }),
+
+  definirEstTitre: (matchId, estTitre) =>
+    set((state) => {
+      if (!state.federation || !state.divisionActiveId) return state
+      return {
+        federation: {
+          ...state.federation,
+          divisions: state.federation.divisions.map((d) =>
+            d.id === state.divisionActiveId
+              ? {
+                  ...d,
+                  card: d.card.map((m) =>
+                    m.id === matchId ? { ...m, estTitre, titleId: estTitre ? m.titleId : null } : m,
+                  ),
+                }
               : d,
           ),
         },

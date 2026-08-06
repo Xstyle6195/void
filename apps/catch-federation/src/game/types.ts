@@ -1,6 +1,10 @@
+import type { MatchStipulation } from "./stipulations"
+
 export type Alignment = "face" | "heel"
 
 export type MoveStyle = "technique" | "puissance" | "aérien" | "hardcore" | "catch-mental"
+
+export type { MatchStipulation }
 
 export interface Wrestler {
   id: string
@@ -28,12 +32,11 @@ export interface Title {
   championId: string | null
 }
 
-export type MatchStipulation = "normal" | "titre" | "no-dq" | "échelles"
-
 export interface BookedMatch {
   id: string
   participantIds: string[]
   stipulation: MatchStipulation
+  estTitre: boolean
   titleId: string | null
 }
 
@@ -42,6 +45,7 @@ export interface MatchResult {
   winnerId: string
   note: number
   blesseId: string | null
+  partiNom: string | null
 }
 
 export interface ShowResult {

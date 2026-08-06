@@ -1,5 +1,6 @@
 import { areneParId } from "./arenas"
 import { candidatParId } from "./officials"
+import { BONUS_TITRE, infoStipulation, RISQUE_TITRE, USURE_TITRE } from "./stipulations"
 import type {
   BookedMatch,
   Difficulte,
@@ -27,20 +28,6 @@ function randInt(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min
 }
 
-const BONUS_STIPULATION: Record<BookedMatch["stipulation"], number> = {
-  normal: 0,
-  titre: 10,
-  "no-dq": 5,
-  échelles: 8,
-}
-
-const RISQUE_STIPULATION: Record<BookedMatch["stipulation"], number> = {
-  normal: 0.04,
-  titre: 0.05,
-  "no-dq": 0.09,
-  échelles: 0.13,
-}
-
 function simulerMatch(
   match: BookedMatch,
   roster: Wrestler[],
@@ -50,6 +37,8 @@ function simulerMatch(
   const participants = match.participantIds
     .map((id) => roster.find((w) => w.id === id))
     .filter((w): w is Wrestler => Boolean(w))
+
+  const stip = infoStipulation(match.stipulation)
 
   const stylesUniques = new Set(participants.map((w) => w.style)).size
   const qualiteBase =
@@ -63,7 +52,7 @@ function simulerMatch(
 
   const bonusVariete = (stylesUniques - 1) * 3
   const bonusMainEvent = mainEvent ? 6 : 0
-  const bonusStip = BONUS_STIPULATION[match.stipulation]
+  const bonusStip = stip.bonusNote + (match.estTitre ? BONUS_TITRE : 0)
   const penaliteForme = (100 - formeMoyenne) * 0.15
   const alea = randInt(-8, 8)
 
@@ -94,7 +83,7 @@ function simulerMatch(
   }
 
   let blesseId: string | null = null
-  const risqueBase = RISQUE_STIPULATION[match.stipulation]
+  const risqueBase = stip.risqueBlessure + (match.estTitre ? RISQUE_TITRE : 0)
   for (const w of participants) {
     const risque = risqueBase + (100 - w.forme) * 0.0015
     if (Math.random() < risque) {
@@ -103,7 +92,13 @@ function simulerMatch(
     }
   }
 
-  return { match, winnerId, note, blesseId }
+  let partiNom: string | null = null
+  if (match.stipulation === "loser-leaves-town") {
+    const perdant = participants.find((p) => p.id !== winnerId)
+    if (perdant) partiNom = perdant.name
+  }
+
+  return { match, winnerId, note, blesseId, partiNom }
 }
 
 interface ResultatDivisionSemaine {
@@ -121,7 +116,7 @@ function jouerDivision(
   bonusArtistique: number,
   reductionAdjointPct: number,
 ): ResultatDivisionSemaine {
-  const roster = division.roster.map((w) => ({ ...w }))
+  let roster = division.roster.map((w) => ({ ...w }))
   const titles = division.titles.map((t) => ({ ...t }))
   const salaires = roster.reduce((acc, w) => acc + w.salaire, 0)
 
@@ -142,6 +137,7 @@ function jouerDivision(
 
   for (const resultat of resultats) {
     const { match, winnerId, note, blesseId } = resultat
+    const stip = infoStipulation(match.stipulation)
     for (const pid of match.participantIds) {
       const w = roster.find((r) => r.id === pid)
       if (!w) continue
@@ -150,18 +146,17 @@ function jouerDivision(
         w.popularite + (gagnant ? note * 0.12 : note * 0.04) + randInt(-1, 1),
       )
       w.moral = clamp(w.moral + (gagnant ? 3 : -2))
-      const usure = match.stipulation === "normal" ? 6 : match.stipulation === "titre" ? 8 : 12
+      const usure = stip.usure + (match.estTitre ? USURE_TITRE : 0)
       w.forme = clamp(w.forme - usure)
       if (blesseId === pid) {
-        const dureeBase =
-          match.stipulation === "échelles" ? randInt(3, 8) : randInt(1, 5)
+        const dureeBase = match.stipulation === "echelles" ? randInt(3, 8) : randInt(1, 5)
         w.blessureSemaines = Math.max(w.blessureSemaines, dureeBase)
         w.forme = clamp(w.forme - 20)
         w.moral = clamp(w.moral - 5)
       }
     }
 
-    if (match.stipulation === "titre" && match.titleId) {
+    if (match.estTitre && match.titleId) {
       const titre = titles.find((t) => t.id === match.titleId)
       if (titre && titre.championId !== winnerId) {
         if (titre.championId) {
@@ -174,6 +169,18 @@ function jouerDivision(
           nouveau.titreId = titre.id
           nouveau.popularite = clamp(nouveau.popularite + 15)
         }
+      }
+    }
+
+    if (match.stipulation === "loser-leaves-town") {
+      const perdantId = match.participantIds.find((id) => id !== winnerId)
+      if (perdantId) {
+        const perdant = roster.find((r) => r.id === perdantId)
+        if (perdant?.titreId) {
+          const titrePerdu = titles.find((t) => t.id === perdant.titreId)
+          if (titrePerdu) titrePerdu.championId = null
+        }
+        roster = roster.filter((r) => r.id !== perdantId)
       }
     }
   }
@@ -192,7 +199,13 @@ function jouerDivision(
   )
   const spectateurs = Math.max(0, Math.min(arene.capacite, spectateursBruts))
   const revenus = Math.round(spectateurs * arene.prixBillet + populariteFederation * 25)
-  const depenses = Math.round((salaires + FRAIS_SALLE) * (1 - reductionAdjointPct / 100))
+  const coutStipulations = division.card.reduce(
+    (acc, m) => acc + infoStipulation(m.stipulation).cout,
+    0,
+  )
+  const depenses = Math.round(
+    (salaires + FRAIS_SALLE + coutStipulations) * (1 - reductionAdjointPct / 100),
+  )
   const nouveauxFans = Math.max(0, Math.round(spectateurs * 0.6))
 
   const resultatShow: ShowResult = {
