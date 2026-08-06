@@ -1,4 +1,5 @@
 import { areneParId } from "./arenas"
+import { candidatParId } from "./officials"
 import type {
   BookedMatch,
   Difficulte,
@@ -44,6 +45,7 @@ function simulerMatch(
   match: BookedMatch,
   roster: Wrestler[],
   mainEvent: boolean,
+  bonusArtistique: number,
 ): MatchResult {
   const participants = match.participantIds
     .map((id) => roster.find((w) => w.id === id))
@@ -71,6 +73,7 @@ function simulerMatch(
         bonusVariete +
         bonusMainEvent +
         bonusStip +
+        bonusArtistique +
         alea -
         penaliteForme,
     ),
@@ -115,6 +118,8 @@ function jouerDivision(
   division: DivisionInstance,
   semaine: number,
   populariteFederation: number,
+  bonusArtistique: number,
+  reductionAdjointPct: number,
 ): ResultatDivisionSemaine {
   const roster = division.roster.map((w) => ({ ...w }))
   const titles = division.titles.map((t) => ({ ...t }))
@@ -126,13 +131,13 @@ function jouerDivision(
       division: { ...division, roster: rosterApresSemaine, titles, card: [] },
       aJoue: false,
       revenus: 0,
-      depenses: salaires,
+      depenses: Math.round(salaires * (1 - reductionAdjointPct / 100)),
       note: 0,
     }
   }
 
   const resultats: MatchResult[] = division.card.map((match, index) =>
-    simulerMatch(match, roster, index === division.card.length - 1),
+    simulerMatch(match, roster, index === division.card.length - 1, bonusArtistique),
   )
 
   for (const resultat of resultats) {
@@ -187,7 +192,7 @@ function jouerDivision(
   )
   const spectateurs = Math.max(0, Math.min(arene.capacite, spectateursBruts))
   const revenus = Math.round(spectateurs * arene.prixBillet + populariteFederation * 25)
-  const depenses = salaires + FRAIS_SALLE
+  const depenses = Math.round((salaires + FRAIS_SALLE) * (1 - reductionAdjointPct / 100))
   const nouveauxFans = Math.max(0, Math.round(spectateurs * 0.6))
 
   const resultatShow: ShowResult = {
@@ -231,15 +236,27 @@ function tickRoster(roster: Wrestler[]): Wrestler[] {
 
 export function jouerSemaine(state: FederationState): FederationState {
   const semaineEcoulee = state.semaine
+
+  const officielArtistique = state.officiels.artistique ? candidatParId(state.officiels.artistique) : undefined
+  const officielAdjoint = state.officiels.adjoint ? candidatParId(state.officiels.adjoint) : undefined
+  const bonusArtistique = officielArtistique?.bonus ?? 0
+  const reductionAdjointPct = officielAdjoint?.bonus ?? 0
+
   const resultatsDivisions = state.divisions.map((division) =>
-    jouerDivision(division, semaineEcoulee, state.popularite),
+    jouerDivision(division, semaineEcoulee, state.popularite, bonusArtistique, reductionAdjointPct),
   )
 
   const divisions = resultatsDivisions.map((r) => r.division)
   const divisionsAyantJoue = resultatsDivisions.filter((r) => r.aJoue)
 
+  const salairesOfficiels = (["marketing", "artistique", "adjoint"] as const).reduce((acc, role) => {
+    const id = state.officiels[role]
+    const candidat = id ? candidatParId(id) : undefined
+    return acc + (candidat?.salaire ?? 0)
+  }, 0)
+
   const revenusTotaux = resultatsDivisions.reduce((acc, r) => acc + r.revenus, 0)
-  const depensesTotales = resultatsDivisions.reduce((acc, r) => acc + r.depenses, 0)
+  const depensesTotales = resultatsDivisions.reduce((acc, r) => acc + r.depenses, 0) + salairesOfficiels
 
   const noteMoyenne = divisionsAyantJoue.length
     ? Math.round(

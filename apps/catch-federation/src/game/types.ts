@@ -73,6 +73,7 @@ export type Screen =
   | "marche"
   | "marketing"
   | "arenes"
+  | "officiels"
   | "divisions"
 
 export type Difficulte = "facile" | "normal" | "difficile"
@@ -87,5 +88,6 @@ export interface FederationState {
   divisions: DivisionInstance[]
   freeAgents: Wrestler[]
   derniereCampagne: Record<string, number>
+  officiels: Record<"marketing" | "artistique" | "adjoint", string | null>
   gameOver: boolean
 }

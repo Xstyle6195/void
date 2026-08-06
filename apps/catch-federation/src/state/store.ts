@@ -3,6 +3,7 @@ import { areneSuivante } from "../game/arenas"
 import { coutNouvelleDivision } from "../game/divisions"
 import { jouerSemaine } from "../game/engine"
 import { CAMPAGNES_MARKETING } from "../game/marketing"
+import { candidatParId } from "../game/officials"
 import type {
   BookedMatch,
   Difficulte,
@@ -68,6 +69,7 @@ function etatInitial(nom: string, difficulte: Difficulte): FederationState {
     divisions: [divisionPrincipale],
     freeAgents: creerMarcheTransferts(6),
     derniereCampagne: {},
+    officiels: { marketing: null, artistique: null, adjoint: null },
     gameOver: false,
   }
 }
@@ -99,6 +101,8 @@ interface Store {
   libererLutteur: (id: string) => void
   renouvelerContrat: (id: string) => void
   lancerCampagne: (campagneId: string) => void
+  recruterOfficiel: (candidatId: string) => void
+  licencierOfficiel: (role: "marketing" | "artistique" | "adjoint") => void
   recommencer: () => void
 }
 
@@ -374,13 +378,45 @@ export const useStore = create<Store>((set) => ({
       if (derniereUtilisation !== undefined && semaine - derniereUtilisation < campagne.cooldownSemaines) {
         return state
       }
+      const officielMarketing = state.federation.officiels.marketing
+        ? candidatParId(state.federation.officiels.marketing)
+        : undefined
+      const multiplicateur = 1 + (officielMarketing?.bonus ?? 0) / 100
       return {
         federation: {
           ...state.federation,
           argent: argent - campagne.cout,
-          fans: fans + campagne.gainFans,
-          popularite: clampPourcentage(state.federation.popularite + campagne.gainPopularite),
+          fans: fans + Math.round(campagne.gainFans * multiplicateur),
+          popularite: clampPourcentage(
+            state.federation.popularite + Math.round(campagne.gainPopularite * multiplicateur),
+          ),
           derniereCampagne: { ...derniereCampagne, [campagneId]: semaine },
+        },
+      }
+    }),
+
+  recruterOfficiel: (candidatId) =>
+    set((state) => {
+      if (!state.federation) return state
+      const candidat = candidatParId(candidatId)
+      if (!candidat) return state
+      if (state.federation.argent < candidat.coutRecrutement) return state
+      return {
+        federation: {
+          ...state.federation,
+          argent: state.federation.argent - candidat.coutRecrutement,
+          officiels: { ...state.federation.officiels, [candidat.role]: candidat.id },
+        },
+      }
+    }),
+
+  licencierOfficiel: (role) =>
+    set((state) => {
+      if (!state.federation) return state
+      return {
+        federation: {
+          ...state.federation,
+          officiels: { ...state.federation.officiels, [role]: null },
         },
       }
     }),

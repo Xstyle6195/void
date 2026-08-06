@@ -596,3 +596,58 @@ select {
   color: var(--gold);
   font-weight: 700;
 }
+
+.carte-etat-effectif {
+  background: var(--panel);
+  border: 1px solid var(--gold);
+  border-radius: 10px;
+  padding: 14px;
+  margin-bottom: 16px;
+}
+
+.carte-officiel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px;
+  margin-bottom: 12px;
+}
+
+.officiel-en-poste {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 10px 0;
+}
+
+.conseil-officiel {
+  background: var(--bg-alt);
+  border-radius: 8px;
+  padding: 10px;
+  font-size: 13px;
+  margin-bottom: 10px;
+}
+
+.liste-candidats {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.ligne-candidat {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  background: var(--bg-alt);
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+
+.ligne-candidat button {
+  font-size: 12px;
+}
