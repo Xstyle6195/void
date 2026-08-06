@@ -9,6 +9,7 @@ import type {
   Difficulte,
   DivisionInstance,
   FederationState,
+  FormatMatch,
   MatchStipulation,
   Screen,
   Wrestler,
@@ -44,7 +45,7 @@ function nouvelleDivision(nom: string, roster: Wrestler[], titres: { name: strin
       id: `${id}-t${i}`,
       name: t.name,
       prestige: t.prestige,
-      championId: null,
+      championIds: [],
     })),
     card: [],
     dernierResultat: null,
@@ -94,6 +95,8 @@ interface Store {
   ajouterMatch: () => void
   supprimerMatch: (matchId: string) => void
   toggleParticipant: (matchId: string, wrestlerId: string) => void
+  definirFormatMatch: (matchId: string, format: FormatMatch) => void
+  toggleParticipantEquipe: (matchId: string, equipe: "A" | "B", wrestlerId: string) => void
   definirStipulation: (matchId: string, stipulation: MatchStipulation) => void
   definirTitre: (matchId: string, titleId: string | null) => void
   definirEstTitre: (matchId: string, estTitre: boolean) => void
@@ -109,6 +112,14 @@ interface Store {
 
 function trouverDivisionDuLutteur(federation: FederationState, wrestlerId: string): DivisionInstance | undefined {
   return federation.divisions.find((d) => d.roster.some((w) => w.id === wrestlerId))
+}
+
+function retirerChampionnat(titles: DivisionInstance["titles"], wrestlerId: string): DivisionInstance["titles"] {
+  return titles.map((t) =>
+    t.championIds.includes(wrestlerId)
+      ? { ...t, championIds: t.championIds.filter((id) => id !== wrestlerId) }
+      : t,
+  )
 }
 
 export const useStore = create<Store>((set) => ({
@@ -186,9 +197,7 @@ export const useStore = create<Store>((set) => ({
               return {
                 ...d,
                 roster: d.roster.filter((w) => w.id !== wrestlerId),
-                titles: d.titles.map((t) =>
-                  t.championId === wrestlerId ? { ...t, championId: null } : t,
-                ),
+                titles: retirerChampionnat(d.titles, wrestlerId),
               }
             }
             if (d.id === versDivisionId) {
@@ -207,7 +216,10 @@ export const useStore = create<Store>((set) => ({
       if (!division || division.card.length >= 5) return state
       const nouveauMatch: BookedMatch = {
         id: idMatch(),
+        format: "1v1",
         participantIds: [],
+        equipeA: [],
+        equipeB: [],
         stipulation: "normal",
         estTitre: false,
         titleId: null,
@@ -256,6 +268,68 @@ export const useStore = create<Store>((set) => ({
                 }
                 if (m.participantIds.length >= 2) return m
                 return { ...m, participantIds: [...m.participantIds, wrestlerId] }
+              }),
+            }
+          }),
+        },
+      }
+    }),
+
+  definirFormatMatch: (matchId, format) =>
+    set((state) => {
+      if (!state.federation || !state.divisionActiveId) return state
+      return {
+        federation: {
+          ...state.federation,
+          divisions: state.federation.divisions.map((d) =>
+            d.id === state.divisionActiveId
+              ? {
+                  ...d,
+                  card: d.card.map((m) =>
+                    m.id === matchId
+                      ? {
+                          ...m,
+                          format,
+                          participantIds: [],
+                          equipeA: [],
+                          equipeB: [],
+                          stipulation: format === "2v2" ? "tag-classique" : "normal",
+                          estTitre: false,
+                          titleId: null,
+                        }
+                      : m,
+                  ),
+                }
+              : d,
+          ),
+        },
+      }
+    }),
+
+  toggleParticipantEquipe: (matchId, equipe, wrestlerId) =>
+    set((state) => {
+      if (!state.federation || !state.divisionActiveId) return state
+      return {
+        federation: {
+          ...state.federation,
+          divisions: state.federation.divisions.map((d) => {
+            if (d.id !== state.divisionActiveId) return d
+            return {
+              ...d,
+              card: d.card.map((m) => {
+                if (m.id !== matchId) return m
+                const autreEquipe = equipe === "A" ? m.equipeB : m.equipeA
+                if (autreEquipe.includes(wrestlerId)) return m
+                const cible = equipe === "A" ? m.equipeA : m.equipeB
+                let nouvelleCible: string[]
+                if (cible.includes(wrestlerId)) {
+                  nouvelleCible = cible.filter((id) => id !== wrestlerId)
+                } else if (cible.length >= 2) {
+                  nouvelleCible = cible
+                } else {
+                  nouvelleCible = [...cible, wrestlerId]
+                }
+                return equipe === "A" ? { ...m, equipeA: nouvelleCible } : { ...m, equipeB: nouvelleCible }
               }),
             }
           }),
@@ -354,9 +428,7 @@ export const useStore = create<Store>((set) => ({
               ? {
                   ...d,
                   roster: d.roster.filter((w) => w.id !== id),
-                  titles: d.titles.map((t) =>
-                    t.championId === id ? { ...t, championId: null } : t,
-                  ),
+                  titles: retirerChampionnat(d.titles, id),
                 }
               : d,
           ),

@@ -28,13 +28,28 @@ function randInt(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min
 }
 
+function campsDuMatch(match: BookedMatch): [string[], string[]] {
+  if (match.format === "2v2") return [match.equipeA, match.equipeB]
+  return [[match.participantIds[0]], [match.participantIds[1]]]
+}
+
+function matchEstComplet(match: BookedMatch): boolean {
+  if (match.format === "2v2") return match.equipeA.length === 2 && match.equipeB.length === 2
+  return match.participantIds.length === 2
+}
+
+const STIPULATIONS_ECHELLES = new Set(["echelles", "echelles-tag"])
+const STIPULATIONS_LOSER_LEAVES_TOWN = new Set(["loser-leaves-town", "loser-leaves-town-tag"])
+
 function simulerMatch(
   match: BookedMatch,
   roster: Wrestler[],
   mainEvent: boolean,
   bonusArtistique: number,
 ): MatchResult {
-  const participants = match.participantIds
+  const camps = campsDuMatch(match)
+  const participants = camps
+    .flat()
     .map((id) => roster.find((w) => w.id === id))
     .filter((w): w is Wrestler => Boolean(w))
 
@@ -68,19 +83,18 @@ function simulerMatch(
     ),
   )
 
-  const poids = participants.map(
-    (w) => w.technique + w.force + w.charisme + w.popularite * 0.5 + randInt(0, 20),
+  const poidsCamps = camps.map((camp) =>
+    camp.reduce((acc, id) => {
+      const w = roster.find((r) => r.id === id)
+      if (!w) return acc
+      return acc + w.technique + w.force + w.charisme + w.popularite * 0.5 + randInt(0, 20)
+    }, 0),
   )
-  const totalPoids = poids.reduce((a, b) => a + b, 0)
-  let tirage = Math.random() * totalPoids
-  let winnerId = participants[0]?.id ?? ""
-  for (let i = 0; i < participants.length; i += 1) {
-    tirage -= poids[i]
-    if (tirage <= 0) {
-      winnerId = participants[i].id
-      break
-    }
-  }
+  const totalPoids = poidsCamps[0] + poidsCamps[1]
+  const tirage = Math.random() * totalPoids
+  const indexGagnant = tirage < poidsCamps[0] ? 0 : 1
+  const winnerIds = camps[indexGagnant]
+  const loserIds = camps[1 - indexGagnant]
 
   let blesseId: string | null = null
   const risqueBase = stip.risqueBlessure + (match.estTitre ? RISQUE_TITRE : 0)
@@ -92,13 +106,14 @@ function simulerMatch(
     }
   }
 
-  let partiNom: string | null = null
-  if (match.stipulation === "loser-leaves-town") {
-    const perdant = participants.find((p) => p.id !== winnerId)
-    if (perdant) partiNom = perdant.name
+  let partisNoms: string[] = []
+  if (STIPULATIONS_LOSER_LEAVES_TOWN.has(match.stipulation)) {
+    partisNoms = loserIds
+      .map((id) => participants.find((p) => p.id === id)?.name)
+      .filter((n): n is string => Boolean(n))
   }
 
-  return { match, winnerId, note, blesseId, partiNom }
+  return { match, winnerIds, note, blesseId, partisNoms }
 }
 
 interface ResultatDivisionSemaine {
@@ -117,10 +132,12 @@ function jouerDivision(
   reductionAdjointPct: number,
 ): ResultatDivisionSemaine {
   let roster = division.roster.map((w) => ({ ...w }))
-  const titles = division.titles.map((t) => ({ ...t }))
+  const titles = division.titles.map((t) => ({ ...t, championIds: [...t.championIds] }))
   const salaires = roster.reduce((acc, w) => acc + w.salaire, 0)
 
-  if (division.card.length === 0) {
+  const matchesValides = division.card.filter(matchEstComplet)
+
+  if (matchesValides.length === 0) {
     const rosterApresSemaine = tickRoster(roster)
     return {
       division: { ...division, roster: rosterApresSemaine, titles, card: [] },
@@ -131,17 +148,19 @@ function jouerDivision(
     }
   }
 
-  const resultats: MatchResult[] = division.card.map((match, index) =>
-    simulerMatch(match, roster, index === division.card.length - 1, bonusArtistique),
+  const resultats: MatchResult[] = matchesValides.map((match, index) =>
+    simulerMatch(match, roster, index === matchesValides.length - 1, bonusArtistique),
   )
 
   for (const resultat of resultats) {
-    const { match, winnerId, note, blesseId } = resultat
+    const { match, winnerIds, note, blesseId } = resultat
     const stip = infoStipulation(match.stipulation)
-    for (const pid of match.participantIds) {
+    const participantsIds = campsDuMatch(match).flat()
+
+    for (const pid of participantsIds) {
       const w = roster.find((r) => r.id === pid)
       if (!w) continue
-      const gagnant = pid === winnerId
+      const gagnant = winnerIds.includes(pid)
       w.popularite = clamp(
         w.popularite + (gagnant ? note * 0.12 : note * 0.04) + randInt(-1, 1),
       )
@@ -149,7 +168,7 @@ function jouerDivision(
       const usure = stip.usure + (match.estTitre ? USURE_TITRE : 0)
       w.forme = clamp(w.forme - usure)
       if (blesseId === pid) {
-        const dureeBase = match.stipulation === "echelles" ? randInt(3, 8) : randInt(1, 5)
+        const dureeBase = STIPULATIONS_ECHELLES.has(match.stipulation) ? randInt(3, 8) : randInt(1, 5)
         w.blessureSemaines = Math.max(w.blessureSemaines, dureeBase)
         w.forme = clamp(w.forme - 20)
         w.moral = clamp(w.moral - 5)
@@ -158,30 +177,39 @@ function jouerDivision(
 
     if (match.estTitre && match.titleId) {
       const titre = titles.find((t) => t.id === match.titleId)
-      if (titre && titre.championId !== winnerId) {
-        if (titre.championId) {
-          const ancien = roster.find((r) => r.id === titre.championId)
-          if (ancien) ancien.titreId = null
-        }
-        titre.championId = winnerId
-        const nouveau = roster.find((r) => r.id === winnerId)
-        if (nouveau) {
-          nouveau.titreId = titre.id
-          nouveau.popularite = clamp(nouveau.popularite + 15)
+      if (titre) {
+        const memeChampions =
+          titre.championIds.length === winnerIds.length &&
+          titre.championIds.every((id) => winnerIds.includes(id))
+        if (!memeChampions) {
+          for (const ancienId of titre.championIds) {
+            const ancien = roster.find((r) => r.id === ancienId)
+            if (ancien) ancien.titreId = null
+          }
+          titre.championIds = winnerIds
+          for (const nouveauId of winnerIds) {
+            const nouveau = roster.find((r) => r.id === nouveauId)
+            if (nouveau) {
+              nouveau.titreId = titre.id
+              nouveau.popularite = clamp(nouveau.popularite + 15)
+            }
+          }
         }
       }
     }
 
-    if (match.stipulation === "loser-leaves-town") {
-      const perdantId = match.participantIds.find((id) => id !== winnerId)
-      if (perdantId) {
+    if (STIPULATIONS_LOSER_LEAVES_TOWN.has(match.stipulation)) {
+      const perdantIds = campsDuMatch(match)
+        .flat()
+        .filter((id) => !winnerIds.includes(id))
+      for (const perdantId of perdantIds) {
         const perdant = roster.find((r) => r.id === perdantId)
         if (perdant?.titreId) {
           const titrePerdu = titles.find((t) => t.id === perdant.titreId)
-          if (titrePerdu) titrePerdu.championId = null
+          if (titrePerdu) titrePerdu.championIds = titrePerdu.championIds.filter((id) => id !== perdantId)
         }
-        roster = roster.filter((r) => r.id !== perdantId)
       }
+      roster = roster.filter((r) => !perdantIds.includes(r.id))
     }
   }
 
@@ -199,7 +227,7 @@ function jouerDivision(
   )
   const spectateurs = Math.max(0, Math.min(arene.capacite, spectateursBruts))
   const revenus = Math.round(spectateurs * arene.prixBillet + populariteFederation * 25)
-  const coutStipulations = division.card.reduce(
+  const coutStipulations = matchesValides.reduce(
     (acc, m) => acc + infoStipulation(m.stipulation).cout,
     0,
   )

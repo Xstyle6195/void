@@ -675,3 +675,41 @@ select {
   width: 16px;
   height: 16px;
 }
+
+.selecteur-format {
+  display: flex;
+  gap: 4px;
+}
+
+.selecteur-format button {
+  font-size: 12px;
+  padding: 6px 12px;
+}
+
+.selecteur-format button.actif {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+.bloc-equipes {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 10px;
+}
+
+.bloc-equipe {
+  background: var(--bg-alt);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px;
+}
+
+.titre-equipe {
+  display: block;
+  font-size: 11px;
+  text-transform: uppercase;
+  color: var(--gold);
+  letter-spacing: 0.05em;
+  margin-bottom: 6px;
+}

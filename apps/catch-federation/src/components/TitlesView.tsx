@@ -12,12 +12,14 @@ export function TitlesView() {
       </div>
       <div className="liste-titres">
         {division.titles.map((t) => {
-          const champion = division.roster.find((w) => w.id === t.championId)
+          const champions = t.championIds
+            .map((id) => division.roster.find((w) => w.id === id)?.name)
+            .filter((n): n is string => Boolean(n))
           return (
             <div key={t.id} className="carte-titre">
               <h3>{t.name}</h3>
               <span className="top-bar-label">Prestige {t.prestige}</span>
-              <p>{champion ? `Détenu par ${champion.name}` : "Vacant"}</p>
+              <p>{champions.length > 0 ? `Détenu par ${champions.join(" & ")}` : "Vacant"}</p>
             </div>
           )
         })}
