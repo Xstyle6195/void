@@ -1,6 +1,6 @@
 import { areneParId } from "./arenas"
 import { candidatParId } from "./officials"
-import { BONUS_TITRE, infoStipulation, RISQUE_TITRE, USURE_TITRE } from "./stipulations"
+import { BONUS_TITRE, infoStipulation, LIMITES_FORMAT, RISQUE_TITRE, USURE_TITRE } from "./stipulations"
 import type {
   BookedMatch,
   Difficulte,
@@ -28,17 +28,17 @@ function randInt(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min
 }
 
-function campsDuMatch(match: BookedMatch): [string[], string[]] {
+function campsDuMatch(match: BookedMatch): string[][] {
   if (match.format === "2v2") return [match.equipeA, match.equipeB]
-  return [[match.participantIds[0]], [match.participantIds[1]]]
+  return match.participantIds.map((id) => [id])
 }
 
 function matchEstComplet(match: BookedMatch): boolean {
   if (match.format === "2v2") return match.equipeA.length === 2 && match.equipeB.length === 2
-  return match.participantIds.length === 2
+  return match.participantIds.length >= LIMITES_FORMAT[match.format].min
 }
 
-const STIPULATIONS_ECHELLES = new Set(["echelles", "echelles-tag"])
+const STIPULATIONS_ECHELLES = new Set(["echelles", "echelles-tag", "triple-echelles", "a4-echelles"])
 const STIPULATIONS_LOSER_LEAVES_TOWN = new Set(["loser-leaves-town", "loser-leaves-town-tag"])
 
 function simulerMatch(
@@ -90,11 +90,18 @@ function simulerMatch(
       return acc + w.technique + w.force + w.charisme + w.popularite * 0.5 + randInt(0, 20)
     }, 0),
   )
-  const totalPoids = poidsCamps[0] + poidsCamps[1]
-  const tirage = Math.random() * totalPoids
-  const indexGagnant = tirage < poidsCamps[0] ? 0 : 1
+  const totalPoids = poidsCamps.reduce((a, b) => a + b, 0)
+  let tirage = Math.random() * totalPoids
+  let indexGagnant = camps.length - 1
+  for (let i = 0; i < camps.length; i += 1) {
+    tirage -= poidsCamps[i]
+    if (tirage <= 0) {
+      indexGagnant = i
+      break
+    }
+  }
   const winnerIds = camps[indexGagnant]
-  const loserIds = camps[1 - indexGagnant]
+  const loserIds = camps.filter((_, i) => i !== indexGagnant).flat()
 
   let blesseId: string | null = null
   const risqueBase = stip.risqueBlessure + (match.estTitre ? RISQUE_TITRE : 0)

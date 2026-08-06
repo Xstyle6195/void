@@ -1,8 +1,16 @@
 import { areneParId } from "../game/arenas"
-import { stipulationsPourFormat, infoStipulation } from "../game/stipulations"
-import type { BookedMatch, MatchStipulation, Wrestler } from "../game/types"
+import { infoStipulation, LIMITES_FORMAT, stipulationsPourFormat } from "../game/stipulations"
+import type { BookedMatch, FormatMatch, MatchStipulation, Wrestler } from "../game/types"
 import { useDivisionActive, useStore } from "../state/store"
 import { DivisionSwitcher } from "./DivisionSwitcher"
+
+const FORMATS: { value: FormatMatch; label: string }[] = [
+  { value: "1v1", label: "1v1" },
+  { value: "2v2", label: "2v2" },
+  { value: "triple-menace", label: "Triple Menace" },
+  { value: "a-4", label: "Match à 4" },
+  { value: "battle-royal", label: "Battle Royal" },
+]
 
 function EquipeSelection({
   match,
@@ -71,24 +79,22 @@ function MatchCard({ match }: { match: BookedMatch }) {
   const lutteursDisponibles = division.roster.filter((w) => w.blessureSemaines === 0)
   const stip = infoStipulation(match.stipulation)
   const stipulationsDisponibles = stipulationsPourFormat(match.format)
-  const complet1v1 = match.participantIds.length >= 2
+  const limites = LIMITES_FORMAT[match.format]
+  const completLibre = match.participantIds.length >= limites.max
 
   return (
     <div className="carte-match">
       <div className="carte-match-entete">
         <div className="selecteur-format">
-          <button
-            className={match.format === "1v1" ? "actif" : ""}
-            onClick={() => definirFormatMatch(match.id, "1v1")}
-          >
-            1v1
-          </button>
-          <button
-            className={match.format === "2v2" ? "actif" : ""}
-            onClick={() => definirFormatMatch(match.id, "2v2")}
-          >
-            2v2
-          </button>
+          {FORMATS.map((f) => (
+            <button
+              key={f.value}
+              className={match.format === f.value ? "actif" : ""}
+              onClick={() => definirFormatMatch(match.id, f.value)}
+            >
+              {f.label}
+            </button>
+          ))}
         </div>
         <button className="danger" onClick={() => supprimerMatch(match.id)}>
           Retirer le match
@@ -146,9 +152,14 @@ function MatchCard({ match }: { match: BookedMatch }) {
         </div>
       ) : (
         <>
+          <p className="texte-muted">
+            {limites.min === limites.max
+              ? `${limites.max} participants requis`
+              : `De ${limites.min} à ${limites.max} participants`}
+          </p>
           <div className="participants-choisis">
             {match.participantIds.length === 0 && (
-              <span className="texte-muted">Aucun lutteur sélectionné (1v1)</span>
+              <span className="texte-muted">Aucun lutteur sélectionné</span>
             )}
             {match.participantIds.map((id) => {
               const w = division.roster.find((r) => r.id === id)
@@ -169,7 +180,7 @@ function MatchCard({ match }: { match: BookedMatch }) {
                   key={w.id}
                   className={`bouton-lutteur ${selectionne ? "selectionne" : ""}`}
                   onClick={() => toggleParticipant(match.id, w.id)}
-                  disabled={!selectionne && complet1v1}
+                  disabled={!selectionne && completLibre}
                 >
                   {w.name}
                   <span className="bouton-lutteur-pop">{w.popularite}%</span>
@@ -185,7 +196,7 @@ function MatchCard({ match }: { match: BookedMatch }) {
 
 function matchEstValide(match: BookedMatch): boolean {
   if (match.format === "2v2") return match.equipeA.length === 2 && match.equipeB.length === 2
-  return match.participantIds.length >= 2
+  return match.participantIds.length >= LIMITES_FORMAT[match.format].min
 }
 
 export function BookingView() {

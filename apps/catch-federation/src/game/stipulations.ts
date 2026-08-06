@@ -1,4 +1,12 @@
-export type FormatMatch = "1v1" | "2v2"
+export type FormatMatch = "1v1" | "2v2" | "triple-menace" | "a-4" | "battle-royal"
+
+export const LIMITES_FORMAT: Record<FormatMatch, { min: number; max: number }> = {
+  "1v1": { min: 2, max: 2 },
+  "2v2": { min: 2, max: 2 },
+  "triple-menace": { min: 3, max: 3 },
+  "a-4": { min: 4, max: 4 },
+  "battle-royal": { min: 4, max: 10 },
+}
 
 export type MatchStipulation =
   | "normal"
@@ -26,6 +34,23 @@ export type MatchStipulation =
   | "echelles-tag"
   | "hardcore-tag"
   | "loser-leaves-town-tag"
+  | "triple-classique"
+  | "triple-no-dq"
+  | "triple-cage"
+  | "triple-falls-anywhere"
+  | "triple-hardcore"
+  | "triple-table"
+  | "triple-elimination"
+  | "triple-echelles"
+  | "a4-classique"
+  | "a4-no-dq"
+  | "a4-cage"
+  | "a4-falls-anywhere"
+  | "a4-hardcore"
+  | "a4-table"
+  | "a4-elimination"
+  | "a4-echelles"
+  | "battle-royal"
 
 export interface StipulationInfo {
   id: MatchStipulation
@@ -290,6 +315,181 @@ export const STIPULATIONS: StipulationInfo[] = [
     risqueBlessure: 0.05,
     usure: 8,
     cout: 3500,
+  },
+  // Stipulations Triple Menace
+  {
+    id: "triple-classique",
+    format: "triple-menace",
+    nom: "Triple Menace Classique",
+    description: "Trois catcheurs, chacun pour soi. N'importe qui peut gagner en tombé.",
+    bonusNote: 6,
+    risqueBlessure: 0.06,
+    usure: 8,
+    cout: 400,
+  },
+  {
+    id: "triple-no-dq",
+    format: "triple-menace",
+    nom: "No Disqualification à Trois",
+    description: "Aucune disqualification possible.",
+    bonusNote: 9,
+    risqueBlessure: 0.11,
+    usure: 12,
+    cout: 600,
+  },
+  {
+    id: "triple-cage",
+    format: "triple-menace",
+    nom: "Cage d'Acier à Trois",
+    description: "Trois catcheurs enfermés dans la même cage.",
+    bonusNote: 12,
+    risqueBlessure: 0.14,
+    usure: 14,
+    cout: 1200,
+  },
+  {
+    id: "triple-falls-anywhere",
+    format: "triple-menace",
+    nom: "Falls Count Anywhere à Trois",
+    description: "Le combat à trois peut se terminer n'importe où dans la salle.",
+    bonusNote: 9,
+    risqueBlessure: 0.12,
+    usure: 12,
+    cout: 700,
+  },
+  {
+    id: "triple-hardcore",
+    format: "triple-menace",
+    nom: "Hardcore à Trois",
+    description: "Armes autorisées, pas de disqualification.",
+    bonusNote: 11,
+    risqueBlessure: 0.19,
+    usure: 16,
+    cout: 1000,
+  },
+  {
+    id: "triple-table",
+    format: "triple-menace",
+    nom: "Table Match à Trois",
+    description: "Passer un adversaire à travers une table permet de gagner.",
+    bonusNote: 10,
+    risqueBlessure: 0.17,
+    usure: 13,
+    cout: 900,
+  },
+  {
+    id: "triple-elimination",
+    format: "triple-menace",
+    nom: "Match à Élimination à Trois",
+    description: "Chaque catcheur éliminé un par un, jusqu'au dernier debout.",
+    bonusNote: 13,
+    risqueBlessure: 0.1,
+    usure: 14,
+    cout: 800,
+  },
+  {
+    id: "triple-echelles",
+    format: "triple-menace",
+    nom: "Match à Échelles à Trois",
+    description: "Un objet est suspendu au-dessus du ring, trois prétendants.",
+    bonusNote: 11,
+    risqueBlessure: 0.15,
+    usure: 14,
+    cout: 1100,
+  },
+
+  // Stipulations Fatal 4-Way
+  {
+    id: "a4-classique",
+    format: "a-4",
+    nom: "Fatal 4-Way Classique",
+    description: "Quatre catcheurs, chacun pour soi. N'importe qui peut gagner en tombé.",
+    bonusNote: 8,
+    risqueBlessure: 0.07,
+    usure: 9,
+    cout: 500,
+  },
+  {
+    id: "a4-no-dq",
+    format: "a-4",
+    nom: "No Disqualification à Quatre",
+    description: "Aucune disqualification possible.",
+    bonusNote: 11,
+    risqueBlessure: 0.12,
+    usure: 13,
+    cout: 700,
+  },
+  {
+    id: "a4-cage",
+    format: "a-4",
+    nom: "Cage d'Acier à Quatre",
+    description: "Quatre catcheurs enfermés dans la même cage.",
+    bonusNote: 14,
+    risqueBlessure: 0.15,
+    usure: 15,
+    cout: 1500,
+  },
+  {
+    id: "a4-falls-anywhere",
+    format: "a-4",
+    nom: "Falls Count Anywhere à Quatre",
+    description: "Le combat à quatre peut se terminer n'importe où dans la salle.",
+    bonusNote: 10,
+    risqueBlessure: 0.13,
+    usure: 13,
+    cout: 800,
+  },
+  {
+    id: "a4-hardcore",
+    format: "a-4",
+    nom: "Hardcore à Quatre",
+    description: "Armes autorisées, pas de disqualification.",
+    bonusNote: 12,
+    risqueBlessure: 0.2,
+    usure: 17,
+    cout: 1200,
+  },
+  {
+    id: "a4-table",
+    format: "a-4",
+    nom: "Table Match à Quatre",
+    description: "Passer un adversaire à travers une table permet de gagner.",
+    bonusNote: 11,
+    risqueBlessure: 0.18,
+    usure: 14,
+    cout: 1000,
+  },
+  {
+    id: "a4-elimination",
+    format: "a-4",
+    nom: "Match à Élimination à Quatre",
+    description: "Chaque catcheur éliminé un par un, jusqu'au dernier debout.",
+    bonusNote: 15,
+    risqueBlessure: 0.11,
+    usure: 15,
+    cout: 1000,
+  },
+  {
+    id: "a4-echelles",
+    format: "a-4",
+    nom: "Match à Échelles à Quatre",
+    description: "Un objet est suspendu au-dessus du ring, quatre prétendants.",
+    bonusNote: 12,
+    risqueBlessure: 0.16,
+    usure: 15,
+    cout: 1300,
+  },
+
+  // Battle Royal
+  {
+    id: "battle-royal",
+    format: "battle-royal",
+    nom: "Battle Royal",
+    description: "Tous les catcheurs sur le ring en même temps, éliminés jusqu'au dernier debout.",
+    bonusNote: 15,
+    risqueBlessure: 0.1,
+    usure: 10,
+    cout: 1500,
   },
 ]
 

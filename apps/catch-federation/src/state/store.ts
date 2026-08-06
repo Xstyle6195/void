@@ -4,6 +4,7 @@ import { coutNouvelleDivision } from "../game/divisions"
 import { jouerSemaine } from "../game/engine"
 import { CAMPAGNES_MARKETING } from "../game/marketing"
 import { candidatParId } from "../game/officials"
+import { LIMITES_FORMAT, stipulationsPourFormat } from "../game/stipulations"
 import type {
   BookedMatch,
   Difficulte,
@@ -266,7 +267,7 @@ export const useStore = create<Store>((set) => ({
                 if (dejaPresent) {
                   return { ...m, participantIds: m.participantIds.filter((id) => id !== wrestlerId) }
                 }
-                if (m.participantIds.length >= 2) return m
+                if (m.participantIds.length >= LIMITES_FORMAT[m.format].max) return m
                 return { ...m, participantIds: [...m.participantIds, wrestlerId] }
               }),
             }
@@ -293,7 +294,7 @@ export const useStore = create<Store>((set) => ({
                           participantIds: [],
                           equipeA: [],
                           equipeB: [],
-                          stipulation: format === "2v2" ? "tag-classique" : "normal",
+                          stipulation: stipulationsPourFormat(format)[0].id,
                           estTitre: false,
                           titleId: null,
                         }
