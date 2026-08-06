@@ -67,19 +67,22 @@
   width: 100%;
   max-width: 480px;
   display: flex;
+  overflow-x: auto;
   background: var(--panel);
   border-top: 1px solid var(--border);
 }
 
 .onglet {
-  flex: 1;
+  flex: 1 0 auto;
+  min-width: 66px;
   padding: 12px 4px;
   background: none;
   border: none;
   color: var(--text-muted);
-  font-size: 12px;
+  font-size: 10.5px;
   font-weight: 600;
   text-transform: uppercase;
+  white-space: nowrap;
   cursor: pointer;
 }
 
@@ -515,4 +518,47 @@ select {
 
 .carte-resultat-division h3 {
   font-size: 15px;
+}
+
+.groupe-palier {
+  margin-bottom: 20px;
+}
+
+.titre-palier {
+  font-size: 13px;
+  color: var(--gold);
+  letter-spacing: 0.05em;
+  margin-bottom: 10px;
+}
+
+.liste-campagnes {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.carte-campagne {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+}
+
+.carte-campagne h3 {
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.campagne-gains {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-size: 12px;
+  color: var(--gold);
+  margin: 8px 0;
+}
+
+.carte-campagne button {
+  width: 100%;
+  font-size: 13px;
 }

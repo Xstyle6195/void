@@ -1,6 +1,7 @@
 import { create } from "zustand"
 import { coutNouvelleDivision } from "../game/divisions"
 import { jouerSemaine } from "../game/engine"
+import { CAMPAGNES_MARKETING } from "../game/marketing"
 import type {
   BookedMatch,
   Difficulte,
@@ -64,8 +65,13 @@ function etatInitial(nom: string, difficulte: Difficulte): FederationState {
     fans: 0,
     divisions: [divisionPrincipale],
     freeAgents: creerMarcheTransferts(6),
+    derniereCampagne: {},
     gameOver: false,
   }
+}
+
+function clampPourcentage(value: number): number {
+  return Math.round(Math.max(0, Math.min(100, value)))
 }
 
 type Phase = "accueil" | "jeu"
@@ -89,6 +95,7 @@ interface Store {
   signerAgentLibre: (id: string, versDivisionId: string) => void
   libererLutteur: (id: string) => void
   renouvelerContrat: (id: string) => void
+  lancerCampagne: (campagneId: string) => void
   recommencer: () => void
 }
 
@@ -328,6 +335,29 @@ export const useStore = create<Store>((set) => ({
                 }
               : d,
           ),
+        },
+      }
+    }),
+
+  lancerCampagne: (campagneId) =>
+    set((state) => {
+      if (!state.federation) return state
+      const campagne = CAMPAGNES_MARKETING.find((c) => c.id === campagneId)
+      if (!campagne) return state
+      const { argent, fans, semaine, derniereCampagne } = state.federation
+      if (argent < campagne.cout) return state
+      if (fans < campagne.fansRequis) return state
+      const derniereUtilisation = derniereCampagne[campagneId]
+      if (derniereUtilisation !== undefined && semaine - derniereUtilisation < campagne.cooldownSemaines) {
+        return state
+      }
+      return {
+        federation: {
+          ...state.federation,
+          argent: argent - campagne.cout,
+          fans: fans + campagne.gainFans,
+          popularite: clampPourcentage(state.federation.popularite + campagne.gainPopularite),
+          derniereCampagne: { ...derniereCampagne, [campagneId]: semaine },
         },
       }
     }),

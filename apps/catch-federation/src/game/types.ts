@@ -70,6 +70,7 @@ export type Screen =
   | "resultats"
   | "titres"
   | "marche"
+  | "marketing"
   | "divisions"
 
 export type Difficulte = "facile" | "normal" | "difficile"
@@ -83,5 +84,6 @@ export interface FederationState {
   fans: number
   divisions: DivisionInstance[]
   freeAgents: Wrestler[]
+  derniereCampagne: Record<string, number>
   gameOver: boolean
 }
