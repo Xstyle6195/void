@@ -1,7 +1,7 @@
 import { useState } from "react"
-import { labelDivision } from "../game/divisions"
 import type { Wrestler } from "../game/types"
-import { useFederation, useStore } from "../state/store"
+import { useDivisionActive, useFederation, useStore } from "../state/store"
+import { DivisionSwitcher } from "./DivisionSwitcher"
 
 function StatBar({ label, value }: { label: string; value: number }) {
   return (
@@ -16,8 +16,14 @@ function StatBar({ label, value }: { label: string; value: number }) {
 }
 
 function WrestlerCard({ w }: { w: Wrestler }) {
+  const federation = useFederation()
+  const divisionActive = useDivisionActive()
   const renouvelerContrat = useStore((s) => s.renouvelerContrat)
   const libererLutteur = useStore((s) => s.libererLutteur)
+  const transfererLutteur = useStore((s) => s.transfererLutteur)
+  const [cibleTransfert, setCibleTransfert] = useState("")
+
+  const autresDivisions = federation.divisions.filter((d) => d.id !== divisionActive.id)
 
   return (
     <div className="carte-lutteur">
@@ -28,6 +34,7 @@ function WrestlerCard({ w }: { w: Wrestler }) {
             {w.alignment === "face" ? "Face" : "Heel"}
           </span>
           <span className="badge badge-style">{w.style}</span>
+          {w.debutant && <span className="badge">Débutant</span>}
           {w.titreId && <span className="badge badge-titre">Champion</span>}
         </div>
         {w.blessureSemaines > 0 && (
@@ -51,35 +58,48 @@ function WrestlerCard({ w }: { w: Wrestler }) {
           Libérer
         </button>
       </div>
+      {autresDivisions.length > 0 && (
+        <div className="carte-lutteur-transfert">
+          <select value={cibleTransfert} onChange={(e) => setCibleTransfert(e.target.value)}>
+            <option value="">Transférer vers…</option>
+            {autresDivisions.map((d) => (
+              <option key={d.id} value={d.id}>
+                {d.nom}
+              </option>
+            ))}
+          </select>
+          <button
+            disabled={!cibleTransfert}
+            onClick={() => {
+              transfererLutteur(w.id, cibleTransfert)
+              setCibleTransfert("")
+            }}
+          >
+            Transférer
+          </button>
+        </div>
+      )}
     </div>
   )
 }
 
 export function RosterView() {
-  const federation = useFederation()
-  const [filtre, setFiltre] = useState(federation.divisionsDebloquees[0])
-
-  const divisionActive = federation.divisionsDebloquees.includes(filtre)
-    ? filtre
-    : federation.divisionsDebloquees[0]
-  const rosterFiltre = federation.roster.filter((w) => w.division === divisionActive)
+  const divisionActive = useDivisionActive()
 
   return (
     <div className="vue">
-      <h2>Effectif ({federation.roster.length})</h2>
-      <div className="filtre-division">
-        {federation.divisionsDebloquees.map((d) => (
-          <button
-            key={d}
-            className={divisionActive === d ? "actif" : ""}
-            onClick={() => setFiltre(d)}
-          >
-            {labelDivision(d)}
-          </button>
-        ))}
+      <div className="vue-entete">
+        <h2>{divisionActive.nom} — Effectif ({divisionActive.roster.length})</h2>
+        <DivisionSwitcher divisionId={divisionActive.id} />
       </div>
+      {divisionActive.roster.length === 0 && (
+        <p className="texte-muted">
+          Aucun lutteur dans cette division. Recrutez-en sur le marché des transferts ou
+          transférez-en depuis une autre division.
+        </p>
+      )}
       <div className="liste-lutteurs">
-        {rosterFiltre.map((w) => (
+        {divisionActive.roster.map((w) => (
           <WrestlerCard key={w.id} w={w} />
         ))}
       </div>

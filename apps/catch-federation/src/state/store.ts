@@ -1,16 +1,16 @@
 import { create } from "zustand"
+import { coutNouvelleDivision } from "../game/divisions"
 import { jouerSemaine } from "../game/engine"
-import { infoDivision } from "../game/divisions"
 import type {
   BookedMatch,
   Difficulte,
-  Division,
+  DivisionInstance,
   FederationState,
   MatchStipulation,
   Screen,
-  Title,
+  Wrestler,
 } from "../game/types"
-import { creerDivision, creerMarcheTransferts, creerRosterInitial } from "../game/wrestlers"
+import { creerMarcheTransferts, creerRosterInitial } from "../game/wrestlers"
 
 const COUT_RENOUVELLEMENT = 500
 const BONUS_SIGNATURE = 300
@@ -22,23 +22,39 @@ const PARAMETRES_DIFFICULTE: Record<Difficulte, { argent: number; popularite: nu
   difficile: { argent: 8000, popularite: 10 },
 }
 
-const TAILLE_NOUVELLE_DIVISION = 6
-
 function idMatch(): string {
   return `m-${Date.now()}-${Math.round(Math.random() * 10000)}`
 }
 
-function nouveauTitre(division: Division, name: string, prestige: number): Title {
-  return { id: `t-${division}-${Date.now()}`, name, division, prestige, championId: null }
+function idDivision(): string {
+  return `div-${Date.now()}-${Math.round(Math.random() * 10000)}`
+}
+
+function nouvelleDivision(nom: string, roster: Wrestler[], titres: { name: string; prestige: number }[]): DivisionInstance {
+  const id = idDivision()
+  return {
+    id,
+    nom,
+    roster,
+    titles: titres.map((t, i) => ({
+      id: `${id}-t${i}`,
+      name: t.name,
+      prestige: t.prestige,
+      championId: null,
+    })),
+    card: [],
+    dernierResultat: null,
+    historique: [],
+  }
 }
 
 function etatInitial(nom: string, difficulte: Difficulte): FederationState {
-  const roster = creerRosterInitial()
-  const titles = [
-    nouveauTitre("masculine", "Championnat du Monde", 100),
-    nouveauTitre("feminine", "Championnat Mondial Féminin", 100),
-  ]
+  const roster = creerRosterInitial(12)
   const { argent, popularite } = PARAMETRES_DIFFICULTE[difficulte]
+  const divisionPrincipale = nouvelleDivision("Division Principale", roster, [
+    { name: "Championnat du Monde", prestige: 100 },
+    { name: "Championnat Intercontinental", prestige: 60 },
+  ])
   return {
     nom,
     difficulte,
@@ -46,13 +62,8 @@ function etatInitial(nom: string, difficulte: Difficulte): FederationState {
     argent,
     popularite,
     fans: 0,
-    roster,
+    divisions: [divisionPrincipale],
     freeAgents: creerMarcheTransferts(6),
-    titles,
-    divisionsDebloquees: ["masculine", "feminine"],
-    card: [],
-    dernierResultat: null,
-    historique: [],
     gameOver: false,
   }
 }
@@ -63,80 +74,154 @@ interface Store {
   phase: Phase
   ecran: Screen
   federation: FederationState | null
+  divisionActiveId: string | null
   demarrerFederation: (nom: string, difficulte: Difficulte) => void
   setEcran: (ecran: Screen) => void
+  setDivisionActive: (id: string) => void
+  creerDivision: (nom: string) => void
+  transfererLutteur: (wrestlerId: string, versDivisionId: string) => void
   ajouterMatch: () => void
   supprimerMatch: (matchId: string) => void
   toggleParticipant: (matchId: string, wrestlerId: string) => void
   definirStipulation: (matchId: string, stipulation: MatchStipulation) => void
   definirTitre: (matchId: string, titleId: string | null) => void
-  definirDivisionMatch: (matchId: string, division: Division) => void
-  debloquerDivision: (division: Division) => void
-  lancerShow: () => void
-  signerAgentLibre: (id: string) => void
+  lancerSemaine: () => void
+  signerAgentLibre: (id: string, versDivisionId: string) => void
   libererLutteur: (id: string) => void
   renouvelerContrat: (id: string) => void
   recommencer: () => void
+}
+
+function trouverDivisionDuLutteur(federation: FederationState, wrestlerId: string): DivisionInstance | undefined {
+  return federation.divisions.find((d) => d.roster.some((w) => w.id === wrestlerId))
 }
 
 export const useStore = create<Store>((set) => ({
   phase: "accueil",
   ecran: "effectif",
   federation: null,
+  divisionActiveId: null,
 
-  demarrerFederation: (nom, difficulte) =>
+  demarrerFederation: (nom, difficulte) => {
+    const federation = etatInitial(nom.trim() || "Fédération", difficulte)
     set({
-      federation: etatInitial(nom.trim() || "Fédération", difficulte),
+      federation,
       phase: "jeu",
       ecran: "effectif",
-    }),
+      divisionActiveId: federation.divisions[0].id,
+    })
+  },
 
   setEcran: (ecran) => set({ ecran }),
 
-  ajouterMatch: () =>
+  setDivisionActive: (id) => set({ divisionActiveId: id }),
+
+  creerDivision: (nom) =>
     set((state) => {
       if (!state.federation) return state
-      if (state.federation.card.length >= 5) return state
+      const cout = coutNouvelleDivision(state.federation.divisions.length)
+      if (state.federation.argent < cout) return state
+      const division = nouvelleDivision(nom.trim() || "Nouvelle Division", [], [
+        { name: `Championnat ${nom.trim() || "de la division"}`, prestige: 70 },
+      ])
+      return {
+        federation: {
+          ...state.federation,
+          argent: state.federation.argent - cout,
+          divisions: [...state.federation.divisions, division],
+        },
+        divisionActiveId: division.id,
+        ecran: "effectif",
+      }
+    }),
+
+  transfererLutteur: (wrestlerId, versDivisionId) =>
+    set((state) => {
+      if (!state.federation) return state
+      const origine = trouverDivisionDuLutteur(state.federation, wrestlerId)
+      if (!origine || origine.id === versDivisionId) return state
+      const lutteur = origine.roster.find((w) => w.id === wrestlerId)
+      if (!lutteur) return state
+      const lutteurSansTitre = { ...lutteur, titreId: null }
+      return {
+        federation: {
+          ...state.federation,
+          divisions: state.federation.divisions.map((d) => {
+            if (d.id === origine.id) {
+              return {
+                ...d,
+                roster: d.roster.filter((w) => w.id !== wrestlerId),
+                titles: d.titles.map((t) =>
+                  t.championId === wrestlerId ? { ...t, championId: null } : t,
+                ),
+              }
+            }
+            if (d.id === versDivisionId) {
+              return { ...d, roster: [...d.roster, lutteurSansTitre] }
+            }
+            return d
+          }),
+        },
+      }
+    }),
+
+  ajouterMatch: () =>
+    set((state) => {
+      if (!state.federation || !state.divisionActiveId) return state
+      const division = state.federation.divisions.find((d) => d.id === state.divisionActiveId)
+      if (!division || division.card.length >= 5) return state
       const nouveauMatch: BookedMatch = {
         id: idMatch(),
-        division: state.federation.divisionsDebloquees[0] ?? "masculine",
         participantIds: [],
         stipulation: "normal",
         titleId: null,
       }
       return {
-        federation: { ...state.federation, card: [...state.federation.card, nouveauMatch] },
+        federation: {
+          ...state.federation,
+          divisions: state.federation.divisions.map((d) =>
+            d.id === division.id ? { ...d, card: [...d.card, nouveauMatch] } : d,
+          ),
+        },
       }
     }),
 
   supprimerMatch: (matchId) =>
     set((state) => {
-      if (!state.federation) return state
+      if (!state.federation || !state.divisionActiveId) return state
       return {
         federation: {
           ...state.federation,
-          card: state.federation.card.filter((m) => m.id !== matchId),
+          divisions: state.federation.divisions.map((d) =>
+            d.id === state.divisionActiveId
+              ? { ...d, card: d.card.filter((m) => m.id !== matchId) }
+              : d,
+          ),
         },
       }
     }),
 
   toggleParticipant: (matchId, wrestlerId) =>
     set((state) => {
-      if (!state.federation) return state
-      const matchCible = state.federation.card.find((m) => m.id === matchId)
-      const dejaPresent = matchCible?.participantIds.includes(wrestlerId) ?? false
+      if (!state.federation || !state.divisionActiveId) return state
       return {
         federation: {
           ...state.federation,
-          card: state.federation.card.map((m) => {
-            if (m.id !== matchId) {
-              return { ...m, participantIds: m.participantIds.filter((id) => id !== wrestlerId) }
+          divisions: state.federation.divisions.map((d) => {
+            if (d.id !== state.divisionActiveId) return d
+            const matchCible = d.card.find((m) => m.id === matchId)
+            const dejaPresent = matchCible?.participantIds.includes(wrestlerId) ?? false
+            return {
+              ...d,
+              card: d.card.map((m) => {
+                if (m.id !== matchId) return m
+                if (dejaPresent) {
+                  return { ...m, participantIds: m.participantIds.filter((id) => id !== wrestlerId) }
+                }
+                if (m.participantIds.length >= 4) return m
+                return { ...m, participantIds: [...m.participantIds, wrestlerId] }
+              }),
             }
-            if (dejaPresent) {
-              return { ...m, participantIds: m.participantIds.filter((id) => id !== wrestlerId) }
-            }
-            if (m.participantIds.length >= 4) return m
-            return { ...m, participantIds: [...m.participantIds, wrestlerId] }
           }),
         },
       }
@@ -144,12 +229,14 @@ export const useStore = create<Store>((set) => ({
 
   definirStipulation: (matchId, stipulation) =>
     set((state) => {
-      if (!state.federation) return state
+      if (!state.federation || !state.divisionActiveId) return state
       return {
         federation: {
           ...state.federation,
-          card: state.federation.card.map((m) =>
-            m.id === matchId ? { ...m, stipulation } : m,
+          divisions: state.federation.divisions.map((d) =>
+            d.id === state.divisionActiveId
+              ? { ...d, card: d.card.map((m) => (m.id === matchId ? { ...m, stipulation } : m)) }
+              : d,
           ),
         },
       }
@@ -157,63 +244,29 @@ export const useStore = create<Store>((set) => ({
 
   definirTitre: (matchId, titleId) =>
     set((state) => {
-      if (!state.federation) return state
+      if (!state.federation || !state.divisionActiveId) return state
       return {
         federation: {
           ...state.federation,
-          card: state.federation.card.map((m) => (m.id === matchId ? { ...m, titleId } : m)),
-        },
-      }
-    }),
-
-  definirDivisionMatch: (matchId, division) =>
-    set((state) => {
-      if (!state.federation) return state
-      return {
-        federation: {
-          ...state.federation,
-          card: state.federation.card.map((m) =>
-            m.id === matchId ? { ...m, division, participantIds: [], titleId: null } : m,
+          divisions: state.federation.divisions.map((d) =>
+            d.id === state.divisionActiveId
+              ? { ...d, card: d.card.map((m) => (m.id === matchId ? { ...m, titleId } : m)) }
+              : d,
           ),
         },
       }
     }),
 
-  debloquerDivision: (division) =>
+  lancerSemaine: () =>
     set((state) => {
       if (!state.federation) return state
-      const info = infoDivision(division)
-      if (state.federation.divisionsDebloquees.includes(division)) return state
-      if (state.federation.argent < info.cout) return state
-      if (state.federation.fans < info.fansMinimum) return state
-      const nouveauxLutteurs = creerDivision(division, TAILLE_NOUVELLE_DIVISION)
-      const titre =
-        division === "equipe"
-          ? nouveauTitre("equipe", "Championnat par Équipes", 80)
-          : nouveauTitre("jeune_talent", "Championnat Jeune Talent", 40)
       return {
-        federation: {
-          ...state.federation,
-          argent: state.federation.argent - info.cout,
-          divisionsDebloquees: [...state.federation.divisionsDebloquees, division],
-          roster: [...state.federation.roster, ...nouveauxLutteurs],
-          titles: [...state.federation.titles, titre],
-        },
-      }
-    }),
-
-  lancerShow: () =>
-    set((state) => {
-      if (!state.federation) return state
-      const carteValide = state.federation.card.filter((m) => m.participantIds.length >= 2)
-      const federationAvecCarte = { ...state.federation, card: carteValide }
-      return {
-        federation: jouerSemaine(federationAvecCarte),
+        federation: jouerSemaine(state.federation),
         ecran: "resultats",
       }
     }),
 
-  signerAgentLibre: (id) =>
+  signerAgentLibre: (id, versDivisionId) =>
     set((state) => {
       if (!state.federation) return state
       const agent = state.federation.freeAgents.find((w) => w.id === id)
@@ -222,8 +275,10 @@ export const useStore = create<Store>((set) => ({
         federation: {
           ...state.federation,
           argent: state.federation.argent - BONUS_SIGNATURE,
-          roster: [...state.federation.roster, agent],
           freeAgents: state.federation.freeAgents.filter((w) => w.id !== id),
+          divisions: state.federation.divisions.map((d) =>
+            d.id === versDivisionId ? { ...d, roster: [...d.roster, agent] } : d,
+          ),
         },
       }
     }),
@@ -232,13 +287,22 @@ export const useStore = create<Store>((set) => ({
     set((state) => {
       if (!state.federation) return state
       if (state.federation.argent < INDEMNITE_LIBERATION) return state
+      const origine = trouverDivisionDuLutteur(state.federation, id)
+      if (!origine) return state
       return {
         federation: {
           ...state.federation,
           argent: state.federation.argent - INDEMNITE_LIBERATION,
-          roster: state.federation.roster.filter((w) => w.id !== id),
-          titles: state.federation.titles.map((t) =>
-            t.championId === id ? { ...t, championId: null } : t,
+          divisions: state.federation.divisions.map((d) =>
+            d.id === origine.id
+              ? {
+                  ...d,
+                  roster: d.roster.filter((w) => w.id !== id),
+                  titles: d.titles.map((t) =>
+                    t.championId === id ? { ...t, championId: null } : t,
+                  ),
+                }
+              : d,
           ),
         },
       }
@@ -248,18 +312,27 @@ export const useStore = create<Store>((set) => ({
     set((state) => {
       if (!state.federation) return state
       if (state.federation.argent < COUT_RENOUVELLEMENT) return state
+      const origine = trouverDivisionDuLutteur(state.federation, id)
+      if (!origine) return state
       return {
         federation: {
           ...state.federation,
           argent: state.federation.argent - COUT_RENOUVELLEMENT,
-          roster: state.federation.roster.map((w) =>
-            w.id === id ? { ...w, contratSemaines: w.contratSemaines + 12 } : w,
+          divisions: state.federation.divisions.map((d) =>
+            d.id === origine.id
+              ? {
+                  ...d,
+                  roster: d.roster.map((w) =>
+                    w.id === id ? { ...w, contratSemaines: w.contratSemaines + 12 } : w,
+                  ),
+                }
+              : d,
           ),
         },
       }
     }),
 
-  recommencer: () => set({ federation: null, phase: "accueil" }),
+  recommencer: () => set({ federation: null, phase: "accueil", divisionActiveId: null }),
 }))
 
 export function usePhase(): Phase {
@@ -272,6 +345,13 @@ export function useFederation(): FederationState {
     throw new Error("useFederation appelé avant le démarrage de la fédération")
   }
   return federation
+}
+
+export function useDivisionActive(): DivisionInstance {
+  const federation = useFederation()
+  const divisionActiveId = useStore((s) => s.divisionActiveId)
+  const division = federation.divisions.find((d) => d.id === divisionActiveId) ?? federation.divisions[0]
+  return division
 }
 
 export function useEcran(): [Screen, (e: Screen) => void] {

@@ -1,55 +1,67 @@
-import { DIVISIONS_INFO } from "../game/divisions"
+import { useState } from "react"
+import { coutNouvelleDivision } from "../game/divisions"
 import { useFederation, useStore } from "../state/store"
 
 export function DivisionsView() {
   const federation = useFederation()
-  const debloquerDivision = useStore((s) => s.debloquerDivision)
+  const setDivisionActive = useStore((s) => s.setDivisionActive)
+  const setEcran = useStore((s) => s.setEcran)
+  const creerDivision = useStore((s) => s.creerDivision)
+  const [nom, setNom] = useState("")
+
+  const cout = coutNouvelleDivision(federation.divisions.length)
+  const argentOk = federation.argent >= cout
 
   return (
     <div className="vue">
       <h2>Divisions</h2>
-      <p className="texte-muted carte-division-fans-actuels">
-        {federation.fans.toLocaleString("fr-FR")} fans
-      </p>
       <div className="liste-divisions">
-        {DIVISIONS_INFO.map((info) => {
-          const debloquee = federation.divisionsDebloquees.includes(info.id)
-          const effectif = federation.roster.filter((w) => w.division === info.id).length
-          const fansOk = federation.fans >= info.fansMinimum
-          const argentOk = federation.argent >= info.cout
-
-          return (
-            <div key={info.id} className={`carte-division ${debloquee ? "debloquee" : ""}`}>
-              <div className="carte-division-entete">
-                <h3>{info.label}</h3>
-                {debloquee && <span className="badge badge-titre">Active</span>}
-              </div>
-              <p className="texte-muted">{info.description}</p>
-
-              {debloquee ? (
-                <p className="carte-division-effectif">{effectif} lutteur{effectif > 1 ? "s" : ""}</p>
-              ) : (
-                <>
-                  <p className="carte-division-condition">
-                    Coût : {info.cout.toLocaleString("fr-FR")} € · Débloquable à partir de{" "}
-                    {info.fansMinimum.toLocaleString("fr-FR")} fans
-                  </p>
-                  <button
-                    className="primaire"
-                    onClick={() => debloquerDivision(info.id)}
-                    disabled={!fansOk || !argentOk}
-                  >
-                    {!fansOk
-                      ? `Encore ${(info.fansMinimum - federation.fans).toLocaleString("fr-FR")} fans`
-                      : !argentOk
-                        ? "Trésorerie insuffisante"
-                        : "Débloquer"}
-                  </button>
-                </>
-              )}
+        {federation.divisions.map((d) => (
+          <div key={d.id} className="carte-division">
+            <div className="carte-division-entete">
+              <h3>{d.nom}</h3>
             </div>
-          )
-        })}
+            <p className="texte-muted">
+              {d.roster.length} lutteur{d.roster.length > 1 ? "s" : ""} · {d.titles.length} titre
+              {d.titles.length > 1 ? "s" : ""}
+            </p>
+            <button
+              onClick={() => {
+                setDivisionActive(d.id)
+                setEcran("effectif")
+              }}
+            >
+              Gérer cette division
+            </button>
+          </div>
+        ))}
+      </div>
+
+      <h2 className="titre-nouvelle-division">Ouvrir une nouvelle division</h2>
+      <div className="carte-division">
+        <p className="texte-muted">
+          Une nouvelle division démarre sans lutteur — recrutez sur le marché des transferts ou
+          transférez des lutteurs depuis vos autres divisions.
+        </p>
+        <input
+          className="champ-nom"
+          type="text"
+          placeholder="Nom de la division"
+          value={nom}
+          onChange={(e) => setNom(e.target.value)}
+          maxLength={30}
+        />
+        <p className="carte-division-condition">Coût : {cout.toLocaleString("fr-FR")} €</p>
+        <button
+          className="primaire"
+          onClick={() => {
+            creerDivision(nom)
+            setNom("")
+          }}
+          disabled={!argentOk || !nom.trim()}
+        >
+          {!argentOk ? "Trésorerie insuffisante" : "Ouvrir la division"}
+        </button>
       </div>
     </div>
   )

@@ -1,6 +1,6 @@
-import { labelDivision } from "../game/divisions"
-import type { BookedMatch, Division, MatchStipulation } from "../game/types"
-import { useFederation, useStore } from "../state/store"
+import type { BookedMatch, MatchStipulation } from "../game/types"
+import { useDivisionActive, useStore } from "../state/store"
+import { DivisionSwitcher } from "./DivisionSwitcher"
 
 const STIPULATIONS: { value: MatchStipulation; label: string }[] = [
   { value: "normal", label: "Normal" },
@@ -10,28 +10,24 @@ const STIPULATIONS: { value: MatchStipulation; label: string }[] = [
 ]
 
 function MatchCard({ match }: { match: BookedMatch }) {
-  const federation = useFederation()
+  const division = useDivisionActive()
   const toggleParticipant = useStore((s) => s.toggleParticipant)
   const definirStipulation = useStore((s) => s.definirStipulation)
   const definirTitre = useStore((s) => s.definirTitre)
-  const definirDivisionMatch = useStore((s) => s.definirDivisionMatch)
   const supprimerMatch = useStore((s) => s.supprimerMatch)
 
-  const lutteursDisponibles = federation.roster.filter(
-    (w) => w.division === match.division && w.blessureSemaines === 0,
-  )
-  const titresDivision = federation.titles.filter((t) => t.division === match.division)
+  const lutteursDisponibles = division.roster.filter((w) => w.blessureSemaines === 0)
 
   return (
     <div className="carte-match">
       <div className="carte-match-entete">
         <select
-          value={match.division}
-          onChange={(e) => definirDivisionMatch(match.id, e.target.value as Division)}
+          value={match.stipulation}
+          onChange={(e) => definirStipulation(match.id, e.target.value as MatchStipulation)}
         >
-          {federation.divisionsDebloquees.map((d) => (
-            <option key={d} value={d}>
-              {labelDivision(d)}
+          {STIPULATIONS.map((s) => (
+            <option key={s.value} value={s.value}>
+              {s.label}
             </option>
           ))}
         </select>
@@ -40,24 +36,13 @@ function MatchCard({ match }: { match: BookedMatch }) {
         </button>
       </div>
 
-      <select
-        value={match.stipulation}
-        onChange={(e) => definirStipulation(match.id, e.target.value as MatchStipulation)}
-      >
-        {STIPULATIONS.map((s) => (
-          <option key={s.value} value={s.value}>
-            {s.label}
-          </option>
-        ))}
-      </select>
-
       {match.stipulation === "titre" && (
         <select
           value={match.titleId ?? ""}
           onChange={(e) => definirTitre(match.id, e.target.value || null)}
         >
           <option value="">Choisir un titre…</option>
-          {titresDivision.map((t) => (
+          {division.titles.map((t) => (
             <option key={t.id} value={t.id}>
               {t.name}
             </option>
@@ -70,7 +55,7 @@ function MatchCard({ match }: { match: BookedMatch }) {
           <span className="texte-muted">Aucun lutteur sélectionné</span>
         )}
         {match.participantIds.map((id) => {
-          const w = federation.roster.find((r) => r.id === id)
+          const w = division.roster.find((r) => r.id === id)
           if (!w) return null
           return (
             <span key={id} className="jeton-participant" onClick={() => toggleParticipant(match.id, id)}>
@@ -100,31 +85,40 @@ function MatchCard({ match }: { match: BookedMatch }) {
 }
 
 export function BookingView() {
-  const federation = useFederation()
+  const division = useDivisionActive()
   const ajouterMatch = useStore((s) => s.ajouterMatch)
-  const lancerShow = useStore((s) => s.lancerShow)
+  const lancerSemaine = useStore((s) => s.lancerSemaine)
 
-  const matchesValides = federation.card.filter((m) => m.participantIds.length >= 2).length
+  const matchesValides = division.card.filter((m) => m.participantIds.length >= 2).length
 
   return (
     <div className="vue">
-      <h2>Composer la carte — Semaine {federation.semaine}</h2>
-      {federation.card.map((match) => (
+      <div className="vue-entete">
+        <h2>{division.nom} — Composer la carte</h2>
+        <DivisionSwitcher divisionId={division.id} />
+      </div>
+      {division.roster.length === 0 && (
+        <p className="texte-muted">Aucun lutteur dans cette division pour composer une carte.</p>
+      )}
+      {division.card.map((match) => (
         <MatchCard key={match.id} match={match} />
       ))}
 
       <div className="actions-booking">
-        <button onClick={ajouterMatch} disabled={federation.card.length >= 5}>
+        <button
+          onClick={ajouterMatch}
+          disabled={division.card.length >= 5 || division.roster.length === 0}
+        >
           + Ajouter un match
         </button>
-        <button
-          className="primaire"
-          onClick={lancerShow}
-          disabled={matchesValides === 0}
-        >
-          Lancer le show ({matchesValides} match{matchesValides > 1 ? "s" : ""})
-        </button>
       </div>
+
+      <p className="texte-muted texte-lancer-semaine">
+        Lancer la semaine résout les cartes de toutes les divisions ayant des matchs programmés.
+      </p>
+      <button className="primaire bouton-lancer-semaine" onClick={lancerSemaine}>
+        Lancer la semaine ({matchesValides} match{matchesValides > 1 ? "s" : ""} ici)
+      </button>
     </div>
   )
 }

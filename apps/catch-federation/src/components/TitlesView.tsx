@@ -1,18 +1,21 @@
-import { labelDivision } from "../game/divisions"
-import { useFederation } from "../state/store"
+import { useDivisionActive } from "../state/store"
+import { DivisionSwitcher } from "./DivisionSwitcher"
 
 export function TitlesView() {
-  const federation = useFederation()
+  const division = useDivisionActive()
+
   return (
     <div className="vue">
-      <h2>Championnats</h2>
+      <div className="vue-entete">
+        <h2>{division.nom} — Championnats</h2>
+        <DivisionSwitcher divisionId={division.id} />
+      </div>
       <div className="liste-titres">
-        {federation.titles.map((t) => {
-          const champion = federation.roster.find((w) => w.id === t.championId)
+        {division.titles.map((t) => {
+          const champion = division.roster.find((w) => w.id === t.championId)
           return (
             <div key={t.id} className="carte-titre">
               <h3>{t.name}</h3>
-              <span className="badge">{labelDivision(t.division)}</span>
               <span className="top-bar-label">Prestige {t.prestige}</span>
               <p>{champion ? `Détenu par ${champion.name}` : "Vacant"}</p>
             </div>

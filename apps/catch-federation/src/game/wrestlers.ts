@@ -1,15 +1,11 @@
-import type { Division, Wrestler } from "./types"
+import type { Wrestler } from "./types"
 
-const PRENOMS_HOMMES = [
+const PRENOMS = [
   "Marcus", "Dante", "Ivan", "Kaito", "Bruno", "Silas", "Rex", "Theo",
   "Rocco", "Diego", "Magnus", "Otis", "Leon", "Jax", "Kane", "Viktor",
-  "Boris",
-]
-
-const PRENOMS_FEMMES = [
-  "Nova", "Zara", "Talia", "Amara", "Selene", "Raya", "Storm", "Freya",
-  "Ines", "Lyra", "Mila", "Nadia", "Ondine", "Sasha", "Vera", "Yara",
-  "Zoe",
+  "Boris", "Nova", "Zara", "Talia", "Amara", "Selene", "Raya", "Storm",
+  "Freya", "Ines", "Lyra", "Mila", "Nadia", "Ondine", "Sasha", "Vera",
+  "Yara", "Zoe",
 ]
 
 const NOMS = [
@@ -34,23 +30,11 @@ function pick<T>(items: T[]): T {
   return items[randInt(0, items.length - 1)]
 }
 
-function nomPourDivision(division: Division): string {
-  const prenoms =
-    division === "feminine"
-      ? PRENOMS_FEMMES
-      : division === "masculine"
-        ? PRENOMS_HOMMES
-        : Math.random() < 0.5
-          ? PRENOMS_HOMMES
-          : PRENOMS_FEMMES
-  return `${pick(prenoms)} ${pick(NOMS)}`
-}
-
-export function generateWrestler(division: Division): Wrestler {
-  const nom = nomPourDivision(division)
+export function generateWrestler(): Wrestler {
+  const nom = `${pick(PRENOMS)} ${pick(NOMS)}`
   const alignment = Math.random() < 0.5 ? "face" : "heel"
   const style = pick([...STYLES])
-  const debutant = division === "jeune_talent"
+  const debutant = Math.random() < 0.15
   const [min, max] = debutant ? [15, 55] : [30, 90]
   const charisme = randInt(min, max)
   const technique = randInt(min, max)
@@ -59,7 +43,7 @@ export function generateWrestler(division: Division): Wrestler {
   return {
     id: nextId("w"),
     name: nom,
-    division,
+    debutant,
     alignment,
     style,
     charisme,
@@ -76,20 +60,10 @@ export function generateWrestler(division: Division): Wrestler {
   }
 }
 
-export function genererAgentLibre(): Wrestler {
-  return generateWrestler(Math.random() < 0.5 ? "masculine" : "feminine")
-}
-
-export function creerRosterInitial(): Wrestler[] {
-  const masculins = Array.from({ length: 6 }, () => generateWrestler("masculine"))
-  const feminins = Array.from({ length: 6 }, () => generateWrestler("feminine"))
-  return [...masculins, ...feminins]
+export function creerRosterInitial(taille: number): Wrestler[] {
+  return Array.from({ length: taille }, generateWrestler)
 }
 
 export function creerMarcheTransferts(taille: number): Wrestler[] {
-  return Array.from({ length: taille }, genererAgentLibre)
-}
-
-export function creerDivision(division: Division, taille: number): Wrestler[] {
-  return Array.from({ length: taille }, () => generateWrestler(division))
+  return Array.from({ length: taille }, generateWrestler)
 }

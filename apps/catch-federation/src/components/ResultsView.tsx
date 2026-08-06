@@ -1,11 +1,70 @@
+import type { DivisionInstance } from "../game/types"
 import { useFederation, useStore } from "../state/store"
+
+function BlocDivision({ division, semaine }: { division: DivisionInstance; semaine: number }) {
+  const resultat = division.dernierResultat
+  const aJoue = resultat?.semaine === semaine
+
+  return (
+    <div className="carte-resultat-division">
+      <h3>{division.nom}</h3>
+      {!aJoue || !resultat ? (
+        <p className="texte-muted">Pas de show cette semaine.</p>
+      ) : (
+        <>
+          <div className="resume-show">
+            <div>
+              <span className="top-bar-label">Note du show</span>
+              <span className="top-bar-value">{resultat.note}/100</span>
+            </div>
+            <div>
+              <span className="top-bar-label">Spectateurs</span>
+              <span className="top-bar-value">{resultat.spectateurs.toLocaleString("fr-FR")}</span>
+            </div>
+            <div>
+              <span className="top-bar-label">Revenus</span>
+              <span className="top-bar-value">{resultat.revenus.toLocaleString("fr-FR")} €</span>
+            </div>
+            <div>
+              <span className="top-bar-label">Nouveaux fans</span>
+              <span className="top-bar-value">+{resultat.nouveauxFans.toLocaleString("fr-FR")}</span>
+            </div>
+          </div>
+          <div className="liste-resultats-matches">
+            {resultat.matches.map((m, i) => {
+              const gagnant = division.roster.find((w) => w.id === m.winnerId)
+              const blesse = division.roster.find((w) => w.id === m.blesseId)
+              return (
+                <div key={m.match.id} className="carte-resultat-match">
+                  <span className="badge">
+                    Match {i + 1} · {m.match.stipulation}
+                  </span>
+                  <p>
+                    Vainqueur : <strong>{gagnant?.name ?? "?"}</strong> — note {m.note}/100
+                  </p>
+                  {blesse && <p className="texte-blessure">{blesse.name} a été blessé.</p>}
+                </div>
+              )
+            })}
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
 
 export function ResultsView() {
   const federation = useFederation()
   const setEcran = useStore((s) => s.setEcran)
-  const resultat = federation.dernierResultat
+  const semaineEcoulee = federation.semaine - 1
 
-  if (!resultat) {
+  const divisionsAyantJoue = federation.divisions.filter(
+    (d) => d.dernierResultat?.semaine === semaineEcoulee,
+  )
+  const revenusTotaux = divisionsAyantJoue.reduce((acc, d) => acc + (d.dernierResultat?.revenus ?? 0), 0)
+  const fansTotaux = divisionsAyantJoue.reduce((acc, d) => acc + (d.dernierResultat?.nouveauxFans ?? 0), 0)
+
+  if (semaineEcoulee < 1) {
     return (
       <div className="vue">
         <h2>Résultats</h2>
@@ -16,27 +75,19 @@ export function ResultsView() {
 
   return (
     <div className="vue">
-      <h2>Show de la semaine {resultat.semaine}</h2>
+      <h2>Bilan de la semaine {semaineEcoulee}</h2>
       <div className="resume-show">
         <div>
-          <span className="top-bar-label">Note du show</span>
-          <span className="top-bar-value">{resultat.note}/100</span>
+          <span className="top-bar-label">Trésorerie</span>
+          <span className="top-bar-value">{federation.argent.toLocaleString("fr-FR")} €</span>
         </div>
         <div>
-          <span className="top-bar-label">Spectateurs</span>
-          <span className="top-bar-value">{resultat.spectateurs.toLocaleString("fr-FR")}</span>
-        </div>
-        <div>
-          <span className="top-bar-label">Revenus</span>
-          <span className="top-bar-value">{resultat.revenus.toLocaleString("fr-FR")} €</span>
-        </div>
-        <div>
-          <span className="top-bar-label">Dépenses</span>
-          <span className="top-bar-value">{resultat.depenses.toLocaleString("fr-FR")} €</span>
+          <span className="top-bar-label">Revenus des shows</span>
+          <span className="top-bar-value">{revenusTotaux.toLocaleString("fr-FR")} €</span>
         </div>
         <div>
           <span className="top-bar-label">Nouveaux fans</span>
-          <span className="top-bar-value">+{resultat.nouveauxFans.toLocaleString("fr-FR")}</span>
+          <span className="top-bar-value">+{fansTotaux.toLocaleString("fr-FR")}</span>
         </div>
         <div>
           <span className="top-bar-label">Total fans</span>
@@ -44,20 +95,10 @@ export function ResultsView() {
         </div>
       </div>
 
-      <div className="liste-resultats-matches">
-        {resultat.matches.map((m, i) => {
-          const gagnant = federation.roster.find((w) => w.id === m.winnerId)
-          const blesse = federation.roster.find((w) => w.id === m.blesseId)
-          return (
-            <div key={m.match.id} className="carte-resultat-match">
-              <span className="badge">Match {i + 1} · {m.match.stipulation}</span>
-              <p>
-                Vainqueur : <strong>{gagnant?.name ?? "?"}</strong> — note {m.note}/100
-              </p>
-              {blesse && <p className="texte-blessure">{blesse.name} a été blessé.</p>}
-            </div>
-          )
-        })}
+      <div className="liste-resultats-divisions">
+        {federation.divisions.map((d) => (
+          <BlocDivision key={d.id} division={d} semaine={semaineEcoulee} />
+        ))}
       </div>
 
       {federation.gameOver ? (

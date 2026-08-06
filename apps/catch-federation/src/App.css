@@ -425,17 +425,11 @@ select {
   font-size: 15px;
 }
 
-.carte-division-fans-actuels {
-  font-size: 15px;
-  color: var(--gold);
-  font-weight: 700;
-  margin-bottom: 16px;
-}
-
 .liste-divisions {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  margin-bottom: 16px;
 }
 
 .carte-division {
@@ -445,20 +439,10 @@ select {
   padding: 14px;
 }
 
-.carte-division.debloquee {
-  border-color: var(--gold);
-}
-
 .carte-division-entete {
   display: flex;
   justify-content: space-between;
   align-items: center;
-}
-
-.carte-division-effectif {
-  font-size: 13px;
-  color: var(--gold);
-  margin-top: 8px;
 }
 
 .carte-division-condition {
@@ -467,19 +451,68 @@ select {
   margin: 8px 0;
 }
 
-.filtre-division {
+.carte-division .champ-nom {
+  margin: 10px 0;
+}
+
+.vue-entete {
   display: flex;
-  gap: 6px;
-  margin-bottom: 14px;
-  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 16px;
 }
 
-.filtre-division button {
+.vue-entete h2 {
+  margin-bottom: 0;
+  flex: 1;
+}
+
+.selecteur-division {
+  flex-shrink: 0;
   font-size: 12px;
-  padding: 6px 10px;
+  max-width: 150px;
 }
 
-.filtre-division button.actif {
-  border-color: var(--gold);
-  color: var(--gold);
+.carte-lutteur-transfert {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.carte-lutteur-transfert select {
+  flex: 1;
+  font-size: 12px;
+}
+
+.texte-lancer-semaine {
+  margin-top: 16px;
+}
+
+.bouton-lancer-semaine {
+  width: 100%;
+  padding: 14px;
+  font-size: 15px;
+}
+
+.titre-nouvelle-division {
+  margin-top: 24px;
+}
+
+.liste-resultats-divisions {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.carte-resultat-division {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px;
+}
+
+.carte-resultat-division h3 {
+  font-size: 15px;
 }

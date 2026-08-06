@@ -1,12 +1,13 @@
 import type {
   BookedMatch,
   Difficulte,
+  DivisionInstance,
   FederationState,
   MatchResult,
   ShowResult,
   Wrestler,
 } from "./types"
-import { genererAgentLibre } from "./wrestlers"
+import { generateWrestler } from "./wrestlers"
 
 const PRIX_BILLET = 18
 const FRAIS_SALLE = 2200
@@ -102,12 +103,36 @@ function simulerMatch(
   return { match, winnerId, note, blesseId }
 }
 
-export function jouerSemaine(state: FederationState): FederationState {
-  const roster = state.roster.map((w) => ({ ...w }))
-  const titles = state.titles.map((t) => ({ ...t }))
+interface ResultatDivisionSemaine {
+  division: DivisionInstance
+  aJoue: boolean
+  revenus: number
+  depenses: number
+  note: number
+}
 
-  const resultats: MatchResult[] = state.card.map((match, index) =>
-    simulerMatch(match, roster, index === state.card.length - 1),
+function jouerDivision(
+  division: DivisionInstance,
+  semaine: number,
+  populariteFederation: number,
+): ResultatDivisionSemaine {
+  const roster = division.roster.map((w) => ({ ...w }))
+  const titles = division.titles.map((t) => ({ ...t }))
+  const salaires = roster.reduce((acc, w) => acc + w.salaire, 0)
+
+  if (division.card.length === 0) {
+    const rosterApresSemaine = tickRoster(roster)
+    return {
+      division: { ...division, roster: rosterApresSemaine, titles, card: [] },
+      aJoue: false,
+      revenus: 0,
+      depenses: salaires,
+      note: 0,
+    }
+  }
+
+  const resultats: MatchResult[] = division.card.map((match, index) =>
+    simulerMatch(match, roster, index === division.card.length - 1),
   )
 
   for (const resultat of resultats) {
@@ -148,75 +173,103 @@ export function jouerSemaine(state: FederationState): FederationState {
     }
   }
 
-  let noteShow = 0
-  if (resultats.length > 0) {
-    const poidsMainEvent = 1.5
-    const sommePoids = resultats.length - 1 + poidsMainEvent
-    const sommeNotes = resultats.reduce(
-      (acc, r, i) => acc + r.note * (i === resultats.length - 1 ? poidsMainEvent : 1),
-      0,
-    )
-    noteShow = Math.round(sommeNotes / sommePoids)
-  }
+  const poidsMainEvent = 1.5
+  const sommePoids = resultats.length - 1 + poidsMainEvent
+  const sommeNotes = resultats.reduce(
+    (acc, r, i) => acc + r.note * (i === resultats.length - 1 ? poidsMainEvent : 1),
+    0,
+  )
+  const noteShow = Math.round(sommeNotes / sommePoids)
 
   const spectateurs = Math.round(
-    150 + state.popularite * 9 + noteShow * 6 + randInt(-50, 50),
+    150 + populariteFederation * 9 + noteShow * 6 + randInt(-50, 50),
   )
-  const revenus = Math.round(spectateurs * PRIX_BILLET + state.popularite * 25)
-  const salaires = roster.reduce((acc, w) => acc + w.salaire, 0)
+  const revenus = Math.round(spectateurs * PRIX_BILLET + populariteFederation * 25)
   const depenses = salaires + FRAIS_SALLE
-
-  const popularitePost = clamp(
-    Math.round(state.popularite + (noteShow - state.popularite) * 0.18),
-  )
-
-  const nouveauxFans = resultats.length > 0 ? Math.max(0, Math.round(spectateurs * 0.6)) : 0
+  const nouveauxFans = Math.max(0, Math.round(spectateurs * 0.6))
 
   const resultatShow: ShowResult = {
-    semaine: state.semaine,
+    semaine,
     matches: resultats,
     note: noteShow,
     spectateurs,
     revenus,
     depenses,
-    popularitePost,
     nouveauxFans,
   }
 
-  const rosterApresSemaine = roster
+  const rosterApresSemaine = tickRoster(roster)
+
+  return {
+    division: {
+      ...division,
+      roster: rosterApresSemaine,
+      titles,
+      card: [],
+      dernierResultat: resultatShow,
+      historique: [resultatShow, ...division.historique].slice(0, 20),
+    },
+    aJoue: true,
+    revenus,
+    depenses,
+    note: noteShow,
+  }
+}
+
+function tickRoster(roster: Wrestler[]): Wrestler[] {
+  return roster
     .map((w) => {
       const contratSemaines = w.contratSemaines - 1
       const blessureSemaines = Math.max(0, w.blessureSemaines - 1)
-      const forme =
-        blessureSemaines > 0 ? w.forme : clamp(w.forme + 8)
+      const forme = blessureSemaines > 0 ? w.forme : clamp(w.forme + 8)
       return { ...w, contratSemaines, blessureSemaines, forme }
     })
     .filter((w) => w.contratSemaines > 0)
+}
+
+export function jouerSemaine(state: FederationState): FederationState {
+  const semaineEcoulee = state.semaine
+  const resultatsDivisions = state.divisions.map((division) =>
+    jouerDivision(division, semaineEcoulee, state.popularite),
+  )
+
+  const divisions = resultatsDivisions.map((r) => r.division)
+  const divisionsAyantJoue = resultatsDivisions.filter((r) => r.aJoue)
+
+  const revenusTotaux = resultatsDivisions.reduce((acc, r) => acc + r.revenus, 0)
+  const depensesTotales = resultatsDivisions.reduce((acc, r) => acc + r.depenses, 0)
+
+  const noteMoyenne = divisionsAyantJoue.length
+    ? Math.round(
+        divisionsAyantJoue.reduce((acc, r) => acc + r.note, 0) / divisionsAyantJoue.length,
+      )
+    : state.popularite
+
+  const popularite = divisionsAyantJoue.length
+    ? clamp(Math.round(state.popularite + (noteMoyenne - state.popularite) * 0.18))
+    : state.popularite
+
+  const fansGagnes = divisions.reduce(
+    (acc, d) => acc + (d.dernierResultat?.semaine === semaineEcoulee ? d.dernierResultat.nouveauxFans : 0),
+    0,
+  )
 
   let freeAgents = state.freeAgents
   if (state.semaine % 3 === 0) {
-    freeAgents = [
-      ...state.freeAgents.slice(-4),
-      genererAgentLibre(),
-      genererAgentLibre(),
-    ]
+    freeAgents = [...state.freeAgents.slice(-4), generateWrestler(), generateWrestler()]
   }
 
-  const argent = state.argent + revenus - depenses
+  const argent = state.argent + revenusTotaux - depensesTotales
   const gameOver = argent < SEUIL_FAILLITE_PAR_DIFFICULTE[state.difficulte]
 
   return {
     ...state,
     semaine: state.semaine + 1,
     argent,
-    popularite: popularitePost,
-    fans: state.fans + nouveauxFans,
-    roster: rosterApresSemaine,
+    popularite,
+    fans: state.fans + fansGagnes,
+    divisions,
     freeAgents,
-    titles,
-    card: [],
-    dernierResultat: resultatShow,
-    historique: [resultatShow, ...state.historique].slice(0, 20),
     gameOver,
   }
 }
