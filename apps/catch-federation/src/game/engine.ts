@@ -13,6 +13,10 @@ import type {
 import { generateWrestler } from "./wrestlers"
 
 const FRAIS_SALLE = 2200
+const BONUS_NOTE_INTERFERENCE = 6
+const RISQUE_BLESSURE_INTERFERENCE = 0.05
+const BONUS_POPULARITE_INTERFERENCE = 8
+const COUT_INTERFERENCE = 200
 
 const SEUIL_FAILLITE_PAR_DIFFICULTE: Record<Difficulte, number> = {
   facile: -14000,
@@ -65,9 +69,12 @@ function simulerMatch(
   const formeMoyenne =
     participants.reduce((acc, w) => acc + w.forme, 0) / participants.length
 
+  const interferant = match.interferenceId ? roster.find((w) => w.id === match.interferenceId) : undefined
+
   const bonusVariete = (stylesUniques - 1) * 3
   const bonusMainEvent = mainEvent ? 6 : 0
   const bonusStip = stip.bonusNote + (match.estTitre ? BONUS_TITRE : 0)
+  const bonusInterference = interferant ? BONUS_NOTE_INTERFERENCE : 0
   const penaliteForme = (100 - formeMoyenne) * 0.15
   const alea = randInt(-8, 8)
 
@@ -78,26 +85,41 @@ function simulerMatch(
         bonusMainEvent +
         bonusStip +
         bonusArtistique +
+        bonusInterference +
         alea -
         penaliteForme,
     ),
   )
 
-  const poidsCamps = camps.map((camp) =>
-    camp.reduce((acc, id) => {
-      const w = roster.find((r) => r.id === id)
-      if (!w) return acc
-      return acc + w.technique + w.force + w.charisme + w.popularite * 0.5 + randInt(0, 20)
-    }, 0),
-  )
-  const totalPoids = poidsCamps.reduce((a, b) => a + b, 0)
-  let tirage = Math.random() * totalPoids
-  let indexGagnant = camps.length - 1
-  for (let i = 0; i < camps.length; i += 1) {
-    tirage -= poidsCamps[i]
-    if (tirage <= 0) {
-      indexGagnant = i
-      break
+  const campImpose =
+    match.vainqueurImposeIds.length > 0
+      ? camps.find(
+          (camp) =>
+            camp.length === match.vainqueurImposeIds.length &&
+            camp.every((id) => match.vainqueurImposeIds.includes(id)),
+        )
+      : undefined
+
+  let indexGagnant: number
+  if (campImpose) {
+    indexGagnant = camps.indexOf(campImpose)
+  } else {
+    const poidsCamps = camps.map((camp) =>
+      camp.reduce((acc, id) => {
+        const w = roster.find((r) => r.id === id)
+        if (!w) return acc
+        return acc + w.technique + w.force + w.charisme + w.popularite * 0.5 + randInt(0, 20)
+      }, 0),
+    )
+    const totalPoids = poidsCamps.reduce((a, b) => a + b, 0)
+    let tirage = Math.random() * totalPoids
+    indexGagnant = camps.length - 1
+    for (let i = 0; i < camps.length; i += 1) {
+      tirage -= poidsCamps[i]
+      if (tirage <= 0) {
+        indexGagnant = i
+        break
+      }
     }
   }
   const winnerIds = camps[indexGagnant]
@@ -112,6 +134,9 @@ function simulerMatch(
       break
     }
   }
+  if (!blesseId && interferant && Math.random() < RISQUE_BLESSURE_INTERFERENCE) {
+    blesseId = interferant.id
+  }
 
   let partisNoms: string[] = []
   if (STIPULATIONS_LOSER_LEAVES_TOWN.has(match.stipulation)) {
@@ -120,7 +145,7 @@ function simulerMatch(
       .filter((n): n is string => Boolean(n))
   }
 
-  return { match, winnerIds, note, blesseId, partisNoms }
+  return { match, winnerIds, note, blesseId, partisNoms, interferenceNom: interferant?.name ?? null }
 }
 
 interface ResultatDivisionSemaine {
@@ -182,6 +207,19 @@ function jouerDivision(
       }
     }
 
+    if (match.interferenceId) {
+      const interferant = roster.find((r) => r.id === match.interferenceId)
+      if (interferant) {
+        interferant.popularite = clamp(interferant.popularite + BONUS_POPULARITE_INTERFERENCE)
+        interferant.moral = clamp(interferant.moral + 2)
+        if (blesseId === interferant.id) {
+          interferant.blessureSemaines = Math.max(interferant.blessureSemaines, randInt(1, 4))
+          interferant.forme = clamp(interferant.forme - 15)
+          interferant.moral = clamp(interferant.moral - 3)
+        }
+      }
+    }
+
     if (match.estTitre && match.titleId) {
       const titre = titles.find((t) => t.id === match.titleId)
       if (titre) {
@@ -235,7 +273,7 @@ function jouerDivision(
   const spectateurs = Math.max(0, Math.min(arene.capacite, spectateursBruts))
   const revenus = Math.round(spectateurs * arene.prixBillet + populariteFederation * 25)
   const coutStipulations = matchesValides.reduce(
-    (acc, m) => acc + infoStipulation(m.stipulation).cout,
+    (acc, m) => acc + infoStipulation(m.stipulation).cout + (m.interferenceId ? COUT_INTERFERENCE : 0),
     0,
   )
   const depenses = Math.round(

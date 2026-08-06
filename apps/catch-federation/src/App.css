@@ -715,3 +715,30 @@ select {
   letter-spacing: 0.05em;
   margin-bottom: 6px;
 }
+
+.controle-booking {
+  margin-top: 12px;
+}
+
+.controle-booking select {
+  width: 100%;
+  margin-top: 4px;
+}
+
+.libelle-controle {
+  display: block;
+  font-size: 11px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+}
+
+.texte-interference {
+  color: var(--gold);
+  font-size: 13px;
+}
+
+.badge-programme {
+  color: var(--gold);
+  border-color: var(--gold);
+}

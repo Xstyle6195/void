@@ -41,6 +41,8 @@ export interface BookedMatch {
   stipulation: MatchStipulation
   estTitre: boolean
   titleId: string | null
+  vainqueurImposeIds: string[]
+  interferenceId: string | null
 }
 
 export interface MatchResult {
@@ -49,6 +51,7 @@ export interface MatchResult {
   note: number
   blesseId: string | null
   partisNoms: string[]
+  interferenceNom: string | null
 }
 
 export interface ShowResult {

@@ -47,11 +47,17 @@ function BlocDivision({ division, semaine }: { division: DivisionInstance; semai
                     Match {i + 1} · {stip.nom}
                     {m.match.estTitre ? " 🏆" : ""}
                   </span>
+                  {m.match.vainqueurImposeIds.length > 0 && (
+                    <span className="badge badge-programme">Résultat programmé</span>
+                  )}
                   <p>
                     Vainqueur{gagnants.length > 1 ? "s" : ""} :{" "}
                     <strong>{gagnants.length > 0 ? gagnants.join(" & ") : "?"}</strong> — note {m.note}/100
                   </p>
                   {blesse && <p className="texte-blessure">{blesse.name} a été blessé.</p>}
+                  {m.interferenceNom && (
+                    <p className="texte-interference">🥊 {m.interferenceNom} est intervenu(e) dans le match.</p>
+                  )}
                   {m.partisNoms.length > 0 && (
                     <p className="texte-blessure">
                       {m.partisNoms.join(" & ")} quitte{m.partisNoms.length > 1 ? "nt" : ""} la fédération.

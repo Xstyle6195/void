@@ -67,6 +67,74 @@ function EquipeSelection({
   )
 }
 
+function campsDuMatch(match: BookedMatch): string[][] {
+  if (match.format === "2v2") return [match.equipeA, match.equipeB]
+  return match.participantIds.map((id) => [id])
+}
+
+function VainqueurSelector({ match }: { match: BookedMatch }) {
+  const division = useDivisionActive()
+  const definirVainqueurImpose = useStore((s) => s.definirVainqueurImpose)
+
+  const camps = campsDuMatch(match).filter((camp) => camp.length > 0)
+  if (camps.length < 2) return null
+
+  const nomsCamp = (camp: string[]) =>
+    camp.map((id) => division.roster.find((w) => w.id === id)?.name ?? "?").join(" & ")
+
+  const cleCamp = (camp: string[]) => camp.join(",")
+  const valeurActuelle =
+    match.vainqueurImposeIds.length > 0 ? [...match.vainqueurImposeIds].sort().join(",") : ""
+
+  return (
+    <div className="controle-booking">
+      <label className="libelle-controle">Vainqueur</label>
+      <select
+        value={valeurActuelle}
+        onChange={(e) => {
+          if (!e.target.value) {
+            definirVainqueurImpose(match.id, [])
+            return
+          }
+          const camp = camps.find((c) => [...c].sort().join(",") === e.target.value)
+          definirVainqueurImpose(match.id, camp ?? [])
+        }}
+      >
+        <option value="">Libre (déterminé par le match)</option>
+        {camps.map((camp) => (
+          <option key={cleCamp(camp)} value={[...camp].sort().join(",")}>
+            {match.format === "2v2" ? `Équipe : ${nomsCamp(camp)}` : nomsCamp(camp)}
+          </option>
+        ))}
+      </select>
+    </div>
+  )
+}
+
+function InterferenceSelector({ match }: { match: BookedMatch }) {
+  const division = useDivisionActive()
+  const definirInterference = useStore((s) => s.definirInterference)
+  const dansLeMatch = new Set(campsDuMatch(match).flat())
+  const candidats = division.roster.filter((w) => !dansLeMatch.has(w.id) && w.blessureSemaines === 0)
+
+  return (
+    <div className="controle-booking">
+      <label className="libelle-controle">Interférence (+200 €)</label>
+      <select
+        value={match.interferenceId ?? ""}
+        onChange={(e) => definirInterference(match.id, e.target.value || null)}
+      >
+        <option value="">Aucune</option>
+        {candidats.map((w) => (
+          <option key={w.id} value={w.id}>
+            {w.name}
+          </option>
+        ))}
+      </select>
+    </div>
+  )
+}
+
 function MatchCard({ match }: { match: BookedMatch }) {
   const division = useDivisionActive()
   const toggleParticipant = useStore((s) => s.toggleParticipant)
@@ -190,6 +258,9 @@ function MatchCard({ match }: { match: BookedMatch }) {
           </div>
         </>
       )}
+
+      <VainqueurSelector match={match} />
+      <InterferenceSelector match={match} />
     </div>
   )
 }

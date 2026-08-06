@@ -101,6 +101,8 @@ interface Store {
   definirStipulation: (matchId: string, stipulation: MatchStipulation) => void
   definirTitre: (matchId: string, titleId: string | null) => void
   definirEstTitre: (matchId: string, estTitre: boolean) => void
+  definirVainqueurImpose: (matchId: string, campIds: string[]) => void
+  definirInterference: (matchId: string, wrestlerId: string | null) => void
   lancerSemaine: () => void
   signerAgentLibre: (id: string, versDivisionId: string) => void
   libererLutteur: (id: string) => void
@@ -224,6 +226,8 @@ export const useStore = create<Store>((set) => ({
         stipulation: "normal",
         estTitre: false,
         titleId: null,
+        vainqueurImposeIds: [],
+        interferenceId: null,
       }
       return {
         federation: {
@@ -265,10 +269,14 @@ export const useStore = create<Store>((set) => ({
               card: d.card.map((m) => {
                 if (m.id !== matchId) return m
                 if (dejaPresent) {
-                  return { ...m, participantIds: m.participantIds.filter((id) => id !== wrestlerId) }
+                  return {
+                    ...m,
+                    participantIds: m.participantIds.filter((id) => id !== wrestlerId),
+                    vainqueurImposeIds: [],
+                  }
                 }
                 if (m.participantIds.length >= LIMITES_FORMAT[m.format].max) return m
-                return { ...m, participantIds: [...m.participantIds, wrestlerId] }
+                return { ...m, participantIds: [...m.participantIds, wrestlerId], vainqueurImposeIds: [] }
               }),
             }
           }),
@@ -297,8 +305,50 @@ export const useStore = create<Store>((set) => ({
                           stipulation: stipulationsPourFormat(format)[0].id,
                           estTitre: false,
                           titleId: null,
+                          vainqueurImposeIds: [],
+                          interferenceId: null,
                         }
                       : m,
+                  ),
+                }
+              : d,
+          ),
+        },
+      }
+    }),
+
+  definirVainqueurImpose: (matchId, campIds) =>
+    set((state) => {
+      if (!state.federation || !state.divisionActiveId) return state
+      return {
+        federation: {
+          ...state.federation,
+          divisions: state.federation.divisions.map((d) =>
+            d.id === state.divisionActiveId
+              ? {
+                  ...d,
+                  card: d.card.map((m) =>
+                    m.id === matchId ? { ...m, vainqueurImposeIds: campIds } : m,
+                  ),
+                }
+              : d,
+          ),
+        },
+      }
+    }),
+
+  definirInterference: (matchId, wrestlerId) =>
+    set((state) => {
+      if (!state.federation || !state.divisionActiveId) return state
+      return {
+        federation: {
+          ...state.federation,
+          divisions: state.federation.divisions.map((d) =>
+            d.id === state.divisionActiveId
+              ? {
+                  ...d,
+                  card: d.card.map((m) =>
+                    m.id === matchId ? { ...m, interferenceId: wrestlerId } : m,
                   ),
                 }
               : d,
@@ -330,7 +380,9 @@ export const useStore = create<Store>((set) => ({
                 } else {
                   nouvelleCible = [...cible, wrestlerId]
                 }
-                return equipe === "A" ? { ...m, equipeA: nouvelleCible } : { ...m, equipeB: nouvelleCible }
+                return equipe === "A"
+                  ? { ...m, equipeA: nouvelleCible, vainqueurImposeIds: [] }
+                  : { ...m, equipeB: nouvelleCible, vainqueurImposeIds: [] }
               }),
             }
           }),
