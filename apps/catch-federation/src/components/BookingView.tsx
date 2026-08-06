@@ -1,3 +1,4 @@
+import { areneParId } from "../game/arenas"
 import type { BookedMatch, MatchStipulation } from "../game/types"
 import { useDivisionActive, useStore } from "../state/store"
 import { DivisionSwitcher } from "./DivisionSwitcher"
@@ -88,6 +89,7 @@ export function BookingView() {
   const division = useDivisionActive()
   const ajouterMatch = useStore((s) => s.ajouterMatch)
   const lancerSemaine = useStore((s) => s.lancerSemaine)
+  const arene = areneParId(division.areneId)
 
   const matchesValides = division.card.filter((m) => m.participantIds.length >= 2).length
 
@@ -97,6 +99,9 @@ export function BookingView() {
         <h2>{division.nom} — Composer la carte</h2>
         <DivisionSwitcher divisionId={division.id} />
       </div>
+      <p className="texte-muted texte-arene-active">
+        Salle : {arene.nom} (capacité {arene.capacite.toLocaleString("fr-FR")})
+      </p>
       {division.roster.length === 0 && (
         <p className="texte-muted">Aucun lutteur dans cette division pour composer une carte.</p>
       )}

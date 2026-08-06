@@ -1,13 +1,16 @@
+import { areneParId } from "../game/arenas"
 import type { DivisionInstance } from "../game/types"
 import { useFederation, useStore } from "../state/store"
 
 function BlocDivision({ division, semaine }: { division: DivisionInstance; semaine: number }) {
   const resultat = division.dernierResultat
   const aJoue = resultat?.semaine === semaine
+  const arene = areneParId(division.areneId)
 
   return (
     <div className="carte-resultat-division">
       <h3>{division.nom}</h3>
+      <p className="texte-muted">{arene.nom}</p>
       {!aJoue || !resultat ? (
         <p className="texte-muted">Pas de show cette semaine.</p>
       ) : (

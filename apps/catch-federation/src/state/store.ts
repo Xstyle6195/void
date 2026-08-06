@@ -1,4 +1,5 @@
 import { create } from "zustand"
+import { areneSuivante } from "../game/arenas"
 import { coutNouvelleDivision } from "../game/divisions"
 import { jouerSemaine } from "../game/engine"
 import { CAMPAGNES_MARKETING } from "../game/marketing"
@@ -36,6 +37,7 @@ function nouvelleDivision(nom: string, roster: Wrestler[], titres: { name: strin
   return {
     id,
     nom,
+    areneId: "rue",
     roster,
     titles: titres.map((t, i) => ({
       id: `${id}-t${i}`,
@@ -85,6 +87,7 @@ interface Store {
   setEcran: (ecran: Screen) => void
   setDivisionActive: (id: string) => void
   creerDivision: (nom: string) => void
+  ameliorerArene: (divisionId: string) => void
   transfererLutteur: (wrestlerId: string, versDivisionId: string) => void
   ajouterMatch: () => void
   supprimerMatch: (matchId: string) => void
@@ -139,6 +142,26 @@ export const useStore = create<Store>((set) => ({
         },
         divisionActiveId: division.id,
         ecran: "effectif",
+      }
+    }),
+
+  ameliorerArene: (divisionId) =>
+    set((state) => {
+      if (!state.federation) return state
+      const division = state.federation.divisions.find((d) => d.id === divisionId)
+      if (!division) return state
+      const suivante = areneSuivante(division.areneId)
+      if (!suivante) return state
+      if (state.federation.argent < suivante.coutUpgrade) return state
+      if (state.federation.fans < suivante.fansRequis) return state
+      return {
+        federation: {
+          ...state.federation,
+          argent: state.federation.argent - suivante.coutUpgrade,
+          divisions: state.federation.divisions.map((d) =>
+            d.id === divisionId ? { ...d, areneId: suivante.id } : d,
+          ),
+        },
       }
     }),
 

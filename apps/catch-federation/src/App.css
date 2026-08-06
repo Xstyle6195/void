@@ -562,3 +562,37 @@ select {
   width: 100%;
   font-size: 13px;
 }
+
+.texte-arene-active {
+  margin-top: -8px;
+  margin-bottom: 16px;
+}
+
+.carte-arene-division {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px;
+}
+
+.echelle-arenes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 8px 0;
+}
+
+.palier-arene {
+  font-size: 10px;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+}
+
+.palier-arene.actuel {
+  border-color: var(--gold);
+  color: var(--gold);
+  font-weight: 700;
+}

@@ -57,6 +57,7 @@ export interface ShowResult {
 export interface DivisionInstance {
   id: string
   nom: string
+  areneId: string
   roster: Wrestler[]
   titles: Title[]
   card: BookedMatch[]
@@ -71,6 +72,7 @@ export type Screen =
   | "titres"
   | "marche"
   | "marketing"
+  | "arenes"
   | "divisions"
 
 export type Difficulte = "facile" | "normal" | "difficile"

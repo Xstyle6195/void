@@ -1,3 +1,4 @@
+import { areneParId } from "./arenas"
 import type {
   BookedMatch,
   Difficulte,
@@ -9,7 +10,6 @@ import type {
 } from "./types"
 import { generateWrestler } from "./wrestlers"
 
-const PRIX_BILLET = 18
 const FRAIS_SALLE = 2200
 
 const SEUIL_FAILLITE_PAR_DIFFICULTE: Record<Difficulte, number> = {
@@ -181,10 +181,12 @@ function jouerDivision(
   )
   const noteShow = Math.round(sommeNotes / sommePoids)
 
-  const spectateurs = Math.round(
+  const arene = areneParId(division.areneId)
+  const spectateursBruts = Math.round(
     150 + populariteFederation * 9 + noteShow * 6 + randInt(-50, 50),
   )
-  const revenus = Math.round(spectateurs * PRIX_BILLET + populariteFederation * 25)
+  const spectateurs = Math.max(0, Math.min(arene.capacite, spectateursBruts))
+  const revenus = Math.round(spectateurs * arene.prixBillet + populariteFederation * 25)
   const depenses = salaires + FRAIS_SALLE
   const nouveauxFans = Math.max(0, Math.round(spectateurs * 0.6))
 

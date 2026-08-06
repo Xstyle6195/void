@@ -6,6 +6,7 @@ import { ResultsView } from "./components/ResultsView"
 import { TitlesView } from "./components/TitlesView"
 import { MarketView } from "./components/MarketView"
 import { MarketingView } from "./components/MarketingView"
+import { ArenasView } from "./components/ArenasView"
 import { DivisionsView } from "./components/DivisionsView"
 import { StartScreen } from "./components/StartScreen"
 import { useEcran, useFederation, usePhase, useStore } from "./state/store"
@@ -18,6 +19,7 @@ const ONGLETS: { value: Screen; label: string }[] = [
   { value: "titres", label: "Titres" },
   { value: "marche", label: "Marché" },
   { value: "marketing", label: "Marketing" },
+  { value: "arenes", label: "Arènes" },
   { value: "divisions", label: "Divisions" },
 ]
 
@@ -35,6 +37,8 @@ function ContenuEcran({ ecran }: { ecran: Screen }) {
       return <MarketView />
     case "marketing":
       return <MarketingView />
+    case "arenes":
+      return <ArenasView />
     case "divisions":
       return <DivisionsView />
     default:
