@@ -3,6 +3,8 @@ import type { FederationRivale } from "./rivals"
 
 export type Alignment = "face" | "heel"
 
+export type Genre = "homme" | "femme"
+
 export type MoveStyle = "technique" | "puissance" | "aérien" | "hardcore" | "catch-mental"
 
 export type { FormatMatch, MatchStipulation, FederationRivale }
@@ -10,6 +12,7 @@ export type { FormatMatch, MatchStipulation, FederationRivale }
 export interface Wrestler {
   id: string
   name: string
+  genre: Genre
   debutant: boolean
   alignment: Alignment
   style: MoveStyle

@@ -12,6 +12,7 @@ import type {
   DivisionInstance,
   FederationState,
   FormatMatch,
+  Genre,
   MatchStipulation,
   Screen,
   Wrestler,
@@ -118,6 +119,10 @@ interface Store {
 
 function trouverDivisionDuLutteur(federation: FederationState, wrestlerId: string): DivisionInstance | undefined {
   return federation.divisions.find((d) => d.roster.some((w) => w.id === wrestlerId))
+}
+
+function genreLutteur(roster: Wrestler[], wrestlerId: string): Genre | undefined {
+  return roster.find((w) => w.id === wrestlerId)?.genre
 }
 
 function retirerChampionnat(titles: DivisionInstance["titles"], wrestlerId: string): DivisionInstance["titles"] {
@@ -281,6 +286,9 @@ export const useStore = create<Store>((set) => ({
                   }
                 }
                 if (m.participantIds.length >= LIMITES_FORMAT[m.format].max) return m
+                const genreNouveau = genreLutteur(d.roster, wrestlerId)
+                const genresExistants = m.participantIds.map((id) => genreLutteur(d.roster, id))
+                if (genreNouveau && genresExistants.some((g) => g && g !== genreNouveau)) return m
                 return { ...m, participantIds: [...m.participantIds, wrestlerId], vainqueurImposeIds: [] }
               }),
             }
@@ -383,7 +391,12 @@ export const useStore = create<Store>((set) => ({
                 } else if (cible.length >= 2) {
                   nouvelleCible = cible
                 } else {
-                  nouvelleCible = [...cible, wrestlerId]
+                  const genreNouveau = genreLutteur(d.roster, wrestlerId)
+                  const genresExistants = [...m.equipeA, ...m.equipeB].map((id) => genreLutteur(d.roster, id))
+                  nouvelleCible =
+                    genreNouveau && genresExistants.some((g) => g && g !== genreNouveau)
+                      ? cible
+                      : [...cible, wrestlerId]
                 }
                 return equipe === "A"
                   ? { ...m, equipeA: nouvelleCible, vainqueurImposeIds: [] }

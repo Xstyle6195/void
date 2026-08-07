@@ -1,8 +1,14 @@
 import { areneParId } from "../game/arenas"
 import { infoStipulation, LIMITES_FORMAT, stipulationsPourFormat } from "../game/stipulations"
-import type { BookedMatch, FormatMatch, MatchStipulation, Wrestler } from "../game/types"
+import type { BookedMatch, FormatMatch, Genre, MatchStipulation, Wrestler } from "../game/types"
 import { useDivisionActive, useStore } from "../state/store"
 import { DivisionSwitcher } from "./DivisionSwitcher"
+
+function genreVerrouilleDuMatch(match: BookedMatch, roster: Wrestler[]): Genre | undefined {
+  const participants =
+    match.format === "2v2" ? [...match.equipeA, ...match.equipeB] : match.participantIds
+  return participants.map((id) => roster.find((w) => w.id === id)?.genre).find((g): g is Genre => Boolean(g))
+}
 
 const FORMATS: { value: FormatMatch; label: string }[] = [
   { value: "1v1", label: "1v1" },
@@ -26,6 +32,7 @@ function EquipeSelection({
   const autreEquipe = equipe === "A" ? match.equipeB : match.equipeA
   const division = useDivisionActive()
   const complete = membres.length >= 2
+  const genreVerrouille = genreVerrouilleDuMatch(match, division.roster)
 
   return (
     <div className="bloc-equipe">
@@ -50,12 +57,14 @@ function EquipeSelection({
         {lutteursDisponibles.map((w) => {
           const selectionne = membres.includes(w.id)
           const dejaDansAutreEquipe = autreEquipe.includes(w.id)
+          const genreIncompatible = Boolean(genreVerrouille) && w.genre !== genreVerrouille
           return (
             <button
               key={w.id}
               className={`bouton-lutteur ${selectionne ? "selectionne" : ""}`}
               onClick={() => toggleParticipantEquipe(match.id, equipe, w.id)}
-              disabled={dejaDansAutreEquipe || (!selectionne && complete)}
+              disabled={dejaDansAutreEquipe || (!selectionne && (complete || genreIncompatible))}
+              title={genreIncompatible ? "Un homme ne peut pas affronter une femme" : undefined}
             >
               {w.name}
               <span className="bouton-lutteur-pop">{w.popularite}%</span>
@@ -115,7 +124,13 @@ function InterferenceSelector({ match }: { match: BookedMatch }) {
   const division = useDivisionActive()
   const definirInterference = useStore((s) => s.definirInterference)
   const dansLeMatch = new Set(campsDuMatch(match).flat())
-  const candidats = division.roster.filter((w) => !dansLeMatch.has(w.id) && w.blessureSemaines === 0)
+  const genreVerrouille = genreVerrouilleDuMatch(match, division.roster)
+  const candidats = division.roster.filter(
+    (w) =>
+      !dansLeMatch.has(w.id) &&
+      w.blessureSemaines === 0 &&
+      (!genreVerrouille || w.genre === genreVerrouille),
+  )
 
   return (
     <div className="controle-booking">
@@ -149,6 +164,7 @@ function MatchCard({ match }: { match: BookedMatch }) {
   const stipulationsDisponibles = stipulationsPourFormat(match.format)
   const limites = LIMITES_FORMAT[match.format]
   const completLibre = match.participantIds.length >= limites.max
+  const genreVerrouille = genreVerrouilleDuMatch(match, division.roster)
 
   return (
     <div className="carte-match">
@@ -213,6 +229,12 @@ function MatchCard({ match }: { match: BookedMatch }) {
         </select>
       )}
 
+      {genreVerrouille && (
+        <p className="texte-muted texte-genre-verrouille">
+          Match {genreVerrouille === "homme" ? "masculin" : "féminin"} — les catégories ne se mélangent pas
+        </p>
+      )}
+
       {match.format === "2v2" ? (
         <div className="bloc-equipes">
           <EquipeSelection match={match} equipe="A" lutteursDisponibles={lutteursDisponibles} />
@@ -243,12 +265,14 @@ function MatchCard({ match }: { match: BookedMatch }) {
           <div className="grille-selection">
             {lutteursDisponibles.map((w) => {
               const selectionne = match.participantIds.includes(w.id)
+              const genreIncompatible = Boolean(genreVerrouille) && w.genre !== genreVerrouille
               return (
                 <button
                   key={w.id}
                   className={`bouton-lutteur ${selectionne ? "selectionne" : ""}`}
                   onClick={() => toggleParticipant(match.id, w.id)}
-                  disabled={!selectionne && completLibre}
+                  disabled={!selectionne && (completLibre || genreIncompatible)}
+                  title={genreIncompatible ? "Un homme ne peut pas affronter une femme" : undefined}
                 >
                   {w.name}
                   <span className="bouton-lutteur-pop">{w.popularite}%</span>

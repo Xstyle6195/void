@@ -172,6 +172,11 @@ select {
   color: var(--text-muted);
 }
 
+.badge-genre {
+  color: var(--accent-soft);
+  border-color: var(--accent-soft);
+}
+
 .badge-face {
   color: var(--good);
   border-color: var(--good);

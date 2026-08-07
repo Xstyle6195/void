@@ -1,9 +1,13 @@
-import type { Wrestler } from "./types"
+import type { Genre, Wrestler } from "./types"
 
-const PRENOMS = [
+const PRENOMS_HOMMES = [
   "Marcus", "Dante", "Ivan", "Kaito", "Bruno", "Silas", "Rex", "Theo",
   "Rocco", "Diego", "Magnus", "Otis", "Leon", "Jax", "Kane", "Viktor",
-  "Boris", "Nova", "Zara", "Talia", "Amara", "Selene", "Raya", "Storm",
+  "Boris",
+]
+
+const PRENOMS_FEMMES = [
+  "Nova", "Zara", "Talia", "Amara", "Selene", "Raya", "Storm",
   "Freya", "Ines", "Lyra", "Mila", "Nadia", "Ondine", "Sasha", "Vera",
   "Yara", "Zoe",
 ]
@@ -39,7 +43,8 @@ export function progressionDepuisFans(fans: number): number {
 
 export function generateWrestler(progression = 0): Wrestler {
   const p = Math.max(0, Math.min(1, progression))
-  const nom = `${pick(PRENOMS)} ${pick(NOMS)}`
+  const genre: Genre = Math.random() < 0.5 ? "homme" : "femme"
+  const nom = `${pick(genre === "homme" ? PRENOMS_HOMMES : PRENOMS_FEMMES)} ${pick(NOMS)}`
   const alignment = Math.random() < 0.5 ? "face" : "heel"
   const style = pick([...STYLES])
   const debutant = Math.random() < 0.15
@@ -54,6 +59,7 @@ export function generateWrestler(progression = 0): Wrestler {
   return {
     id: nextId("w"),
     name: nom,
+    genre,
     debutant,
     alignment,
     style,

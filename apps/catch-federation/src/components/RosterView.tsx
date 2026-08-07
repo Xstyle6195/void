@@ -19,6 +19,9 @@ function WrestlerCard({ w }: { w: Wrestler }) {
       <div className="carte-lutteur-entete">
         <div>
           <h3>{w.name}</h3>
+          <span className="badge badge-genre">
+            {w.genre === "homme" ? "Catcheur" : "Catcheuse"}
+          </span>
           <span className={`badge badge-${w.alignment}`}>
             {w.alignment === "face" ? "Face" : "Heel"}
           </span>
