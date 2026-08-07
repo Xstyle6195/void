@@ -30,16 +30,27 @@ function pick<T>(items: T[]): T {
   return items[randInt(0, items.length - 1)]
 }
 
-export function generateWrestler(): Wrestler {
+const SEUIL_FANS_PROGRESSION = 15000
+
+// 0 = fédération tout juste lancée (petites stars locales), 1 = fédération installée (vedettes confirmées)
+export function progressionDepuisFans(fans: number): number {
+  return Math.max(0, Math.min(1, fans / SEUIL_FANS_PROGRESSION))
+}
+
+export function generateWrestler(progression = 0): Wrestler {
+  const p = Math.max(0, Math.min(1, progression))
   const nom = `${pick(PRENOMS)} ${pick(NOMS)}`
   const alignment = Math.random() < 0.5 ? "face" : "heel"
   const style = pick([...STYLES])
   const debutant = Math.random() < 0.15
-  const [min, max] = debutant ? [15, 55] : [30, 90]
+  const [min, max] = debutant
+    ? [Math.round(10 + p * 10), Math.round(35 + p * 25)]
+    : [Math.round(15 + p * 20), Math.round(45 + p * 50)]
   const charisme = randInt(min, max)
   const technique = randInt(min, max)
   const force = randInt(min, max)
   const moyenne = (charisme + technique + force) / 3
+  const populariteMax = debutant ? Math.round(5 + p * 15) : Math.round(15 + p * 40)
   return {
     id: nextId("w"),
     name: nom,
@@ -49,7 +60,7 @@ export function generateWrestler(): Wrestler {
     charisme,
     technique,
     force,
-    popularite: randInt(5, debutant ? 15 : 40),
+    popularite: randInt(5, Math.max(6, populariteMax)),
     moral: randInt(50, 80),
     forme: 100,
     age: debutant ? randInt(18, 24) : randInt(20, 40),
@@ -60,6 +71,6 @@ export function generateWrestler(): Wrestler {
   }
 }
 
-export function creerMarcheTransferts(taille: number): Wrestler[] {
-  return Array.from({ length: taille }, generateWrestler)
+export function creerMarcheTransferts(taille: number, progression = 0): Wrestler[] {
+  return Array.from({ length: taille }, () => generateWrestler(progression))
 }

@@ -12,7 +12,7 @@ import type {
   Title,
   Wrestler,
 } from "./types"
-import { generateWrestler } from "./wrestlers"
+import { generateWrestler, progressionDepuisFans } from "./wrestlers"
 
 const FRAIS_SALLE = 2200
 const BONUS_NOTE_INTERFERENCE = 6
@@ -414,9 +414,10 @@ export function jouerSemaine(state: FederationState): FederationState {
       : 0
   const fansGagnes = Math.round(fansGagnesBruts * (1 - pressionConcurrentielle * 0.2))
 
+  const progression = progressionDepuisFans(state.fans)
   let freeAgents = state.freeAgents.filter(() => Math.random() >= RISQUE_DEBAUCHAGE_AGENT_LIBRE)
   if (state.semaine % 3 === 0) {
-    freeAgents = [...freeAgents.slice(-4), generateWrestler(), generateWrestler()]
+    freeAgents = [...freeAgents.slice(-4), generateWrestler(progression), generateWrestler(progression)]
   }
 
   const argent = state.argent + revenusTotaux - depensesTotales

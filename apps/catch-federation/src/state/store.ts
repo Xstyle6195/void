@@ -16,7 +16,7 @@ import type {
   Screen,
   Wrestler,
 } from "../game/types"
-import { creerMarcheTransferts, generateWrestler } from "../game/wrestlers"
+import { creerMarcheTransferts, generateWrestler, progressionDepuisFans } from "../game/wrestlers"
 
 const COUT_RENOUVELLEMENT = 500
 const BONUS_SIGNATURE = 300
@@ -587,7 +587,8 @@ export const useStore = create<Store>((set) => ({
       const division = state.federation.divisions.find((d) => d.id === state.divisionActiveId)
       const placesRestantes = division ? MAX_ROSTER_DIVISION - division.roster.length : 0
       const nbAbsorbes = Math.max(0, Math.min(3, Math.round(rivale.fans / 8000), placesRestantes))
-      const nouveauxLutteurs = Array.from({ length: nbAbsorbes }, () => generateWrestler())
+      const progression = progressionDepuisFans(state.federation.fans)
+      const nouveauxLutteurs = Array.from({ length: nbAbsorbes }, () => generateWrestler(progression))
 
       return {
         federation: {
