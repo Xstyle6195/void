@@ -141,17 +141,38 @@ select {
   gap: 12px;
 }
 
-.section-marche {
-  margin-bottom: 20px;
+.sous-onglets {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 10px;
 }
 
-.section-marche:last-child {
-  margin-bottom: 0;
+.sous-onglets button {
+  flex: 1;
+  font-size: 12px;
+  padding: 8px 4px;
 }
 
-.titre-section-marche {
+.sous-onglets button.actif {
+  border-color: var(--gold);
   color: var(--gold);
-  margin-bottom: 4px;
+  background: var(--bg-alt);
+}
+
+.barre-filtre {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 12px 0;
+}
+
+.barre-filtre label {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.barre-filtre select {
+  flex: 1;
 }
 
 .carte-lutteur {

@@ -1,7 +1,37 @@
-import { useState } from "react"
-import type { Wrestler } from "../game/types"
+import { useMemo, useState } from "react"
+import type { CategorieRecrutement, Wrestler } from "../game/types"
 import { MAX_ROSTER_DIVISION, useDivisionActive, useFederation, useStore } from "../state/store"
 import { Etoiles } from "./Etoiles"
+
+type TriMarche = "aucun" | "sexe" | "niveau" | "specialite" | "alignment"
+
+const OPTIONS_TRI: { value: TriMarche; label: string }[] = [
+  { value: "aucun", label: "Par défaut" },
+  { value: "niveau", label: "Niveau" },
+  { value: "sexe", label: "Sexe" },
+  { value: "specialite", label: "Spécialité" },
+  { value: "alignment", label: "Heel / Face" },
+]
+
+function niveauLutteur(w: Wrestler): number {
+  return (w.charisme + w.technique + w.force) / 3
+}
+
+function trierLutteurs(lutteurs: Wrestler[], tri: TriMarche): Wrestler[] {
+  const copie = [...lutteurs]
+  switch (tri) {
+    case "niveau":
+      return copie.sort((a, b) => niveauLutteur(b) - niveauLutteur(a))
+    case "sexe":
+      return copie.sort((a, b) => a.genre.localeCompare(b.genre))
+    case "specialite":
+      return copie.sort((a, b) => a.style.localeCompare(b.style))
+    case "alignment":
+      return copie.sort((a, b) => a.alignment.localeCompare(b.alignment))
+    default:
+      return copie
+  }
+}
 
 function libelleContrat(w: Wrestler): string {
   if (w.typeContrat === "temporaire" && w.dureeMoisContrat) {
@@ -62,38 +92,64 @@ function CarteAgentLibre({ w }: { w: Wrestler }) {
   )
 }
 
-function SectionMarche({ titre, description, lutteurs }: { titre: string; description: string; lutteurs: Wrestler[] }) {
+const ONGLETS_MARCHE: { value: CategorieRecrutement; label: string; description: string }[] = [
+  {
+    value: "officiel",
+    label: "Recrutements officiels",
+    description:
+      "Contrat permanent de 3 ans, sauf mention « guest star » : ces profils ne sont disponibles que pour 1, 3 ou 6 mois, avec de meilleures stats et un coût plus élevé.",
+  },
+  {
+    value: "jobbeur",
+    label: "Jobbeurs",
+    description: "Stats très faibles, coût de signature réduit. Utiles pour compléter une carte à moindre coût.",
+  },
+]
+
+export function MarketView() {
+  const federation = useFederation()
+  const [onglet, setOnglet] = useState<CategorieRecrutement>("officiel")
+  const [tri, setTri] = useState<TriMarche>("aucun")
+
+  const ongletActif = ONGLETS_MARCHE.find((o) => o.value === onglet)!
+  const lutteurs = useMemo(
+    () => trierLutteurs(federation.freeAgents.filter((w) => w.categorie === onglet), tri),
+    [federation.freeAgents, onglet, tri],
+  )
+
   return (
-    <div className="section-marche">
-      <h3 className="titre-section-marche">{titre}</h3>
-      <p className="texte-muted">{description}</p>
+    <div className="vue">
+      <h2>Marché des transferts</h2>
+
+      <div className="sous-onglets">
+        {ONGLETS_MARCHE.map((o) => (
+          <button
+            key={o.value}
+            className={onglet === o.value ? "actif" : ""}
+            onClick={() => setOnglet(o.value)}
+          >
+            {o.label}
+          </button>
+        ))}
+      </div>
+      <p className="texte-muted">{ongletActif.description}</p>
+
+      <div className="barre-filtre">
+        <label htmlFor="tri-marche">Trier par</label>
+        <select id="tri-marche" value={tri} onChange={(e) => setTri(e.target.value as TriMarche)}>
+          {OPTIONS_TRI.map((o) => (
+            <option key={o.value} value={o.value}>
+              {o.label}
+            </option>
+          ))}
+        </select>
+      </div>
+
       <div className="liste-lutteurs">
         {lutteurs.map((w) => (
           <CarteAgentLibre key={w.id} w={w} />
         ))}
       </div>
-    </div>
-  )
-}
-
-export function MarketView() {
-  const federation = useFederation()
-  const officiels = federation.freeAgents.filter((w) => w.categorie === "officiel")
-  const jobbeurs = federation.freeAgents.filter((w) => w.categorie === "jobbeur")
-
-  return (
-    <div className="vue">
-      <h2>Marché des transferts</h2>
-      <SectionMarche
-        titre="Recrutements officiels"
-        description="Contrat permanent de 3 ans, sauf mention « guest star » : ces profils ne sont disponibles que pour 1, 3 ou 6 mois, avec de meilleures stats et un coût plus élevé."
-        lutteurs={officiels}
-      />
-      <SectionMarche
-        titre="Jobbeurs"
-        description="Stats très faibles, coût de signature réduit. Utiles pour compléter une carte à moindre coût."
-        lutteurs={jobbeurs}
-      />
     </div>
   )
 }
