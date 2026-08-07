@@ -2,18 +2,7 @@ import { useState } from "react"
 import type { Wrestler } from "../game/types"
 import { MAX_ROSTER_DIVISION, useDivisionActive, useFederation, useStore } from "../state/store"
 import { DivisionSwitcher } from "./DivisionSwitcher"
-
-function StatBar({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="stat-bar">
-      <span className="stat-bar-label">{label}</span>
-      <div className="stat-bar-track">
-        <div className="stat-bar-fill" style={{ width: `${value}%` }} />
-      </div>
-      <span className="stat-bar-value">{value}</span>
-    </div>
-  )
-}
+import { Etoiles } from "./Etoiles"
 
 function WrestlerCard({ w }: { w: Wrestler }) {
   const federation = useFederation()
@@ -41,12 +30,12 @@ function WrestlerCard({ w }: { w: Wrestler }) {
           <span className="badge badge-blessure">Blessé ({w.blessureSemaines} sem.)</span>
         )}
       </div>
-      <StatBar label="Charisme" value={w.charisme} />
-      <StatBar label="Technique" value={w.technique} />
-      <StatBar label="Force" value={w.force} />
-      <StatBar label="Popularité" value={w.popularite} />
-      <StatBar label="Moral" value={w.moral} />
-      <StatBar label="Forme" value={w.forme} />
+      <Etoiles label="Charisme" valeur={w.charisme} />
+      <Etoiles label="Technique" valeur={w.technique} />
+      <Etoiles label="Force" valeur={w.force} />
+      <Etoiles label="Popularité" valeur={w.popularite} />
+      <Etoiles label="Moral" valeur={w.moral} />
+      <Etoiles label="Forme" valeur={w.forme} />
       <div className="carte-lutteur-pied">
         <span>Âge {w.age}</span>
         <span>{w.salaire} €/sem.</span>

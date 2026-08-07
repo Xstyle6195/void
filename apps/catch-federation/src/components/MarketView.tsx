@@ -1,6 +1,7 @@
 import { useState } from "react"
 import type { Wrestler } from "../game/types"
 import { MAX_ROSTER_DIVISION, useDivisionActive, useFederation, useStore } from "../state/store"
+import { Etoiles } from "./Etoiles"
 
 function CarteAgentLibre({ w }: { w: Wrestler }) {
   const federation = useFederation()
@@ -22,9 +23,9 @@ function CarteAgentLibre({ w }: { w: Wrestler }) {
           {w.debutant && <span className="badge">Débutant</span>}
         </div>
       </div>
-      <p className="texte-muted">
-        Charisme {w.charisme} · Technique {w.technique} · Force {w.force}
-      </p>
+      <Etoiles label="Charisme" valeur={w.charisme} />
+      <Etoiles label="Technique" valeur={w.technique} />
+      <Etoiles label="Force" valeur={w.force} />
       <div className="carte-lutteur-pied">
         <span>Âge {w.age}</span>
         <span>{w.salaire} €/sem.</span>

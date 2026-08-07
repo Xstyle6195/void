@@ -192,30 +192,44 @@ select {
   border-color: var(--bad);
 }
 
-.stat-bar {
+.ligne-etoiles {
   display: grid;
-  grid-template-columns: 70px 1fr 24px;
+  grid-template-columns: 70px 1fr;
   align-items: center;
   gap: 6px;
   font-size: 11px;
   margin-bottom: 3px;
 }
 
-.stat-bar-track {
-  background: var(--bg-alt);
-  border-radius: 4px;
-  height: 6px;
-  overflow: hidden;
-}
-
-.stat-bar-fill {
-  height: 100%;
-  background: linear-gradient(90deg, var(--accent), var(--gold));
-}
-
-.stat-bar-value {
-  text-align: right;
+.etoiles-label {
   color: var(--text-muted);
+}
+
+.etoiles-affichage {
+  display: inline-flex;
+  gap: 1px;
+}
+
+.etoile {
+  position: relative;
+  display: inline-block;
+  font-size: 13px;
+  line-height: 1;
+}
+
+.etoile-fond {
+  color: var(--text-muted);
+  opacity: 0.35;
+}
+
+.etoile-remplissage {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: inline-block;
+  overflow: hidden;
+  white-space: nowrap;
+  color: var(--gold);
 }
 
 .carte-lutteur-pied {
