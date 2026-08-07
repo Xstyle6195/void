@@ -1,12 +1,14 @@
 import { useState } from "react"
 import type { Wrestler } from "../game/types"
-import { useDivisionActive, useFederation, useStore } from "../state/store"
+import { MAX_ROSTER_DIVISION, useDivisionActive, useFederation, useStore } from "../state/store"
 
 function CarteAgentLibre({ w }: { w: Wrestler }) {
   const federation = useFederation()
   const divisionActive = useDivisionActive()
   const signerAgentLibre = useStore((s) => s.signerAgentLibre)
   const [cible, setCible] = useState(divisionActive.id)
+  const divisionCible = federation.divisions.find((d) => d.id === cible)
+  const divisionPleine = (divisionCible?.roster.length ?? 0) >= MAX_ROSTER_DIVISION
 
   return (
     <div className="carte-lutteur">
@@ -31,16 +33,16 @@ function CarteAgentLibre({ w }: { w: Wrestler }) {
         <select value={cible} onChange={(e) => setCible(e.target.value)}>
           {federation.divisions.map((d) => (
             <option key={d.id} value={d.id}>
-              {d.nom}
+              {d.nom} ({d.roster.length}/{MAX_ROSTER_DIVISION})
             </option>
           ))}
         </select>
         <button
           className="primaire"
           onClick={() => signerAgentLibre(w.id, cible)}
-          disabled={federation.argent < 300}
+          disabled={federation.argent < 300 || divisionPleine}
         >
-          Signer (300 €)
+          {divisionPleine ? "Division pleine" : "Signer (300 €)"}
         </button>
       </div>
     </div>

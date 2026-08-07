@@ -1,6 +1,6 @@
 import { useState } from "react"
 import type { Wrestler } from "../game/types"
-import { useDivisionActive, useFederation, useStore } from "../state/store"
+import { MAX_ROSTER_DIVISION, useDivisionActive, useFederation, useStore } from "../state/store"
 import { DivisionSwitcher } from "./DivisionSwitcher"
 
 function StatBar({ label, value }: { label: string; value: number }) {
@@ -63,8 +63,9 @@ function WrestlerCard({ w }: { w: Wrestler }) {
           <select value={cibleTransfert} onChange={(e) => setCibleTransfert(e.target.value)}>
             <option value="">Transférer vers…</option>
             {autresDivisions.map((d) => (
-              <option key={d.id} value={d.id}>
-                {d.nom}
+              <option key={d.id} value={d.id} disabled={d.roster.length >= MAX_ROSTER_DIVISION}>
+                {d.nom} ({d.roster.length}/{MAX_ROSTER_DIVISION})
+                {d.roster.length >= MAX_ROSTER_DIVISION ? " · pleine" : ""}
               </option>
             ))}
           </select>
@@ -89,7 +90,9 @@ export function RosterView() {
   return (
     <div className="vue">
       <div className="vue-entete">
-        <h2>{divisionActive.nom} — Effectif ({divisionActive.roster.length})</h2>
+        <h2>
+          {divisionActive.nom} — Effectif ({divisionActive.roster.length}/{MAX_ROSTER_DIVISION})
+        </h2>
         <DivisionSwitcher divisionId={divisionActive.id} />
       </div>
       {divisionActive.roster.length === 0 && (

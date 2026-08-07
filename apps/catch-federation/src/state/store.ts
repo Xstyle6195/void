@@ -20,6 +20,7 @@ import { creerMarcheTransferts, creerRosterInitial } from "../game/wrestlers"
 const COUT_RENOUVELLEMENT = 500
 const BONUS_SIGNATURE = 300
 const INDEMNITE_LIBERATION = 400
+export const MAX_ROSTER_DIVISION = 50
 
 const PARAMETRES_DIFFICULTE: Record<Difficulte, { argent: number; popularite: number }> = {
   facile: { argent: 25000, popularite: 30 },
@@ -191,6 +192,8 @@ export const useStore = create<Store>((set) => ({
       if (!origine || origine.id === versDivisionId) return state
       const lutteur = origine.roster.find((w) => w.id === wrestlerId)
       if (!lutteur) return state
+      const destination = state.federation.divisions.find((d) => d.id === versDivisionId)
+      if (!destination || destination.roster.length >= MAX_ROSTER_DIVISION) return state
       const lutteurSansTitre = { ...lutteur, titreId: null }
       return {
         federation: {
@@ -454,6 +457,8 @@ export const useStore = create<Store>((set) => ({
       if (!state.federation) return state
       const agent = state.federation.freeAgents.find((w) => w.id === id)
       if (!agent || state.federation.argent < BONUS_SIGNATURE) return state
+      const destination = state.federation.divisions.find((d) => d.id === versDivisionId)
+      if (!destination || destination.roster.length >= MAX_ROSTER_DIVISION) return state
       return {
         federation: {
           ...state.federation,
