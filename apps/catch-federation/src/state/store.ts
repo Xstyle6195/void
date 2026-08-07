@@ -16,7 +16,7 @@ import type {
   Screen,
   Wrestler,
 } from "../game/types"
-import { creerMarcheTransferts, creerRosterInitial, generateWrestler } from "../game/wrestlers"
+import { creerMarcheTransferts, generateWrestler } from "../game/wrestlers"
 
 const COUT_RENOUVELLEMENT = 500
 const BONUS_SIGNATURE = 300
@@ -57,9 +57,8 @@ function nouvelleDivision(nom: string, roster: Wrestler[], titres: { name: strin
 }
 
 function etatInitial(nom: string, difficulte: Difficulte): FederationState {
-  const roster = creerRosterInitial(12)
   const { argent, popularite } = PARAMETRES_DIFFICULTE[difficulte]
-  const divisionPrincipale = nouvelleDivision("Division Principale", roster, [
+  const divisionPrincipale = nouvelleDivision("Division Principale", [], [
     { name: "Championnat du Monde", prestige: 100 },
     { name: "Championnat Intercontinental", prestige: 60 },
   ])

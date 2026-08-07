@@ -60,10 +60,6 @@ export function generateWrestler(): Wrestler {
   }
 }
 
-export function creerRosterInitial(taille: number): Wrestler[] {
-  return Array.from({ length: taille }, generateWrestler)
-}
-
 export function creerMarcheTransferts(taille: number): Wrestler[] {
   return Array.from({ length: taille }, generateWrestler)
 }
