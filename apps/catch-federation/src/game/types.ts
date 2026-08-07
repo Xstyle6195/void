@@ -7,6 +7,10 @@ export type Genre = "homme" | "femme"
 
 export type MoveStyle = "technique" | "puissance" | "aérien" | "hardcore" | "catch-mental"
 
+export type CategorieRecrutement = "officiel" | "jobbeur"
+
+export type TypeContrat = "permanent" | "temporaire"
+
 export type { FormatMatch, MatchStipulation, FederationRivale }
 
 export interface Wrestler {
@@ -16,6 +20,10 @@ export interface Wrestler {
   debutant: boolean
   alignment: Alignment
   style: MoveStyle
+  categorie: CategorieRecrutement
+  typeContrat: TypeContrat
+  dureeMoisContrat: number | null
+  coutSignature: number
   charisme: number
   technique: number
   force: number

@@ -27,6 +27,8 @@ function WrestlerCard({ w }: { w: Wrestler }) {
           </span>
           <span className="badge badge-style">{w.style}</span>
           {w.debutant && <span className="badge">Débutant</span>}
+          {w.categorie === "jobbeur" && <span className="badge">Jobbeur</span>}
+          {w.typeContrat === "temporaire" && <span className="badge badge-titre">Guest star</span>}
           {w.titreId && <span className="badge badge-titre">Champion</span>}
         </div>
         {w.blessureSemaines > 0 && (

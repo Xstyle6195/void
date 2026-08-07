@@ -20,7 +20,6 @@ import type {
 import { creerMarcheTransferts, generateWrestler, progressionDepuisFans } from "../game/wrestlers"
 
 const COUT_RENOUVELLEMENT = 500
-const BONUS_SIGNATURE = 300
 const INDEMNITE_LIBERATION = 400
 export const MAX_ROSTER_DIVISION = 50
 
@@ -71,7 +70,7 @@ function etatInitial(nom: string, difficulte: Difficulte): FederationState {
     popularite,
     fans: 0,
     divisions: [divisionPrincipale],
-    freeAgents: creerMarcheTransferts(6),
+    freeAgents: creerMarcheTransferts(),
     derniereCampagne: {},
     officiels: { marketing: null, artistique: null, adjoint: null },
     rivales: creerRivales(),
@@ -471,13 +470,13 @@ export const useStore = create<Store>((set) => ({
     set((state) => {
       if (!state.federation) return state
       const agent = state.federation.freeAgents.find((w) => w.id === id)
-      if (!agent || state.federation.argent < BONUS_SIGNATURE) return state
+      if (!agent || state.federation.argent < agent.coutSignature) return state
       const destination = state.federation.divisions.find((d) => d.id === versDivisionId)
       if (!destination || destination.roster.length >= MAX_ROSTER_DIVISION) return state
       return {
         federation: {
           ...state.federation,
-          argent: state.federation.argent - BONUS_SIGNATURE,
+          argent: state.federation.argent - agent.coutSignature,
           freeAgents: state.federation.freeAgents.filter((w) => w.id !== id),
           divisions: state.federation.divisions.map((d) =>
             d.id === versDivisionId ? { ...d, roster: [...d.roster, agent] } : d,
@@ -601,7 +600,7 @@ export const useStore = create<Store>((set) => ({
       const placesRestantes = division ? MAX_ROSTER_DIVISION - division.roster.length : 0
       const nbAbsorbes = Math.max(0, Math.min(3, Math.round(rivale.fans / 8000), placesRestantes))
       const progression = progressionDepuisFans(state.federation.fans)
-      const nouveauxLutteurs = Array.from({ length: nbAbsorbes }, () => generateWrestler(progression))
+      const nouveauxLutteurs = Array.from({ length: nbAbsorbes }, () => generateWrestler({ progression }))
 
       return {
         federation: {

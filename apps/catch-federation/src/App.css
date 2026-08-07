@@ -141,6 +141,19 @@ select {
   gap: 12px;
 }
 
+.section-marche {
+  margin-bottom: 20px;
+}
+
+.section-marche:last-child {
+  margin-bottom: 0;
+}
+
+.titre-section-marche {
+  color: var(--gold);
+  margin-bottom: 4px;
+}
+
 .carte-lutteur {
   background: var(--panel);
   border: 1px solid var(--border);
