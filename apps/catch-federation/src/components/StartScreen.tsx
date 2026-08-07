@@ -1,17 +1,9 @@
 import { useState } from "react"
-import type { Difficulte } from "../game/types"
 import { useStore } from "../state/store"
-
-const DIFFICULTES: { value: Difficulte; label: string; description: string }[] = [
-  { value: "facile", label: "Facile", description: "25 000 € de départ, 30% de popularité." },
-  { value: "normal", label: "Normal", description: "15 000 € de départ, 20% de popularité." },
-  { value: "difficile", label: "Difficile", description: "8 000 € de départ, 10% de popularité." },
-]
 
 export function StartScreen() {
   const demarrerFederation = useStore((s) => s.demarrerFederation)
   const [nom, setNom] = useState("")
-  const [difficulte, setDifficulte] = useState<Difficulte>("normal")
 
   return (
     <div className="ecran-accueil">
@@ -31,23 +23,9 @@ export function StartScreen() {
         maxLength={30}
       />
 
-      <span className="champ-label">Difficulté</span>
-      <div className="selecteur-difficulte">
-        {DIFFICULTES.map((d) => (
-          <button
-            key={d.value}
-            className={`carte-difficulte ${difficulte === d.value ? "selectionnee" : ""}`}
-            onClick={() => setDifficulte(d.value)}
-          >
-            <span className="carte-difficulte-titre">{d.label}</span>
-            <span className="carte-difficulte-description">{d.description}</span>
-          </button>
-        ))}
-      </div>
-
       <button
         className="primaire bouton-demarrer"
-        onClick={() => demarrerFederation(nom, difficulte)}
+        onClick={() => demarrerFederation(nom, "normal")}
       >
         Créer la fédération
       </button>
