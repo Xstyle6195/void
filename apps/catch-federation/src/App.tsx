@@ -9,6 +9,7 @@ import { MarketingView } from "./components/MarketingView"
 import { ArenasView } from "./components/ArenasView"
 import { OfficialsView } from "./components/OfficialsView"
 import { DivisionsView } from "./components/DivisionsView"
+import { RivalsView } from "./components/RivalsView"
 import { StartScreen } from "./components/StartScreen"
 import { useEcran, useFederation, usePhase, useStore } from "./state/store"
 import type { Screen } from "./game/types"
@@ -23,6 +24,7 @@ const ONGLETS: { value: Screen; label: string }[] = [
   { value: "arenes", label: "Arènes" },
   { value: "officiels", label: "Officiels" },
   { value: "divisions", label: "Divisions" },
+  { value: "rivales", label: "Rivales" },
 ]
 
 function ContenuEcran({ ecran }: { ecran: Screen }) {
@@ -45,6 +47,8 @@ function ContenuEcran({ ecran }: { ecran: Screen }) {
       return <OfficialsView />
     case "divisions":
       return <DivisionsView />
+    case "rivales":
+      return <RivalsView />
     default:
       return null
   }

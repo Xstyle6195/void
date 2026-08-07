@@ -1,10 +1,11 @@
 import type { FormatMatch, MatchStipulation } from "./stipulations"
+import type { FederationRivale } from "./rivals"
 
 export type Alignment = "face" | "heel"
 
 export type MoveStyle = "technique" | "puissance" | "aérien" | "hardcore" | "catch-mental"
 
-export type { FormatMatch, MatchStipulation }
+export type { FormatMatch, MatchStipulation, FederationRivale }
 
 export interface Wrestler {
   id: string
@@ -62,6 +63,7 @@ export interface ShowResult {
   revenus: number
   depenses: number
   nouveauxFans: number
+  debauchesNoms: string[]
 }
 
 export interface DivisionInstance {
@@ -85,6 +87,7 @@ export type Screen =
   | "arenes"
   | "officiels"
   | "divisions"
+  | "rivales"
 
 export type Difficulte = "facile" | "normal" | "difficile"
 
@@ -99,5 +102,6 @@ export interface FederationState {
   freeAgents: Wrestler[]
   derniereCampagne: Record<string, number>
   officiels: Record<"marketing" | "artistique" | "adjoint", string | null>
+  rivales: FederationRivale[]
   gameOver: boolean
 }

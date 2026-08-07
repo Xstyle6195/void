@@ -742,3 +742,25 @@ select {
   color: var(--gold);
   border-color: var(--gold);
 }
+
+.carte-rivale {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+}
+
+.carte-rivale h3 {
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.carte-rivale-joueur {
+  border-color: var(--gold);
+}
+
+.carte-rivale button {
+  width: 100%;
+  margin-top: 6px;
+  font-size: 13px;
+}

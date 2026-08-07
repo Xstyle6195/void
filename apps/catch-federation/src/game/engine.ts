@@ -1,5 +1,6 @@
 import { areneParId } from "./arenas"
 import { candidatParId } from "./officials"
+import { evoluerRivales, forceMoyenneRivalesActives, palierPourFans } from "./rivals"
 import { BONUS_TITRE, infoStipulation, LIMITES_FORMAT, RISQUE_TITRE, USURE_TITRE } from "./stipulations"
 import type {
   BookedMatch,
@@ -8,6 +9,7 @@ import type {
   FederationState,
   MatchResult,
   ShowResult,
+  Title,
   Wrestler,
 } from "./types"
 import { generateWrestler } from "./wrestlers"
@@ -17,6 +19,8 @@ const BONUS_NOTE_INTERFERENCE = 6
 const RISQUE_BLESSURE_INTERFERENCE = 0.05
 const BONUS_POPULARITE_INTERFERENCE = 8
 const COUT_INTERFERENCE = 200
+const RISQUE_DEBAUCHAGE_BASE = 0.02
+const RISQUE_DEBAUCHAGE_AGENT_LIBRE = 0.05
 
 const SEUIL_FAILLITE_PAR_DIFFICULTE: Record<Difficulte, number> = {
   facile: -14000,
@@ -162,6 +166,7 @@ function jouerDivision(
   populariteFederation: number,
   bonusArtistique: number,
   reductionAdjointPct: number,
+  forceRivales: number,
 ): ResultatDivisionSemaine {
   let roster = division.roster.map((w) => ({ ...w }))
   const titles = division.titles.map((t) => ({ ...t, championIds: [...t.championIds] }))
@@ -281,6 +286,8 @@ function jouerDivision(
   )
   const nouveauxFans = Math.max(0, Math.round(spectateurs * 0.6))
 
+  const apresDebauchage = appliquerDebauchage(roster, titles, forceRivales)
+
   const resultatShow: ShowResult = {
     semaine,
     matches: resultats,
@@ -289,15 +296,16 @@ function jouerDivision(
     revenus,
     depenses,
     nouveauxFans,
+    debauchesNoms: apresDebauchage.debauchesNoms,
   }
 
-  const rosterApresSemaine = tickRoster(roster)
+  const rosterApresSemaine = tickRoster(apresDebauchage.roster)
 
   return {
     division: {
       ...division,
       roster: rosterApresSemaine,
-      titles,
+      titles: apresDebauchage.titles,
       card: [],
       dernierResultat: resultatShow,
       historique: [resultatShow, ...division.historique].slice(0, 20),
@@ -306,6 +314,33 @@ function jouerDivision(
     revenus,
     depenses,
     note: noteShow,
+  }
+}
+
+function appliquerDebauchage(
+  roster: Wrestler[],
+  titles: Title[],
+  forceRivales: number,
+): { roster: Wrestler[]; titles: Title[]; debauchesNoms: string[] } {
+  const facteur = 0.5 + forceRivales / 100
+  const debauchesNoms: string[] = []
+  const debauchesIds = new Set<string>()
+  for (const w of roster) {
+    if (w.contratSemaines > 0 && w.contratSemaines <= 3) {
+      if (Math.random() < RISQUE_DEBAUCHAGE_BASE * facteur) {
+        debauchesNoms.push(w.name)
+        debauchesIds.add(w.id)
+      }
+    }
+  }
+  if (debauchesIds.size === 0) return { roster, titles, debauchesNoms }
+  return {
+    roster: roster.filter((w) => !debauchesIds.has(w.id)),
+    titles: titles.map((t) => ({
+      ...t,
+      championIds: t.championIds.filter((id) => !debauchesIds.has(id)),
+    })),
+    debauchesNoms,
   }
 }
 
@@ -327,9 +362,17 @@ export function jouerSemaine(state: FederationState): FederationState {
   const officielAdjoint = state.officiels.adjoint ? candidatParId(state.officiels.adjoint) : undefined
   const bonusArtistique = officielArtistique?.bonus ?? 0
   const reductionAdjointPct = officielAdjoint?.bonus ?? 0
+  const forceRivales = forceMoyenneRivalesActives(state.rivales)
 
   const resultatsDivisions = state.divisions.map((division) =>
-    jouerDivision(division, semaineEcoulee, state.popularite, bonusArtistique, reductionAdjointPct),
+    jouerDivision(
+      division,
+      semaineEcoulee,
+      state.popularite,
+      bonusArtistique,
+      reductionAdjointPct,
+      forceRivales,
+    ),
   )
 
   const divisions = resultatsDivisions.map((r) => r.division)
@@ -354,14 +397,26 @@ export function jouerSemaine(state: FederationState): FederationState {
     ? clamp(Math.round(state.popularite + (noteMoyenne - state.popularite) * 0.18))
     : state.popularite
 
-  const fansGagnes = divisions.reduce(
+  const fansGagnesBruts = divisions.reduce(
     (acc, d) => acc + (d.dernierResultat?.semaine === semaineEcoulee ? d.dernierResultat.nouveauxFans : 0),
     0,
   )
 
-  let freeAgents = state.freeAgents
+  const rivales = evoluerRivales(state.rivales)
+
+  const palierJoueur = palierPourFans(state.fans)
+  const fansRivalesMemePalier = rivales
+    .filter((r) => r.palier === palierJoueur)
+    .reduce((acc, r) => acc + r.fans, 0)
+  const pressionConcurrentielle =
+    fansRivalesMemePalier > 0
+      ? fansRivalesMemePalier / (fansRivalesMemePalier + state.fans + 1)
+      : 0
+  const fansGagnes = Math.round(fansGagnesBruts * (1 - pressionConcurrentielle * 0.2))
+
+  let freeAgents = state.freeAgents.filter(() => Math.random() >= RISQUE_DEBAUCHAGE_AGENT_LIBRE)
   if (state.semaine % 3 === 0) {
-    freeAgents = [...state.freeAgents.slice(-4), generateWrestler(), generateWrestler()]
+    freeAgents = [...freeAgents.slice(-4), generateWrestler(), generateWrestler()]
   }
 
   const argent = state.argent + revenusTotaux - depensesTotales
@@ -375,6 +430,7 @@ export function jouerSemaine(state: FederationState): FederationState {
     fans: state.fans + fansGagnes,
     divisions,
     freeAgents,
+    rivales,
     gameOver,
   }
 }

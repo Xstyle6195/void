@@ -67,6 +67,12 @@ function BlocDivision({ division, semaine }: { division: DivisionInstance; semai
               )
             })}
           </div>
+          {resultat.debauchesNoms.length > 0 && (
+            <p className="texte-blessure">
+              🏴 {resultat.debauchesNoms.join(", ")} {resultat.debauchesNoms.length > 1 ? "ont" : "a"} signé
+              avec une fédération rivale.
+            </p>
+          )}
         </>
       )}
     </div>

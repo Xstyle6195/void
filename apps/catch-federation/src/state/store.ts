@@ -4,6 +4,7 @@ import { coutNouvelleDivision } from "../game/divisions"
 import { jouerSemaine } from "../game/engine"
 import { CAMPAGNES_MARKETING } from "../game/marketing"
 import { candidatParId } from "../game/officials"
+import { creerRivales, valorisationRivale } from "../game/rivals"
 import { LIMITES_FORMAT, stipulationsPourFormat } from "../game/stipulations"
 import type {
   BookedMatch,
@@ -15,7 +16,7 @@ import type {
   Screen,
   Wrestler,
 } from "../game/types"
-import { creerMarcheTransferts, creerRosterInitial } from "../game/wrestlers"
+import { creerMarcheTransferts, creerRosterInitial, generateWrestler } from "../game/wrestlers"
 
 const COUT_RENOUVELLEMENT = 500
 const BONUS_SIGNATURE = 300
@@ -73,6 +74,7 @@ function etatInitial(nom: string, difficulte: Difficulte): FederationState {
     freeAgents: creerMarcheTransferts(6),
     derniereCampagne: {},
     officiels: { marketing: null, artistique: null, adjoint: null },
+    rivales: creerRivales(),
     gameOver: false,
   }
 }
@@ -111,6 +113,7 @@ interface Store {
   lancerCampagne: (campagneId: string) => void
   recruterOfficiel: (candidatId: string) => void
   licencierOfficiel: (role: "marketing" | "artistique" | "adjoint") => void
+  racheterRivale: (rivaleId: string) => void
   recommencer: () => void
 }
 
@@ -569,6 +572,34 @@ export const useStore = create<Store>((set) => ({
         federation: {
           ...state.federation,
           officiels: { ...state.federation.officiels, [role]: null },
+        },
+      }
+    }),
+
+  racheterRivale: (rivaleId) =>
+    set((state) => {
+      if (!state.federation || !state.divisionActiveId) return state
+      const rivale = state.federation.rivales.find((r) => r.id === rivaleId)
+      if (!rivale) return state
+      if (rivale.fans >= state.federation.fans) return state
+      const cout = valorisationRivale(rivale)
+      if (state.federation.argent < cout) return state
+
+      const division = state.federation.divisions.find((d) => d.id === state.divisionActiveId)
+      const placesRestantes = division ? MAX_ROSTER_DIVISION - division.roster.length : 0
+      const nbAbsorbes = Math.max(0, Math.min(3, Math.round(rivale.fans / 8000), placesRestantes))
+      const nouveauxLutteurs = Array.from({ length: nbAbsorbes }, () => generateWrestler())
+
+      return {
+        federation: {
+          ...state.federation,
+          argent: state.federation.argent - cout,
+          fans: state.federation.fans + rivale.fans,
+          popularite: clampPourcentage(state.federation.popularite + 4),
+          rivales: state.federation.rivales.filter((r) => r.id !== rivaleId),
+          divisions: state.federation.divisions.map((d) =>
+            d.id === state.divisionActiveId ? { ...d, roster: [...d.roster, ...nouveauxLutteurs] } : d,
+          ),
         },
       }
     }),
