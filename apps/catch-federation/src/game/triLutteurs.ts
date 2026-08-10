@@ -1,4 +1,4 @@
-import type { Wrestler } from "./types"
+import type { Alignment, Genre, MoveStyle, Wrestler } from "./types"
 
 export type TriMarche = "aucun" | "sexe" | "niveau" | "specialite" | "alignment"
 
@@ -28,4 +28,50 @@ export function trierLutteurs(lutteurs: Wrestler[], tri: TriMarche): Wrestler[] 
     default:
       return copie
   }
+}
+
+export interface FiltresLutteurs {
+  genre: Genre | "tous"
+  style: MoveStyle | "tous"
+  alignment: Alignment | "tous"
+}
+
+export const FILTRES_PAR_DEFAUT: FiltresLutteurs = {
+  genre: "tous",
+  style: "tous",
+  alignment: "tous",
+}
+
+export const OPTIONS_FILTRE_GENRE: { value: FiltresLutteurs["genre"]; label: string }[] = [
+  { value: "tous", label: "Tous" },
+  { value: "homme", label: "Catcheurs (hommes)" },
+  { value: "femme", label: "Catcheuses (femmes)" },
+]
+
+export const OPTIONS_FILTRE_STYLE: { value: FiltresLutteurs["style"]; label: string }[] = [
+  { value: "tous", label: "Toutes" },
+  { value: "technique", label: "Technique" },
+  { value: "puissance", label: "Puissance" },
+  { value: "aérien", label: "Aérien" },
+  { value: "hardcore", label: "Hardcore" },
+  { value: "catch-mental", label: "Catch-mental" },
+]
+
+export const OPTIONS_FILTRE_ALIGNMENT: { value: FiltresLutteurs["alignment"]; label: string }[] = [
+  { value: "tous", label: "Tous" },
+  { value: "face", label: "Face" },
+  { value: "heel", label: "Heel" },
+]
+
+export function filtresActifs(filtres: FiltresLutteurs): boolean {
+  return filtres.genre !== "tous" || filtres.style !== "tous" || filtres.alignment !== "tous"
+}
+
+export function filtrerLutteurs(lutteurs: Wrestler[], filtres: FiltresLutteurs): Wrestler[] {
+  return lutteurs.filter(
+    (w) =>
+      (filtres.genre === "tous" || w.genre === filtres.genre) &&
+      (filtres.style === "tous" || w.style === filtres.style) &&
+      (filtres.alignment === "tous" || w.alignment === filtres.alignment),
+  )
 }

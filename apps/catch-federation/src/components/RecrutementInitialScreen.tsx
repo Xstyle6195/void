@@ -1,8 +1,16 @@
 import { useMemo, useState } from "react"
 import type { CategorieRecrutement } from "../game/types"
-import { OPTIONS_TRI, trierLutteurs, type TriMarche } from "../game/triLutteurs"
+import {
+  FILTRES_PAR_DEFAUT,
+  filtrerLutteurs,
+  OPTIONS_TRI,
+  trierLutteurs,
+  type FiltresLutteurs,
+  type TriMarche,
+} from "../game/triLutteurs"
 import { TAILLE_ROSTER_INITIAL, useDivisionActive, useFederation, useStore } from "../state/store"
 import { CarteAgentLibre } from "./CarteAgentLibre"
+import { PanneauFiltres } from "./PanneauFiltres"
 import { RosterView } from "./RosterView"
 
 type VueRecrutement = "marche" | "effectif"
@@ -24,12 +32,13 @@ export function RecrutementInitialScreen() {
   const [vue, setVue] = useState<VueRecrutement>("marche")
   const [onglet, setOnglet] = useState<CategorieRecrutement>("officiel")
   const [tri, setTri] = useState<TriMarche>("aucun")
+  const [filtres, setFiltres] = useState<FiltresLutteurs>(FILTRES_PAR_DEFAUT)
 
   const rosterComplet = division.roster.length >= TAILLE_ROSTER_INITIAL
-  const lutteurs = useMemo(
-    () => trierLutteurs(federation.freeAgents.filter((w) => w.categorie === onglet), tri),
-    [federation.freeAgents, onglet, tri],
-  )
+  const lutteurs = useMemo(() => {
+    const disponibles = federation.freeAgents.filter((w) => w.categorie === onglet)
+    return trierLutteurs(filtrerLutteurs(disponibles, filtres), tri)
+  }, [federation.freeAgents, onglet, tri, filtres])
 
   return (
     <div className="vue ecran-recrutement-initial">
@@ -77,6 +86,8 @@ export function RecrutementInitialScreen() {
             ))}
           </div>
 
+          <PanneauFiltres filtres={filtres} onChange={setFiltres} />
+
           <div className="barre-filtre">
             <label htmlFor="tri-recrutement">Trier par</label>
             <select id="tri-recrutement" value={tri} onChange={(e) => setTri(e.target.value as TriMarche)}>
@@ -87,6 +98,10 @@ export function RecrutementInitialScreen() {
               ))}
             </select>
           </div>
+
+          <p className="texte-muted texte-nb-resultats">
+            {lutteurs.length} catcheur{lutteurs.length > 1 ? "s" : ""} trouvé{lutteurs.length > 1 ? "s" : ""}
+          </p>
 
           {rosterComplet && (
             <p className="texte-muted">Roster complet — libère un catcheur depuis « Mon effectif » pour en signer un autre.</p>

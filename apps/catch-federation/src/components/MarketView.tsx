@@ -1,8 +1,16 @@
 import { useMemo, useState } from "react"
 import type { CategorieRecrutement } from "../game/types"
-import { OPTIONS_TRI, trierLutteurs, type TriMarche } from "../game/triLutteurs"
+import {
+  FILTRES_PAR_DEFAUT,
+  filtrerLutteurs,
+  OPTIONS_TRI,
+  trierLutteurs,
+  type FiltresLutteurs,
+  type TriMarche,
+} from "../game/triLutteurs"
 import { useFederation } from "../state/store"
 import { CarteAgentLibre } from "./CarteAgentLibre"
+import { PanneauFiltres } from "./PanneauFiltres"
 
 const ONGLETS_MARCHE: { value: CategorieRecrutement; label: string; description: string }[] = [
   {
@@ -22,12 +30,13 @@ export function MarketView() {
   const federation = useFederation()
   const [onglet, setOnglet] = useState<CategorieRecrutement>("officiel")
   const [tri, setTri] = useState<TriMarche>("aucun")
+  const [filtres, setFiltres] = useState<FiltresLutteurs>(FILTRES_PAR_DEFAUT)
 
   const ongletActif = ONGLETS_MARCHE.find((o) => o.value === onglet)!
-  const lutteurs = useMemo(
-    () => trierLutteurs(federation.freeAgents.filter((w) => w.categorie === onglet), tri),
-    [federation.freeAgents, onglet, tri],
-  )
+  const lutteurs = useMemo(() => {
+    const disponibles = federation.freeAgents.filter((w) => w.categorie === onglet)
+    return trierLutteurs(filtrerLutteurs(disponibles, filtres), tri)
+  }, [federation.freeAgents, onglet, tri, filtres])
 
   return (
     <div className="vue">
@@ -46,6 +55,8 @@ export function MarketView() {
       </div>
       <p className="texte-muted">{ongletActif.description}</p>
 
+      <PanneauFiltres filtres={filtres} onChange={setFiltres} />
+
       <div className="barre-filtre">
         <label htmlFor="tri-marche">Trier par</label>
         <select id="tri-marche" value={tri} onChange={(e) => setTri(e.target.value as TriMarche)}>
@@ -56,6 +67,10 @@ export function MarketView() {
           ))}
         </select>
       </div>
+
+      <p className="texte-muted texte-nb-resultats">
+        {lutteurs.length} catcheur{lutteurs.length > 1 ? "s" : ""} trouvé{lutteurs.length > 1 ? "s" : ""}
+      </p>
 
       <div className="liste-lutteurs">
         {lutteurs.map((w) => (
