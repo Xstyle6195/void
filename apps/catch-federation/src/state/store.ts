@@ -4,11 +4,11 @@ import { coutNouvelleDivision } from "../game/divisions"
 import { jouerSemaine } from "../game/engine"
 import { CAMPAGNES_MARKETING } from "../game/marketing"
 import { candidatParId } from "../game/officials"
-import { creerRivales, valorisationRivale } from "../game/rivals"
+import { PRESETS_RANG } from "../game/rangDepart"
+import { creerRivales, valorisationRivale, type PalierRivale } from "../game/rivals"
 import { LIMITES_FORMAT, stipulationsPourFormat } from "../game/stipulations"
 import type {
   BookedMatch,
-  Difficulte,
   DivisionInstance,
   FederationState,
   FormatMatch,
@@ -22,12 +22,6 @@ import { creerMarcheTransferts, generateWrestler, progressionDepuisFans } from "
 const COUT_RENOUVELLEMENT = 500
 const INDEMNITE_LIBERATION = 400
 export const MAX_ROSTER_DIVISION = 50
-
-const PARAMETRES_DIFFICULTE: Record<Difficulte, { argent: number; popularite: number }> = {
-  facile: { argent: 25000, popularite: 30 },
-  normal: { argent: 15000, popularite: 20 },
-  difficile: { argent: 8000, popularite: 10 },
-}
 
 function idMatch(): string {
   return `m-${Date.now()}-${Math.round(Math.random() * 10000)}`
@@ -56,21 +50,22 @@ function nouvelleDivision(nom: string, roster: Wrestler[], titres: { name: strin
   }
 }
 
-function etatInitial(nom: string, difficulte: Difficulte): FederationState {
-  const { argent, popularite } = PARAMETRES_DIFFICULTE[difficulte]
+function etatInitial(nom: string, logo: string, rang: PalierRivale): FederationState {
+  const { argent, fans, popularite } = PRESETS_RANG[rang]
   const divisionPrincipale = nouvelleDivision("Division Principale", [], [
     { name: "Championnat du Monde", prestige: 100 },
     { name: "Championnat Intercontinental", prestige: 60 },
   ])
   return {
     nom,
-    difficulte,
+    logo,
+    difficulte: "normal",
     semaine: 1,
     argent,
     popularite,
-    fans: 0,
+    fans,
     divisions: [divisionPrincipale],
-    freeAgents: creerMarcheTransferts(),
+    freeAgents: creerMarcheTransferts(undefined, progressionDepuisFans(fans)),
     derniereCampagne: {},
     officiels: { marketing: null, artistique: null, adjoint: null },
     rivales: creerRivales(),
@@ -89,7 +84,7 @@ interface Store {
   ecran: Screen
   federation: FederationState | null
   divisionActiveId: string | null
-  demarrerFederation: (nom: string, difficulte: Difficulte) => void
+  demarrerFederation: (nom: string, logo: string, rang: PalierRivale) => void
   setEcran: (ecran: Screen) => void
   setDivisionActive: (id: string) => void
   creerDivision: (nom: string) => void
@@ -138,8 +133,8 @@ export const useStore = create<Store>((set) => ({
   federation: null,
   divisionActiveId: null,
 
-  demarrerFederation: (nom, difficulte) => {
-    const federation = etatInitial(nom.trim() || "Fédération", difficulte)
+  demarrerFederation: (nom, logo, rang) => {
+    const federation = etatInitial(nom.trim() || "Fédération", logo, rang)
     set({
       federation,
       phase: "jeu",

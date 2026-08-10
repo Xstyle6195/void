@@ -104,6 +104,7 @@ export type Difficulte = "facile" | "normal" | "difficile"
 
 export interface FederationState {
   nom: string
+  logo: string
   difficulte: Difficulte
   semaine: number
   argent: number

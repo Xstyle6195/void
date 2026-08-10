@@ -15,15 +15,38 @@
 }
 
 .top-bar {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   padding: 10px 10px;
   background: var(--panel);
   border-bottom: 2px solid var(--accent);
   position: sticky;
   top: 0;
   z-index: 5;
+}
+
+.top-bar-identite {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.top-bar-logo {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.top-bar-nom {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.top-bar-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
 }
 
 .top-bar-item {
@@ -444,6 +467,60 @@ select {
   font-size: 15px;
 }
 
+.grille-logos {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 6px;
+}
+
+.bouton-logo {
+  aspect-ratio: 1;
+  font-size: 22px;
+  padding: 0;
+  background: var(--panel);
+}
+
+.bouton-logo.actif {
+  border-color: var(--gold);
+  background: var(--bg-alt);
+}
+
+.grille-rangs {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.carte-rang {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  text-align: left;
+  background: var(--panel);
+  padding: 10px 12px;
+}
+
+.carte-rang.actif {
+  border-color: var(--gold);
+  background: var(--bg-alt);
+}
+
+.carte-rang-nom {
+  font-weight: 700;
+  color: var(--gold);
+  font-size: 14px;
+}
+
+.carte-rang-stats {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.carte-rang-description {
+  font-size: 11px;
+  color: var(--text-muted);
+}
 
 .bouton-demarrer {
   margin-top: 28px;
