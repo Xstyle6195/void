@@ -10,12 +10,12 @@ import { creerRivales, valorisationRivale, type PalierRivale } from "../game/riv
 import { LIMITES_FORMAT, stipulationsPourFormat } from "../game/stipulations"
 import type {
   BookedMatch,
-  BookedPromo,
   DivisionInstance,
   FederationState,
   FormatMatch,
   Genre,
   MatchStipulation,
+  PlanCarte,
   Screen,
   TypePromo,
   Wrestler,
@@ -26,7 +26,8 @@ const COUT_RENOUVELLEMENT = 500
 const INDEMNITE_LIBERATION = 400
 export const MAX_ROSTER_DIVISION = 50
 export const TAILLE_ROSTER_INITIAL = 12
-const MAX_PROMOS_PAR_SHOW = 3
+export const MIN_MATCHS_CARTE = 3
+export const MAX_MATCHS_CARTE = 5
 
 function idMatch(): string {
   return `m-${Date.now()}-${Math.round(Math.random() * 10000)}`
@@ -38,6 +39,21 @@ function idPromo(): string {
 
 function idDivision(): string {
   return `div-${Date.now()}-${Math.round(Math.random() * 10000)}`
+}
+
+function nouveauMatch(): BookedMatch {
+  return {
+    id: idMatch(),
+    format: "1v1",
+    participantIds: [],
+    equipeA: [],
+    equipeB: [],
+    stipulation: "normal",
+    estTitre: false,
+    titleId: null,
+    vainqueurImposeIds: [],
+    interferenceId: null,
+  }
 }
 
 function nouvelleDivision(
@@ -60,8 +76,7 @@ function nouvelleDivision(
       prestige: t.prestige,
       championIds: [],
     })),
-    card: [],
-    promos: [],
+    planCarte: null,
     dernierResultat: null,
     historique: [],
   }
@@ -112,8 +127,8 @@ interface Store {
   creerDivision: (nom: string) => void
   definirArene: (divisionId: string, areneId: string) => void
   transfererLutteur: (wrestlerId: string, versDivisionId: string) => void
-  ajouterMatch: () => void
-  supprimerMatch: (matchId: string) => void
+  definirPlanCarte: (divisionId: string, nombreMatchs: number) => void
+  togglePromoSlot: (divisionId: string, indexSlot: number) => void
   toggleParticipant: (matchId: string, wrestlerId: string) => void
   definirFormatMatch: (matchId: string, format: FormatMatch) => void
   toggleParticipantEquipe: (matchId: string, equipe: "A" | "B", wrestlerId: string) => void
@@ -122,8 +137,6 @@ interface Store {
   definirEstTitre: (matchId: string, estTitre: boolean) => void
   definirVainqueurImpose: (matchId: string, campIds: string[]) => void
   definirInterference: (matchId: string, wrestlerId: string | null) => void
-  ajouterPromo: () => void
-  supprimerPromo: (promoId: string) => void
   definirTypePromo: (promoId: string, type: TypePromo) => void
   toggleParticipantPromo: (promoId: string, wrestlerId: string) => void
   lancerSemaine: () => void
@@ -151,6 +164,21 @@ function retirerChampionnat(titles: DivisionInstance["titles"], wrestlerId: stri
       ? { ...t, championIds: t.championIds.filter((id) => id !== wrestlerId) }
       : t,
   )
+}
+
+// Applique une transformation au plan de carte de la division active, sans effet si aucun plan n'existe encore.
+function modifierPlanCarte(
+  federation: FederationState,
+  divisionId: string,
+  transformer: (plan: PlanCarte, division: DivisionInstance) => PlanCarte,
+): FederationState {
+  return {
+    ...federation,
+    divisions: federation.divisions.map((d) => {
+      if (d.id !== divisionId || !d.planCarte) return d
+      return { ...d, planCarte: transformer(d.planCarte, d) }
+    }),
+  }
 }
 
 export const useStore = create<Store>((set) => ({
@@ -240,45 +268,35 @@ export const useStore = create<Store>((set) => ({
       }
     }),
 
-  ajouterMatch: () =>
+  definirPlanCarte: (divisionId, nombreMatchs) =>
     set((state) => {
-      if (!state.federation || !state.divisionActiveId) return state
-      const division = state.federation.divisions.find((d) => d.id === state.divisionActiveId)
-      if (!division || division.card.length >= 5) return state
-      const nouveauMatch: BookedMatch = {
-        id: idMatch(),
-        format: "1v1",
-        participantIds: [],
-        equipeA: [],
-        equipeB: [],
-        stipulation: "normal",
-        estTitre: false,
-        titleId: null,
-        vainqueurImposeIds: [],
-        interferenceId: null,
+      if (!state.federation) return state
+      const n = Math.max(MIN_MATCHS_CARTE, Math.min(MAX_MATCHS_CARTE, nombreMatchs))
+      const planCarte: PlanCarte = {
+        matchs: Array.from({ length: n }, nouveauMatch),
+        promoSlots: Array.from({ length: n + 1 }, () => null),
       }
       return {
         federation: {
           ...state.federation,
           divisions: state.federation.divisions.map((d) =>
-            d.id === division.id ? { ...d, card: [...d.card, nouveauMatch] } : d,
+            d.id === divisionId ? { ...d, planCarte } : d,
           ),
         },
       }
     }),
 
-  supprimerMatch: (matchId) =>
+  togglePromoSlot: (divisionId, indexSlot) =>
     set((state) => {
-      if (!state.federation || !state.divisionActiveId) return state
+      if (!state.federation) return state
       return {
-        federation: {
-          ...state.federation,
-          divisions: state.federation.divisions.map((d) =>
-            d.id === state.divisionActiveId
-              ? { ...d, card: d.card.filter((m) => m.id !== matchId) }
-              : d,
-          ),
-        },
+        federation: modifierPlanCarte(state.federation, divisionId, (plan) => ({
+          ...plan,
+          promoSlots: plan.promoSlots.map((p, i) => {
+            if (i !== indexSlot) return p
+            return p ? null : { id: idPromo(), type: "interview", participantIds: [] }
+          }),
+        })),
       }
     }),
 
@@ -286,32 +304,28 @@ export const useStore = create<Store>((set) => ({
     set((state) => {
       if (!state.federation || !state.divisionActiveId) return state
       return {
-        federation: {
-          ...state.federation,
-          divisions: state.federation.divisions.map((d) => {
-            if (d.id !== state.divisionActiveId) return d
-            const matchCible = d.card.find((m) => m.id === matchId)
-            const dejaPresent = matchCible?.participantIds.includes(wrestlerId) ?? false
-            return {
-              ...d,
-              card: d.card.map((m) => {
-                if (m.id !== matchId) return m
-                if (dejaPresent) {
-                  return {
-                    ...m,
-                    participantIds: m.participantIds.filter((id) => id !== wrestlerId),
-                    vainqueurImposeIds: [],
-                  }
+        federation: modifierPlanCarte(state.federation, state.divisionActiveId, (plan, d) => {
+          const matchCible = plan.matchs.find((m) => m.id === matchId)
+          const dejaPresent = matchCible?.participantIds.includes(wrestlerId) ?? false
+          return {
+            ...plan,
+            matchs: plan.matchs.map((m) => {
+              if (m.id !== matchId) return m
+              if (dejaPresent) {
+                return {
+                  ...m,
+                  participantIds: m.participantIds.filter((id) => id !== wrestlerId),
+                  vainqueurImposeIds: [],
                 }
-                if (m.participantIds.length >= LIMITES_FORMAT[m.format].max) return m
-                const genreNouveau = genreLutteur(d.roster, wrestlerId)
-                const genresExistants = m.participantIds.map((id) => genreLutteur(d.roster, id))
-                if (genreNouveau && genresExistants.some((g) => g && g !== genreNouveau)) return m
-                return { ...m, participantIds: [...m.participantIds, wrestlerId], vainqueurImposeIds: [] }
-              }),
-            }
-          }),
-        },
+              }
+              if (m.participantIds.length >= LIMITES_FORMAT[m.format].max) return m
+              const genreNouveau = genreLutteur(d.roster, wrestlerId)
+              const genresExistants = m.participantIds.map((id) => genreLutteur(d.roster, id))
+              if (genreNouveau && genresExistants.some((g) => g && g !== genreNouveau)) return m
+              return { ...m, participantIds: [...m.participantIds, wrestlerId], vainqueurImposeIds: [] }
+            }),
+          }
+        }),
       }
     }),
 
@@ -319,32 +333,25 @@ export const useStore = create<Store>((set) => ({
     set((state) => {
       if (!state.federation || !state.divisionActiveId) return state
       return {
-        federation: {
-          ...state.federation,
-          divisions: state.federation.divisions.map((d) =>
-            d.id === state.divisionActiveId
+        federation: modifierPlanCarte(state.federation, state.divisionActiveId, (plan) => ({
+          ...plan,
+          matchs: plan.matchs.map((m) =>
+            m.id === matchId
               ? {
-                  ...d,
-                  card: d.card.map((m) =>
-                    m.id === matchId
-                      ? {
-                          ...m,
-                          format,
-                          participantIds: [],
-                          equipeA: [],
-                          equipeB: [],
-                          stipulation: stipulationsPourFormat(format)[0].id,
-                          estTitre: false,
-                          titleId: null,
-                          vainqueurImposeIds: [],
-                          interferenceId: null,
-                        }
-                      : m,
-                  ),
+                  ...m,
+                  format,
+                  participantIds: [],
+                  equipeA: [],
+                  equipeB: [],
+                  stipulation: stipulationsPourFormat(format)[0].id,
+                  estTitre: false,
+                  titleId: null,
+                  vainqueurImposeIds: [],
+                  interferenceId: null,
                 }
-              : d,
+              : m,
           ),
-        },
+        })),
       }
     }),
 
@@ -352,19 +359,10 @@ export const useStore = create<Store>((set) => ({
     set((state) => {
       if (!state.federation || !state.divisionActiveId) return state
       return {
-        federation: {
-          ...state.federation,
-          divisions: state.federation.divisions.map((d) =>
-            d.id === state.divisionActiveId
-              ? {
-                  ...d,
-                  card: d.card.map((m) =>
-                    m.id === matchId ? { ...m, vainqueurImposeIds: campIds } : m,
-                  ),
-                }
-              : d,
-          ),
-        },
+        federation: modifierPlanCarte(state.federation, state.divisionActiveId, (plan) => ({
+          ...plan,
+          matchs: plan.matchs.map((m) => (m.id === matchId ? { ...m, vainqueurImposeIds: campIds } : m)),
+        })),
       }
     }),
 
@@ -372,19 +370,10 @@ export const useStore = create<Store>((set) => ({
     set((state) => {
       if (!state.federation || !state.divisionActiveId) return state
       return {
-        federation: {
-          ...state.federation,
-          divisions: state.federation.divisions.map((d) =>
-            d.id === state.divisionActiveId
-              ? {
-                  ...d,
-                  card: d.card.map((m) =>
-                    m.id === matchId ? { ...m, interferenceId: wrestlerId } : m,
-                  ),
-                }
-              : d,
-          ),
-        },
+        federation: modifierPlanCarte(state.federation, state.divisionActiveId, (plan) => ({
+          ...plan,
+          matchs: plan.matchs.map((m) => (m.id === matchId ? { ...m, interferenceId: wrestlerId } : m)),
+        })),
       }
     }),
 
@@ -392,37 +381,31 @@ export const useStore = create<Store>((set) => ({
     set((state) => {
       if (!state.federation || !state.divisionActiveId) return state
       return {
-        federation: {
-          ...state.federation,
-          divisions: state.federation.divisions.map((d) => {
-            if (d.id !== state.divisionActiveId) return d
-            return {
-              ...d,
-              card: d.card.map((m) => {
-                if (m.id !== matchId) return m
-                const autreEquipe = equipe === "A" ? m.equipeB : m.equipeA
-                if (autreEquipe.includes(wrestlerId)) return m
-                const cible = equipe === "A" ? m.equipeA : m.equipeB
-                let nouvelleCible: string[]
-                if (cible.includes(wrestlerId)) {
-                  nouvelleCible = cible.filter((id) => id !== wrestlerId)
-                } else if (cible.length >= 2) {
-                  nouvelleCible = cible
-                } else {
-                  const genreNouveau = genreLutteur(d.roster, wrestlerId)
-                  const genresExistants = [...m.equipeA, ...m.equipeB].map((id) => genreLutteur(d.roster, id))
-                  nouvelleCible =
-                    genreNouveau && genresExistants.some((g) => g && g !== genreNouveau)
-                      ? cible
-                      : [...cible, wrestlerId]
-                }
-                return equipe === "A"
-                  ? { ...m, equipeA: nouvelleCible, vainqueurImposeIds: [] }
-                  : { ...m, equipeB: nouvelleCible, vainqueurImposeIds: [] }
-              }),
+        federation: modifierPlanCarte(state.federation, state.divisionActiveId, (plan, d) => ({
+          ...plan,
+          matchs: plan.matchs.map((m) => {
+            if (m.id !== matchId) return m
+            const autreEquipe = equipe === "A" ? m.equipeB : m.equipeA
+            if (autreEquipe.includes(wrestlerId)) return m
+            const cible = equipe === "A" ? m.equipeA : m.equipeB
+            let nouvelleCible: string[]
+            if (cible.includes(wrestlerId)) {
+              nouvelleCible = cible.filter((id) => id !== wrestlerId)
+            } else if (cible.length >= 2) {
+              nouvelleCible = cible
+            } else {
+              const genreNouveau = genreLutteur(d.roster, wrestlerId)
+              const genresExistants = [...m.equipeA, ...m.equipeB].map((id) => genreLutteur(d.roster, id))
+              nouvelleCible =
+                genreNouveau && genresExistants.some((g) => g && g !== genreNouveau)
+                  ? cible
+                  : [...cible, wrestlerId]
             }
+            return equipe === "A"
+              ? { ...m, equipeA: nouvelleCible, vainqueurImposeIds: [] }
+              : { ...m, equipeB: nouvelleCible, vainqueurImposeIds: [] }
           }),
-        },
+        })),
       }
     }),
 
@@ -430,14 +413,10 @@ export const useStore = create<Store>((set) => ({
     set((state) => {
       if (!state.federation || !state.divisionActiveId) return state
       return {
-        federation: {
-          ...state.federation,
-          divisions: state.federation.divisions.map((d) =>
-            d.id === state.divisionActiveId
-              ? { ...d, card: d.card.map((m) => (m.id === matchId ? { ...m, stipulation } : m)) }
-              : d,
-          ),
-        },
+        federation: modifierPlanCarte(state.federation, state.divisionActiveId, (plan) => ({
+          ...plan,
+          matchs: plan.matchs.map((m) => (m.id === matchId ? { ...m, stipulation } : m)),
+        })),
       }
     }),
 
@@ -445,14 +424,10 @@ export const useStore = create<Store>((set) => ({
     set((state) => {
       if (!state.federation || !state.divisionActiveId) return state
       return {
-        federation: {
-          ...state.federation,
-          divisions: state.federation.divisions.map((d) =>
-            d.id === state.divisionActiveId
-              ? { ...d, card: d.card.map((m) => (m.id === matchId ? { ...m, titleId } : m)) }
-              : d,
-          ),
-        },
+        federation: modifierPlanCarte(state.federation, state.divisionActiveId, (plan) => ({
+          ...plan,
+          matchs: plan.matchs.map((m) => (m.id === matchId ? { ...m, titleId } : m)),
+        })),
       }
     }),
 
@@ -460,54 +435,12 @@ export const useStore = create<Store>((set) => ({
     set((state) => {
       if (!state.federation || !state.divisionActiveId) return state
       return {
-        federation: {
-          ...state.federation,
-          divisions: state.federation.divisions.map((d) =>
-            d.id === state.divisionActiveId
-              ? {
-                  ...d,
-                  card: d.card.map((m) =>
-                    m.id === matchId ? { ...m, estTitre, titleId: estTitre ? m.titleId : null } : m,
-                  ),
-                }
-              : d,
+        federation: modifierPlanCarte(state.federation, state.divisionActiveId, (plan) => ({
+          ...plan,
+          matchs: plan.matchs.map((m) =>
+            m.id === matchId ? { ...m, estTitre, titleId: estTitre ? m.titleId : null } : m,
           ),
-        },
-      }
-    }),
-
-  ajouterPromo: () =>
-    set((state) => {
-      if (!state.federation || !state.divisionActiveId) return state
-      const division = state.federation.divisions.find((d) => d.id === state.divisionActiveId)
-      if (!division || division.promos.length >= MAX_PROMOS_PAR_SHOW) return state
-      const nouvellePromo: BookedPromo = {
-        id: idPromo(),
-        type: "interview",
-        participantIds: [],
-      }
-      return {
-        federation: {
-          ...state.federation,
-          divisions: state.federation.divisions.map((d) =>
-            d.id === division.id ? { ...d, promos: [...d.promos, nouvellePromo] } : d,
-          ),
-        },
-      }
-    }),
-
-  supprimerPromo: (promoId) =>
-    set((state) => {
-      if (!state.federation || !state.divisionActiveId) return state
-      return {
-        federation: {
-          ...state.federation,
-          divisions: state.federation.divisions.map((d) =>
-            d.id === state.divisionActiveId
-              ? { ...d, promos: d.promos.filter((p) => p.id !== promoId) }
-              : d,
-          ),
-        },
+        })),
       }
     }),
 
@@ -515,19 +448,12 @@ export const useStore = create<Store>((set) => ({
     set((state) => {
       if (!state.federation || !state.divisionActiveId) return state
       return {
-        federation: {
-          ...state.federation,
-          divisions: state.federation.divisions.map((d) =>
-            d.id === state.divisionActiveId
-              ? {
-                  ...d,
-                  promos: d.promos.map((p) =>
-                    p.id === promoId ? { ...p, type, participantIds: [] } : p,
-                  ),
-                }
-              : d,
+        federation: modifierPlanCarte(state.federation, state.divisionActiveId, (plan) => ({
+          ...plan,
+          promoSlots: plan.promoSlots.map((p) =>
+            p && p.id === promoId ? { ...p, type, participantIds: [] } : p,
           ),
-        },
+        })),
       }
     }),
 
@@ -535,23 +461,17 @@ export const useStore = create<Store>((set) => ({
     set((state) => {
       if (!state.federation || !state.divisionActiveId) return state
       return {
-        federation: {
-          ...state.federation,
-          divisions: state.federation.divisions.map((d) => {
-            if (d.id !== state.divisionActiveId) return d
-            return {
-              ...d,
-              promos: d.promos.map((p) => {
-                if (p.id !== promoId) return p
-                if (p.participantIds.includes(wrestlerId)) {
-                  return { ...p, participantIds: p.participantIds.filter((id) => id !== wrestlerId) }
-                }
-                if (p.participantIds.length >= infoPromo(p.type).participantsMax) return p
-                return { ...p, participantIds: [...p.participantIds, wrestlerId] }
-              }),
+        federation: modifierPlanCarte(state.federation, state.divisionActiveId, (plan) => ({
+          ...plan,
+          promoSlots: plan.promoSlots.map((p) => {
+            if (!p || p.id !== promoId) return p
+            if (p.participantIds.includes(wrestlerId)) {
+              return { ...p, participantIds: p.participantIds.filter((id) => id !== wrestlerId) }
             }
+            if (p.participantIds.length >= infoPromo(p.type).participantsMax) return p
+            return { ...p, participantIds: [...p.participantIds, wrestlerId] }
           }),
-        },
+        })),
       }
     }),
 

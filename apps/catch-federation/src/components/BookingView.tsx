@@ -3,8 +3,14 @@ import { ARENES, areneParId } from "../game/arenas"
 import { infoPromo, PROMOS } from "../game/promos"
 import { MODES_DIFFUSION, SCENOGRAPHIES } from "../game/showSetup"
 import { infoStipulation, LIMITES_FORMAT, stipulationsPourFormat } from "../game/stipulations"
-import type { BookedMatch, BookedPromo, FormatMatch, Genre, MatchStipulation, Title, Wrestler } from "../game/types"
-import { useDivisionActive, useFederation, useStore } from "../state/store"
+import type { BookedMatch, BookedPromo, DivisionInstance, FormatMatch, Genre, MatchStipulation, Title, Wrestler } from "../game/types"
+import {
+  MAX_MATCHS_CARTE,
+  MIN_MATCHS_CARTE,
+  useDivisionActive,
+  useFederation,
+  useStore,
+} from "../state/store"
 import { DivisionSwitcher } from "./DivisionSwitcher"
 
 function genreParticipantsDuMatch(match: BookedMatch, roster: Wrestler[]): Genre | undefined {
@@ -195,14 +201,13 @@ function InterferenceSelector({ match }: { match: BookedMatch }) {
   )
 }
 
-function MatchCard({ match }: { match: BookedMatch }) {
+function MatchCard({ match, numero }: { match: BookedMatch; numero: number }) {
   const division = useDivisionActive()
   const toggleParticipant = useStore((s) => s.toggleParticipant)
   const definirFormatMatch = useStore((s) => s.definirFormatMatch)
   const definirStipulation = useStore((s) => s.definirStipulation)
   const definirEstTitre = useStore((s) => s.definirEstTitre)
   const definirTitre = useStore((s) => s.definirTitre)
-  const supprimerMatch = useStore((s) => s.supprimerMatch)
 
   const lutteursDisponibles = division.roster.filter((w) => w.blessureSemaines === 0)
   const stip = infoStipulation(match.stipulation)
@@ -218,20 +223,18 @@ function MatchCard({ match }: { match: BookedMatch }) {
   return (
     <div className="carte-match">
       <div className="carte-match-entete">
-        <div className="selecteur-format">
-          {FORMATS.map((f) => (
-            <button
-              key={f.value}
-              className={match.format === f.value ? "actif" : ""}
-              onClick={() => definirFormatMatch(match.id, f.value)}
-            >
-              {f.label}
-            </button>
-          ))}
-        </div>
-        <button className="danger" onClick={() => supprimerMatch(match.id)}>
-          Retirer le match
-        </button>
+        <span className="numero-match">Match {numero}</span>
+      </div>
+      <div className="selecteur-format">
+        {FORMATS.map((f) => (
+          <button
+            key={f.value}
+            className={match.format === f.value ? "actif" : ""}
+            onClick={() => definirFormatMatch(match.id, f.value)}
+          >
+            {f.label}
+          </button>
+        ))}
       </div>
 
       <select
@@ -336,17 +339,17 @@ function MatchCard({ match }: { match: BookedMatch }) {
   )
 }
 
-function PromoCard({ promo }: { promo: BookedPromo }) {
+function PromoCard({ promo, slotIndex }: { promo: BookedPromo; slotIndex: number }) {
   const division = useDivisionActive()
   const definirTypePromo = useStore((s) => s.definirTypePromo)
   const toggleParticipantPromo = useStore((s) => s.toggleParticipantPromo)
-  const supprimerPromo = useStore((s) => s.supprimerPromo)
+  const togglePromoSlot = useStore((s) => s.togglePromoSlot)
 
   const info = infoPromo(promo.type)
   const complet = promo.participantIds.length >= info.participantsMax
 
   return (
-    <div className="carte-match">
+    <div className="carte-match carte-promo">
       <div className="carte-match-entete">
         <div className="selecteur-format">
           {PROMOS.map((p) => (
@@ -359,7 +362,7 @@ function PromoCard({ promo }: { promo: BookedPromo }) {
             </button>
           ))}
         </div>
-        <button className="danger" onClick={() => supprimerPromo(promo.id)}>
+        <button className="danger" onClick={() => togglePromoSlot(division.id, slotIndex)}>
           Retirer la promo
         </button>
       </div>
@@ -416,30 +419,114 @@ function promoEstValide(promo: BookedPromo): boolean {
   return promo.participantIds.length >= info.participantsMin && promo.participantIds.length <= info.participantsMax
 }
 
-type EtapeShow = "matchs" | "promos" | "setup"
+function libelleSlot(index: number, nombreMatchs: number): string {
+  if (index === 0) return "Avant le Match 1"
+  if (index === nombreMatchs) return `Après le Match ${nombreMatchs}`
+  return `Entre les matchs ${index} et ${index + 1}`
+}
+
+const OPTIONS_NB_MATCHS = Array.from(
+  { length: MAX_MATCHS_CARTE - MIN_MATCHS_CARTE + 1 },
+  (_, i) => MIN_MATCHS_CARTE + i,
+)
+
+function EtapeFormat({ division, onSuivant }: { division: DivisionInstance; onSuivant: () => void }) {
+  const definirPlanCarte = useStore((s) => s.definirPlanCarte)
+  const togglePromoSlot = useStore((s) => s.togglePromoSlot)
+  const plan = division.planCarte
+
+  return (
+    <>
+      <p className="texte-muted">
+        Choisis d'abord le plan de ce show : le nombre de matchs, puis les créneaux de promo autour d'eux.
+      </p>
+
+      <div className="selecteur-format">
+        {OPTIONS_NB_MATCHS.map((n) => (
+          <button
+            key={n}
+            className={plan?.matchs.length === n ? "actif" : ""}
+            onClick={() => definirPlanCarte(division.id, n)}
+          >
+            {n} matchs
+          </button>
+        ))}
+      </div>
+
+      {plan && (
+        <div className="timeline-carte">
+          {plan.matchs.map((_, i) => (
+            <div key={i} className="fragment-timeline">
+              <button
+                className={`bouton-slot-promo ${plan.promoSlots[i] ? "actif" : ""}`}
+                onClick={() => togglePromoSlot(division.id, i)}
+              >
+                {plan.promoSlots[i] ? "🎙️ Promo activée" : "+ Ajouter une promo"} —{" "}
+                {libelleSlot(i, plan.matchs.length)}
+              </button>
+              <div className="timeline-match-label">Match {i + 1}</div>
+            </div>
+          ))}
+          <button
+            className={`bouton-slot-promo ${plan.promoSlots[plan.matchs.length] ? "actif" : ""}`}
+            onClick={() => togglePromoSlot(division.id, plan.matchs.length)}
+          >
+            {plan.promoSlots[plan.matchs.length] ? "🎙️ Promo activée" : "+ Ajouter une promo"} —{" "}
+            {libelleSlot(plan.matchs.length, plan.matchs.length)}
+          </button>
+        </div>
+      )}
+
+      <button className="primaire bouton-etape-suivante" onClick={onSuivant} disabled={!plan}>
+        Étape suivante →
+      </button>
+    </>
+  )
+}
+
+function EtapeCarte({ division }: { division: DivisionInstance }) {
+  const plan = division.planCarte
+  if (!plan) return null
+
+  return (
+    <>
+      {plan.matchs.map((match, i) => (
+        <div key={match.id}>
+          {plan.promoSlots[i] && <PromoCard promo={plan.promoSlots[i]!} slotIndex={i} />}
+          <MatchCard match={match} numero={i + 1} />
+        </div>
+      ))}
+      {plan.promoSlots[plan.matchs.length] && (
+        <PromoCard promo={plan.promoSlots[plan.matchs.length]!} slotIndex={plan.matchs.length} />
+      )}
+    </>
+  )
+}
+
+type EtapeShow = "format" | "carte" | "setup"
 
 const ETAPES: { value: EtapeShow; label: string }[] = [
-  { value: "matchs", label: "Matchs" },
-  { value: "promos", label: "Promos" },
+  { value: "format", label: "Format" },
+  { value: "carte", label: "Carte" },
   { value: "setup", label: "Setup" },
 ]
 
 function BookingWizard() {
   const division = useDivisionActive()
   const federation = useFederation()
-  const ajouterMatch = useStore((s) => s.ajouterMatch)
-  const ajouterPromo = useStore((s) => s.ajouterPromo)
   const definirArene = useStore((s) => s.definirArene)
   const lancerSemaine = useStore((s) => s.lancerSemaine)
   const arene = areneParId(division.areneId)
-  const [etape, setEtape] = useState<EtapeShow>("matchs")
+  const [etape, setEtape] = useState<EtapeShow>(division.planCarte ? "carte" : "format")
 
-  const matchesValides = division.card.filter(matchEstValide).length
-  const promosValides = division.promos.filter(promoEstValide).length
+  const matchs = division.planCarte?.matchs ?? []
+  const promos = division.planCarte?.promoSlots.filter((p): p is BookedPromo => Boolean(p)) ?? []
+  const matchesValides = matchs.filter(matchEstValide).length
+  const promosValides = promos.filter(promoEstValide).length
   const coutEstime =
     arene.coutLocation +
-    division.card.filter(matchEstValide).reduce((acc, m) => acc + infoStipulation(m.stipulation).cout, 0) +
-    division.promos.filter(promoEstValide).reduce((acc, p) => acc + infoPromo(p.type).cout, 0)
+    matchs.filter(matchEstValide).reduce((acc, m) => acc + infoStipulation(m.stipulation).cout, 0) +
+    promos.filter(promoEstValide).reduce((acc, p) => acc + infoPromo(p.type).cout, 0)
 
   const indexEtape = ETAPES.findIndex((e) => e.value === etape)
   const scenographie = SCENOGRAPHIES[0]
@@ -460,43 +547,16 @@ function BookingWizard() {
         <p className="texte-muted">Aucun lutteur dans cette division pour composer une carte.</p>
       )}
 
-      {etape === "matchs" && (
+      {etape === "format" && <EtapeFormat division={division} onSuivant={() => setEtape("carte")} />}
+
+      {etape === "carte" && division.planCarte && (
         <>
           <p className="texte-muted texte-arene-active">
             Salle : {arene.nom} (capacité {arene.capacite.toLocaleString("fr-FR")})
           </p>
-          {division.card.map((match) => (
-            <MatchCard key={match.id} match={match} />
-          ))}
-          <div className="actions-booking">
-            <button
-              onClick={ajouterMatch}
-              disabled={division.card.length >= 5 || division.roster.length === 0}
-            >
-              + Ajouter un match
-            </button>
-          </div>
-          <button className="primaire bouton-etape-suivante" onClick={() => setEtape("promos")}>
-            Étape suivante →
-          </button>
-        </>
-      )}
-
-      {etape === "promos" && (
-        <>
-          {division.promos.map((promo) => (
-            <PromoCard key={promo.id} promo={promo} />
-          ))}
-          <div className="actions-booking">
-            <button
-              onClick={ajouterPromo}
-              disabled={division.promos.length >= 3 || division.roster.length === 0}
-            >
-              + Ajouter une promo
-            </button>
-          </div>
+          <EtapeCarte division={division} />
           <div className="actions-etapes">
-            <button onClick={() => setEtape("matchs")}>← Retour</button>
+            <button onClick={() => setEtape("format")}>← Revoir le format</button>
             <button className="primaire" onClick={() => setEtape("setup")}>
               Étape suivante →
             </button>
@@ -565,7 +625,7 @@ function BookingWizard() {
           </p>
 
           <div className="actions-etapes">
-            <button onClick={() => setEtape("promos")}>← Retour</button>
+            <button onClick={() => setEtape("carte")}>← Retour</button>
             <button className="primaire" onClick={lancerSemaine}>
               🎤 Lancer le show
             </button>

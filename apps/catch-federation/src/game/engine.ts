@@ -222,13 +222,14 @@ function jouerDivision(
   const titles = division.titles.map((t) => ({ ...t, championIds: [...t.championIds] }))
   const salaires = roster.reduce((acc, w) => acc + w.salaire, 0)
 
-  const matchesValides = division.card.filter(matchEstComplet)
-  const promosValides = division.promos.filter(promoEstComplete)
+  const promosPlanifiees = division.planCarte?.promoSlots.filter((p): p is BookedPromo => Boolean(p)) ?? []
+  const matchesValides = (division.planCarte?.matchs ?? []).filter(matchEstComplet)
+  const promosValides = promosPlanifiees.filter(promoEstComplete)
 
   if (matchesValides.length === 0 && promosValides.length === 0) {
     const rosterApresSemaine = tickRoster(roster)
     return {
-      division: { ...division, roster: rosterApresSemaine, titles, card: [], promos: [] },
+      division: { ...division, roster: rosterApresSemaine, titles, planCarte: null },
       aJoue: false,
       revenus: 0,
       depenses: Math.round(salaires * (1 - reductionAdjointPct / 100)),
@@ -320,7 +321,7 @@ function jouerDivision(
     }
   }
 
-  const resultatPromos = resoudrePromos(division.promos, roster)
+  const resultatPromos = resoudrePromos(promosPlanifiees, roster)
   roster = resultatPromos.roster
 
   const poidsMainEvent = 1.5
@@ -387,8 +388,7 @@ function jouerDivision(
       ...division,
       roster: rosterApresSemaine,
       titles: apresDebauchage.titles,
-      card: [],
-      promos: [],
+      planCarte: null,
       dernierResultat: resultatShow,
       historique: [resultatShow, ...division.historique].slice(0, 20),
     },

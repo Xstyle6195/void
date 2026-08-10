@@ -76,6 +76,11 @@ export interface BookedPromo {
   participantIds: string[]
 }
 
+export interface PlanCarte {
+  matchs: BookedMatch[]
+  promoSlots: (BookedPromo | null)[]
+}
+
 export interface PromoResultat {
   type: TypePromo
   participantNoms: string[]
@@ -119,8 +124,7 @@ export interface DivisionInstance {
   modeDiffusion: TypeModeDiffusion
   roster: Wrestler[]
   titles: Title[]
-  card: BookedMatch[]
-  promos: BookedPromo[]
+  planCarte: PlanCarte | null
   dernierResultat: ShowResult | null
   historique: ShowResult[]
 }

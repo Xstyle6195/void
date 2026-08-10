@@ -810,6 +810,48 @@ select {
   color: var(--gold);
 }
 
+.numero-match {
+  font-weight: 700;
+  color: var(--gold);
+  font-size: 13px;
+}
+
+.timeline-carte {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 14px 0;
+}
+
+.fragment-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.bouton-slot-promo {
+  width: 100%;
+  text-align: left;
+  font-size: 12px;
+  padding: 8px 10px;
+  color: var(--text-muted);
+}
+
+.bouton-slot-promo.actif {
+  border-color: var(--gold);
+  color: var(--gold);
+  background: var(--bg-alt);
+}
+
+.timeline-match-label {
+  align-self: center;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  padding: 4px 0;
+}
+
 .bloc-equipes {
   display: flex;
   flex-direction: column;
