@@ -1,7 +1,17 @@
 import { areneParId } from "../game/arenas"
+import { Etoiles } from "./Etoiles"
+import { infoPromo } from "../game/promos"
 import { infoStipulation } from "../game/stipulations"
 import type { DivisionInstance } from "../game/types"
 import { useFederation, useStore } from "../state/store"
+
+function reactionPublique(note: number): string {
+  if (note >= 85) return "Le public est en délire, ce show restera dans les mémoires !"
+  if (note >= 70) return "Très bon accueil du public, l'énergie était au rendez-vous."
+  if (note >= 50) return "Le public a suivi sans grand enthousiasme."
+  if (note >= 30) return "Réactions tièdes, la foule s'est vite lassée."
+  return "Le public a hué certains passages, soirée compliquée."
+}
 
 function BlocDivision({ division, semaine }: { division: DivisionInstance; semaine: number }) {
   const resultat = division.dernierResultat
@@ -34,6 +44,33 @@ function BlocDivision({ division, semaine }: { division: DivisionInstance; semai
               <span className="top-bar-value">+{resultat.nouveauxFans.toLocaleString("fr-FR")}</span>
             </div>
           </div>
+
+          <p className="texte-reaction-public">🎤 {reactionPublique(resultat.note)}</p>
+
+          <div className="detail-depenses">
+            <span className="detail-depenses-titre">Détail des dépenses</span>
+            <div className="detail-depenses-ligne">
+              <span>Salaires</span>
+              <span>{resultat.detailDepenses.salaires.toLocaleString("fr-FR")} €</span>
+            </div>
+            <div className="detail-depenses-ligne">
+              <span>Frais de salle</span>
+              <span>{resultat.detailDepenses.frais.toLocaleString("fr-FR")} €</span>
+            </div>
+            <div className="detail-depenses-ligne">
+              <span>Stipulations &amp; interférences</span>
+              <span>{resultat.detailDepenses.stipulations.toLocaleString("fr-FR")} €</span>
+            </div>
+            <div className="detail-depenses-ligne">
+              <span>Promos</span>
+              <span>{resultat.detailDepenses.promos.toLocaleString("fr-FR")} €</span>
+            </div>
+            <div className="detail-depenses-ligne detail-depenses-total">
+              <span>Total</span>
+              <span>{resultat.depenses.toLocaleString("fr-FR")} €</span>
+            </div>
+          </div>
+
           <div className="liste-resultats-matches">
             {resultat.matches.map((m, i) => {
               const gagnants = m.winnerIds
@@ -67,11 +104,49 @@ function BlocDivision({ division, semaine }: { division: DivisionInstance; semai
               )
             })}
           </div>
+
+          {resultat.promos.length > 0 && (
+            <div className="liste-resultats-promos">
+              {resultat.promos.map((p, i) => {
+                const info = infoPromo(p.type)
+                return (
+                  <div key={i} className="carte-resultat-match">
+                    <span className="badge">🎙️ {info.nom}</span>
+                    <p>
+                      <strong>{p.participantNoms.join(" & ")}</strong> — effet : popularité{" "}
+                      {info.bonusPopularite >= 0 ? "+" : ""}
+                      {info.bonusPopularite}, moral {info.bonusMoral >= 0 ? "+" : ""}
+                      {info.bonusMoral}
+                    </p>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+
           {resultat.debauchesNoms.length > 0 && (
             <p className="texte-blessure">
               🏴 {resultat.debauchesNoms.join(", ")} {resultat.debauchesNoms.length > 1 ? "ont" : "a"} signé
               avec une fédération rivale.
             </p>
+          )}
+
+          {division.roster.length > 0 && (
+            <div className="etat-roster">
+              <span className="detail-depenses-titre">État du roster après le show</span>
+              {division.roster.map((w) => (
+                <div key={w.id} className="ligne-etat-lutteur">
+                  <span className="etat-lutteur-nom">
+                    {w.name}
+                    {w.blessureSemaines > 0 && (
+                      <span className="badge badge-blessure">Blessé ({w.blessureSemaines} sem.)</span>
+                    )}
+                  </span>
+                  <Etoiles label="Moral" valeur={w.moral} />
+                  <Etoiles label="Forme" valeur={w.forme} />
+                </div>
+              ))}
+            </div>
           )}
         </>
       )}

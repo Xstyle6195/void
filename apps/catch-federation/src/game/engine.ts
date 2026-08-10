@@ -1,13 +1,16 @@
 import { areneParId } from "./arenas"
 import { candidatParId } from "./officials"
+import { infoPromo } from "./promos"
 import { evoluerRivales, forceMoyenneRivalesActives, palierPourFans } from "./rivals"
 import { BONUS_TITRE, infoStipulation, LIMITES_FORMAT, RISQUE_TITRE, USURE_TITRE } from "./stipulations"
 import type {
   BookedMatch,
+  BookedPromo,
   Difficulte,
   DivisionInstance,
   FederationState,
   MatchResult,
+  PromoResultat,
   ShowResult,
   Title,
   Wrestler,
@@ -49,6 +52,45 @@ function campsDuMatch(match: BookedMatch): string[][] {
 function matchEstComplet(match: BookedMatch): boolean {
   if (match.format === "2v2") return match.equipeA.length === 2 && match.equipeB.length === 2
   return match.participantIds.length >= LIMITES_FORMAT[match.format].min
+}
+
+function promoEstComplete(promo: BookedPromo): boolean {
+  const info = infoPromo(promo.type)
+  return promo.participantIds.length >= info.participantsMin && promo.participantIds.length <= info.participantsMax
+}
+
+interface ResultatPromos {
+  roster: Wrestler[]
+  resultats: PromoResultat[]
+  coutTotal: number
+  bonusNoteTotal: number
+}
+
+function resoudrePromos(promos: BookedPromo[], roster: Wrestler[]): ResultatPromos {
+  const promosValides = promos.filter(promoEstComplete)
+  let rosterCourant = roster.map((w) => ({ ...w }))
+  let coutTotal = 0
+  let bonusNoteTotal = 0
+  const resultats: PromoResultat[] = []
+
+  for (const promo of promosValides) {
+    const info = infoPromo(promo.type)
+    coutTotal += info.cout
+    bonusNoteTotal += info.bonusNote
+    const participantNoms: string[] = []
+    for (const pid of promo.participantIds) {
+      const w = rosterCourant.find((r) => r.id === pid)
+      if (!w) continue
+      w.popularite = clamp(w.popularite + info.bonusPopularite + randInt(-2, 2))
+      w.moral = clamp(w.moral + info.bonusMoral)
+      participantNoms.push(w.name)
+    }
+    if (participantNoms.length > 0) {
+      resultats.push({ type: promo.type, participantNoms })
+    }
+  }
+
+  return { roster: rosterCourant, resultats, coutTotal, bonusNoteTotal }
 }
 
 const STIPULATIONS_ECHELLES = new Set(["echelles", "echelles-tag", "triple-echelles", "a4-echelles"])
@@ -178,11 +220,12 @@ function jouerDivision(
   const salaires = roster.reduce((acc, w) => acc + w.salaire, 0)
 
   const matchesValides = division.card.filter(matchEstComplet)
+  const promosValides = division.promos.filter(promoEstComplete)
 
-  if (matchesValides.length === 0) {
+  if (matchesValides.length === 0 && promosValides.length === 0) {
     const rosterApresSemaine = tickRoster(roster)
     return {
-      division: { ...division, roster: rosterApresSemaine, titles, card: [] },
+      division: { ...division, roster: rosterApresSemaine, titles, card: [], promos: [] },
       aJoue: false,
       revenus: 0,
       depenses: Math.round(salaires * (1 - reductionAdjointPct / 100)),
@@ -268,13 +311,17 @@ function jouerDivision(
     }
   }
 
+  const resultatPromos = resoudrePromos(division.promos, roster)
+  roster = resultatPromos.roster
+
   const poidsMainEvent = 1.5
   const sommePoids = resultats.length - 1 + poidsMainEvent
   const sommeNotes = resultats.reduce(
     (acc, r, i) => acc + r.note * (i === resultats.length - 1 ? poidsMainEvent : 1),
     0,
   )
-  const noteShow = Math.round(sommeNotes / sommePoids)
+  const noteMatches = sommeNotes / sommePoids
+  const noteShow = clamp(Math.round(noteMatches + resultatPromos.bonusNoteTotal))
 
   const arene = areneParId(division.areneId)
   const spectateursBruts = Math.round(
@@ -286,9 +333,15 @@ function jouerDivision(
     (acc, m) => acc + infoStipulation(m.stipulation).cout + (m.interferenceId ? COUT_INTERFERENCE : 0),
     0,
   )
-  const depenses = Math.round(
-    (salaires + FRAIS_SALLE + coutStipulations) * (1 - reductionAdjointPct / 100),
-  )
+  const facteurReduction = 1 - reductionAdjointPct / 100
+  const detailDepenses = {
+    salaires: Math.round(salaires * facteurReduction),
+    frais: Math.round(FRAIS_SALLE * facteurReduction),
+    stipulations: Math.round(coutStipulations * facteurReduction),
+    promos: Math.round(resultatPromos.coutTotal * facteurReduction),
+  }
+  const depenses =
+    detailDepenses.salaires + detailDepenses.frais + detailDepenses.stipulations + detailDepenses.promos
   const nouveauxFans = Math.max(0, Math.round(spectateurs * 0.6))
 
   const apresDebauchage = appliquerDebauchage(roster, titles, forceRivales)
@@ -296,10 +349,12 @@ function jouerDivision(
   const resultatShow: ShowResult = {
     semaine,
     matches: resultats,
+    promos: resultatPromos.resultats,
     note: noteShow,
     spectateurs,
     revenus,
     depenses,
+    detailDepenses,
     nouveauxFans,
     debauchesNoms: apresDebauchage.debauchesNoms,
   }
@@ -312,6 +367,7 @@ function jouerDivision(
       roster: rosterApresSemaine,
       titles: apresDebauchage.titles,
       card: [],
+      promos: [],
       dernierResultat: resultatShow,
       historique: [resultatShow, ...division.historique].slice(0, 20),
     },

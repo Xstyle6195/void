@@ -11,6 +11,7 @@ import { OfficialsView } from "./components/OfficialsView"
 import { DivisionsView } from "./components/DivisionsView"
 import { RivalsView } from "./components/RivalsView"
 import { StartScreen } from "./components/StartScreen"
+import { RecrutementInitialScreen } from "./components/RecrutementInitialScreen"
 import { useEcran, useFederation, usePhase, useStore } from "./state/store"
 import type { Screen } from "./game/types"
 
@@ -61,6 +62,14 @@ function App() {
     return (
       <div className="app">
         <StartScreen />
+      </div>
+    )
+  }
+
+  if (phase === "recrutement-initial") {
+    return (
+      <div className="app">
+        <RecrutementInitialScreen />
       </div>
     )
   }

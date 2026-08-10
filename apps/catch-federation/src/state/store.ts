@@ -4,17 +4,20 @@ import { coutNouvelleDivision } from "../game/divisions"
 import { jouerSemaine } from "../game/engine"
 import { CAMPAGNES_MARKETING } from "../game/marketing"
 import { candidatParId } from "../game/officials"
+import { infoPromo } from "../game/promos"
 import { PRESETS_RANG } from "../game/rangDepart"
 import { creerRivales, valorisationRivale, type PalierRivale } from "../game/rivals"
 import { LIMITES_FORMAT, stipulationsPourFormat } from "../game/stipulations"
 import type {
   BookedMatch,
+  BookedPromo,
   DivisionInstance,
   FederationState,
   FormatMatch,
   Genre,
   MatchStipulation,
   Screen,
+  TypePromo,
   Wrestler,
 } from "../game/types"
 import { creerMarcheTransferts, generateWrestler, progressionDepuisFans } from "../game/wrestlers"
@@ -22,9 +25,15 @@ import { creerMarcheTransferts, generateWrestler, progressionDepuisFans } from "
 const COUT_RENOUVELLEMENT = 500
 const INDEMNITE_LIBERATION = 400
 export const MAX_ROSTER_DIVISION = 50
+export const TAILLE_ROSTER_INITIAL = 12
+const MAX_PROMOS_PAR_SHOW = 3
 
 function idMatch(): string {
   return `m-${Date.now()}-${Math.round(Math.random() * 10000)}`
+}
+
+function idPromo(): string {
+  return `p-${Date.now()}-${Math.round(Math.random() * 10000)}`
 }
 
 function idDivision(): string {
@@ -37,6 +46,8 @@ function nouvelleDivision(nom: string, roster: Wrestler[], titres: { name: strin
     id,
     nom,
     areneId: "rue",
+    scenographie: "standard",
+    modeDiffusion: "locale",
     roster,
     titles: titres.map((t, i) => ({
       id: `${id}-t${i}`,
@@ -45,6 +56,7 @@ function nouvelleDivision(nom: string, roster: Wrestler[], titres: { name: strin
       championIds: [],
     })),
     card: [],
+    promos: [],
     dernierResultat: null,
     historique: [],
   }
@@ -77,7 +89,7 @@ function clampPourcentage(value: number): number {
   return Math.round(Math.max(0, Math.min(100, value)))
 }
 
-type Phase = "accueil" | "jeu"
+type Phase = "accueil" | "recrutement-initial" | "jeu"
 
 interface Store {
   phase: Phase
@@ -85,6 +97,7 @@ interface Store {
   federation: FederationState | null
   divisionActiveId: string | null
   demarrerFederation: (nom: string, logo: string, rang: PalierRivale) => void
+  terminerRecrutementInitial: () => void
   setEcran: (ecran: Screen) => void
   setDivisionActive: (id: string) => void
   creerDivision: (nom: string) => void
@@ -100,6 +113,10 @@ interface Store {
   definirEstTitre: (matchId: string, estTitre: boolean) => void
   definirVainqueurImpose: (matchId: string, campIds: string[]) => void
   definirInterference: (matchId: string, wrestlerId: string | null) => void
+  ajouterPromo: () => void
+  supprimerPromo: (promoId: string) => void
+  definirTypePromo: (promoId: string, type: TypePromo) => void
+  toggleParticipantPromo: (promoId: string, wrestlerId: string) => void
   lancerSemaine: () => void
   signerAgentLibre: (id: string, versDivisionId: string) => void
   libererLutteur: (id: string) => void
@@ -137,11 +154,13 @@ export const useStore = create<Store>((set) => ({
     const federation = etatInitial(nom.trim() || "Fédération", logo, rang)
     set({
       federation,
-      phase: "jeu",
+      phase: "recrutement-initial",
       ecran: "effectif",
       divisionActiveId: federation.divisions[0].id,
     })
   },
+
+  terminerRecrutementInitial: () => set({ phase: "jeu", ecran: "effectif" }),
 
   setEcran: (ecran) => set({ ecran }),
 
@@ -448,6 +467,85 @@ export const useStore = create<Store>((set) => ({
                 }
               : d,
           ),
+        },
+      }
+    }),
+
+  ajouterPromo: () =>
+    set((state) => {
+      if (!state.federation || !state.divisionActiveId) return state
+      const division = state.federation.divisions.find((d) => d.id === state.divisionActiveId)
+      if (!division || division.promos.length >= MAX_PROMOS_PAR_SHOW) return state
+      const nouvellePromo: BookedPromo = {
+        id: idPromo(),
+        type: "interview",
+        participantIds: [],
+      }
+      return {
+        federation: {
+          ...state.federation,
+          divisions: state.federation.divisions.map((d) =>
+            d.id === division.id ? { ...d, promos: [...d.promos, nouvellePromo] } : d,
+          ),
+        },
+      }
+    }),
+
+  supprimerPromo: (promoId) =>
+    set((state) => {
+      if (!state.federation || !state.divisionActiveId) return state
+      return {
+        federation: {
+          ...state.federation,
+          divisions: state.federation.divisions.map((d) =>
+            d.id === state.divisionActiveId
+              ? { ...d, promos: d.promos.filter((p) => p.id !== promoId) }
+              : d,
+          ),
+        },
+      }
+    }),
+
+  definirTypePromo: (promoId, type) =>
+    set((state) => {
+      if (!state.federation || !state.divisionActiveId) return state
+      return {
+        federation: {
+          ...state.federation,
+          divisions: state.federation.divisions.map((d) =>
+            d.id === state.divisionActiveId
+              ? {
+                  ...d,
+                  promos: d.promos.map((p) =>
+                    p.id === promoId ? { ...p, type, participantIds: [] } : p,
+                  ),
+                }
+              : d,
+          ),
+        },
+      }
+    }),
+
+  toggleParticipantPromo: (promoId, wrestlerId) =>
+    set((state) => {
+      if (!state.federation || !state.divisionActiveId) return state
+      return {
+        federation: {
+          ...state.federation,
+          divisions: state.federation.divisions.map((d) => {
+            if (d.id !== state.divisionActiveId) return d
+            return {
+              ...d,
+              promos: d.promos.map((p) => {
+                if (p.id !== promoId) return p
+                if (p.participantIds.includes(wrestlerId)) {
+                  return { ...p, participantIds: p.participantIds.filter((id) => id !== wrestlerId) }
+                }
+                if (p.participantIds.length >= infoPromo(p.type).participantsMax) return p
+                return { ...p, participantIds: [...p.participantIds, wrestlerId] }
+              }),
+            }
+          }),
         },
       }
     }),

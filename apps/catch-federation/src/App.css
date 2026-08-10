@@ -863,3 +863,146 @@ select {
   margin-top: 6px;
   font-size: 13px;
 }
+
+/* Recrutement initial (onboarding) */
+
+.entete-recrutement-initial {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.entete-recrutement-initial-logo {
+  font-size: 32px;
+  line-height: 1;
+}
+
+.entete-recrutement-initial h2 {
+  margin-bottom: 2px;
+}
+
+/* Assistant de préparation du show (wizard) */
+
+.texte-etape-wizard {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--gold);
+  margin-bottom: 12px;
+}
+
+.bouton-etape-suivante {
+  width: 100%;
+  padding: 14px;
+  font-size: 15px;
+  margin-top: 12px;
+}
+
+.actions-etapes {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.actions-etapes button {
+  flex: 1;
+}
+
+.carte-setup {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+  margin-bottom: 10px;
+}
+
+.carte-setup-titre {
+  display: block;
+  font-weight: 700;
+  color: var(--gold);
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+
+.recap-show {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: var(--bg-alt);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 13px;
+  margin-bottom: 12px;
+}
+
+/* Résultats enrichis */
+
+.texte-reaction-public {
+  font-style: italic;
+  color: var(--text);
+  margin-bottom: 12px;
+}
+
+.detail-depenses {
+  background: var(--bg-alt);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  font-size: 13px;
+}
+
+.detail-depenses-titre {
+  display: block;
+  font-weight: 700;
+  color: var(--gold);
+  font-size: 12px;
+  margin-bottom: 6px;
+}
+
+.detail-depenses-ligne {
+  display: flex;
+  justify-content: space-between;
+  color: var(--text-muted);
+  padding: 2px 0;
+}
+
+.detail-depenses-total {
+  color: var(--text);
+  font-weight: 700;
+  border-top: 1px solid var(--border);
+  margin-top: 4px;
+  padding-top: 6px;
+}
+
+.liste-resultats-promos {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.etat-roster {
+  background: var(--bg-alt);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+}
+
+.ligne-etat-lutteur {
+  padding: 6px 0;
+  border-top: 1px solid var(--border);
+}
+
+.ligne-etat-lutteur:first-of-type {
+  border-top: none;
+}
+
+.etat-lutteur-nom {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 2px;
+}

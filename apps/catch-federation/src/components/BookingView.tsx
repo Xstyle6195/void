@@ -1,6 +1,9 @@
+import { useState } from "react"
 import { areneParId } from "../game/arenas"
+import { infoPromo, PROMOS } from "../game/promos"
+import { MODES_DIFFUSION, SCENOGRAPHIES } from "../game/showSetup"
 import { infoStipulation, LIMITES_FORMAT, stipulationsPourFormat } from "../game/stipulations"
-import type { BookedMatch, FormatMatch, Genre, MatchStipulation, Wrestler } from "../game/types"
+import type { BookedMatch, BookedPromo, FormatMatch, Genre, MatchStipulation, Wrestler } from "../game/types"
 import { useDivisionActive, useStore } from "../state/store"
 import { DivisionSwitcher } from "./DivisionSwitcher"
 
@@ -289,18 +292,113 @@ function MatchCard({ match }: { match: BookedMatch }) {
   )
 }
 
+function PromoCard({ promo }: { promo: BookedPromo }) {
+  const division = useDivisionActive()
+  const definirTypePromo = useStore((s) => s.definirTypePromo)
+  const toggleParticipantPromo = useStore((s) => s.toggleParticipantPromo)
+  const supprimerPromo = useStore((s) => s.supprimerPromo)
+
+  const info = infoPromo(promo.type)
+  const complet = promo.participantIds.length >= info.participantsMax
+
+  return (
+    <div className="carte-match">
+      <div className="carte-match-entete">
+        <div className="selecteur-format">
+          {PROMOS.map((p) => (
+            <button
+              key={p.id}
+              className={promo.type === p.id ? "actif" : ""}
+              onClick={() => definirTypePromo(promo.id, p.id)}
+            >
+              {p.nom}
+            </button>
+          ))}
+        </div>
+        <button className="danger" onClick={() => supprimerPromo(promo.id)}>
+          Retirer la promo
+        </button>
+      </div>
+
+      <p className="texte-muted texte-stipulation">
+        {info.description} · Coût : {info.cout.toLocaleString("fr-FR")} €
+      </p>
+      <p className="texte-muted">
+        {info.participantsMin === info.participantsMax
+          ? `${info.participantsMax} participant${info.participantsMax > 1 ? "s" : ""} requis`
+          : `De ${info.participantsMin} à ${info.participantsMax} participants`}
+      </p>
+
+      <div className="participants-choisis">
+        {promo.participantIds.length === 0 && (
+          <span className="texte-muted">Aucun lutteur sélectionné</span>
+        )}
+        {promo.participantIds.map((id) => {
+          const w = division.roster.find((r) => r.id === id)
+          if (!w) return null
+          return (
+            <span key={id} className="jeton-participant" onClick={() => toggleParticipantPromo(promo.id, id)}>
+              {w.name} ✕
+            </span>
+          )
+        })}
+      </div>
+
+      <div className="grille-selection">
+        {division.roster.map((w) => {
+          const selectionne = promo.participantIds.includes(w.id)
+          return (
+            <button
+              key={w.id}
+              className={`bouton-lutteur ${selectionne ? "selectionne" : ""}`}
+              onClick={() => toggleParticipantPromo(promo.id, w.id)}
+              disabled={!selectionne && complet}
+            >
+              {w.name}
+              <span className="bouton-lutteur-pop">{w.popularite}%</span>
+            </button>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 function matchEstValide(match: BookedMatch): boolean {
   if (match.format === "2v2") return match.equipeA.length === 2 && match.equipeB.length === 2
   return match.participantIds.length >= LIMITES_FORMAT[match.format].min
 }
 
-export function BookingView() {
+function promoEstValide(promo: BookedPromo): boolean {
+  const info = infoPromo(promo.type)
+  return promo.participantIds.length >= info.participantsMin && promo.participantIds.length <= info.participantsMax
+}
+
+type EtapeShow = "matchs" | "promos" | "setup"
+
+const ETAPES: { value: EtapeShow; label: string }[] = [
+  { value: "matchs", label: "Matchs" },
+  { value: "promos", label: "Promos" },
+  { value: "setup", label: "Setup" },
+]
+
+function BookingWizard() {
   const division = useDivisionActive()
   const ajouterMatch = useStore((s) => s.ajouterMatch)
+  const ajouterPromo = useStore((s) => s.ajouterPromo)
   const lancerSemaine = useStore((s) => s.lancerSemaine)
   const arene = areneParId(division.areneId)
+  const [etape, setEtape] = useState<EtapeShow>("matchs")
 
   const matchesValides = division.card.filter(matchEstValide).length
+  const promosValides = division.promos.filter(promoEstValide).length
+  const coutEstime =
+    division.card.filter(matchEstValide).reduce((acc, m) => acc + infoStipulation(m.stipulation).cout, 0) +
+    division.promos.filter(promoEstValide).reduce((acc, p) => acc + infoPromo(p.type).cout, 0)
+
+  const indexEtape = ETAPES.findIndex((e) => e.value === etape)
+  const scenographie = SCENOGRAPHIES[0]
+  const modeDiffusion = MODES_DIFFUSION[0]
 
   return (
     <div className="vue">
@@ -308,31 +406,111 @@ export function BookingView() {
         <h2>{division.nom} — Composer la carte</h2>
         <DivisionSwitcher divisionId={division.id} />
       </div>
-      <p className="texte-muted texte-arene-active">
-        Salle : {arene.nom} (capacité {arene.capacite.toLocaleString("fr-FR")})
+
+      <p className="texte-etape-wizard">
+        Étape {indexEtape + 1}/3 — {ETAPES[indexEtape].label}
       </p>
+
       {division.roster.length === 0 && (
         <p className="texte-muted">Aucun lutteur dans cette division pour composer une carte.</p>
       )}
-      {division.card.map((match) => (
-        <MatchCard key={match.id} match={match} />
-      ))}
 
-      <div className="actions-booking">
-        <button
-          onClick={ajouterMatch}
-          disabled={division.card.length >= 5 || division.roster.length === 0}
-        >
-          + Ajouter un match
-        </button>
-      </div>
+      {etape === "matchs" && (
+        <>
+          <p className="texte-muted texte-arene-active">
+            Salle : {arene.nom} (capacité {arene.capacite.toLocaleString("fr-FR")})
+          </p>
+          {division.card.map((match) => (
+            <MatchCard key={match.id} match={match} />
+          ))}
+          <div className="actions-booking">
+            <button
+              onClick={ajouterMatch}
+              disabled={division.card.length >= 5 || division.roster.length === 0}
+            >
+              + Ajouter un match
+            </button>
+          </div>
+          <button className="primaire bouton-etape-suivante" onClick={() => setEtape("promos")}>
+            Étape suivante →
+          </button>
+        </>
+      )}
 
-      <p className="texte-muted texte-lancer-semaine">
-        Lancer la semaine résout les cartes de toutes les divisions ayant des matchs programmés.
-      </p>
-      <button className="primaire bouton-lancer-semaine" onClick={lancerSemaine}>
-        Lancer la semaine ({matchesValides} match{matchesValides > 1 ? "s" : ""} ici)
-      </button>
+      {etape === "promos" && (
+        <>
+          {division.promos.map((promo) => (
+            <PromoCard key={promo.id} promo={promo} />
+          ))}
+          <div className="actions-booking">
+            <button
+              onClick={ajouterPromo}
+              disabled={division.promos.length >= 3 || division.roster.length === 0}
+            >
+              + Ajouter une promo
+            </button>
+          </div>
+          <div className="actions-etapes">
+            <button onClick={() => setEtape("matchs")}>← Retour</button>
+            <button className="primaire" onClick={() => setEtape("setup")}>
+              Étape suivante →
+            </button>
+          </div>
+        </>
+      )}
+
+      {etape === "setup" && (
+        <>
+          <div className="carte-setup">
+            <span className="carte-setup-titre">Arène</span>
+            <p className="texte-muted">
+              {arene.nom} — capacité {arene.capacite.toLocaleString("fr-FR")}, {arene.prixBillet} €/billet
+            </p>
+            <p className="texte-muted">Améliore ton arène depuis l'onglet Arènes.</p>
+          </div>
+
+          <div className="carte-setup">
+            <span className="carte-setup-titre">Scénographie</span>
+            <p className="texte-muted">
+              {scenographie.nom} — {scenographie.description}
+            </p>
+          </div>
+
+          <div className="carte-setup">
+            <span className="carte-setup-titre">Mode de diffusion</span>
+            <p className="texte-muted">
+              {modeDiffusion.nom} — {modeDiffusion.description}
+            </p>
+          </div>
+
+          <div className="recap-show">
+            <span>
+              {matchesValides} match{matchesValides > 1 ? "s" : ""}
+            </span>
+            <span>
+              {promosValides} promo{promosValides > 1 ? "s" : ""}
+            </span>
+            <span>Stipulations + promos : {coutEstime.toLocaleString("fr-FR")} €</span>
+          </div>
+
+          <p className="texte-muted texte-lancer-semaine">
+            Lancer le show résout la semaine pour toutes les divisions ayant des matchs ou promos
+            programmés, pas seulement celle-ci.
+          </p>
+
+          <div className="actions-etapes">
+            <button onClick={() => setEtape("promos")}>← Retour</button>
+            <button className="primaire" onClick={lancerSemaine}>
+              🎤 Lancer le show
+            </button>
+          </div>
+        </>
+      )}
     </div>
   )
+}
+
+export function BookingView() {
+  const division = useDivisionActive()
+  return <BookingWizard key={division.id} />
 }

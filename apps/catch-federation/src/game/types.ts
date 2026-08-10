@@ -1,5 +1,7 @@
 import type { FormatMatch, MatchStipulation } from "./stipulations"
 import type { FederationRivale } from "./rivals"
+import type { TypePromo } from "./promos"
+import type { TypeModeDiffusion, TypeScenographie } from "./showSetup"
 
 export type Alignment = "face" | "heel"
 
@@ -11,7 +13,7 @@ export type CategorieRecrutement = "officiel" | "jobbeur"
 
 export type TypeContrat = "permanent" | "temporaire"
 
-export type { FormatMatch, MatchStipulation, FederationRivale }
+export type { FormatMatch, MatchStipulation, FederationRivale, TypePromo, TypeModeDiffusion, TypeScenographie }
 
 export interface Wrestler {
   id: string
@@ -66,13 +68,33 @@ export interface MatchResult {
   interferenceNom: string | null
 }
 
+export interface BookedPromo {
+  id: string
+  type: TypePromo
+  participantIds: string[]
+}
+
+export interface PromoResultat {
+  type: TypePromo
+  participantNoms: string[]
+}
+
+export interface DetailDepenses {
+  salaires: number
+  frais: number
+  stipulations: number
+  promos: number
+}
+
 export interface ShowResult {
   semaine: number
   matches: MatchResult[]
+  promos: PromoResultat[]
   note: number
   spectateurs: number
   revenus: number
   depenses: number
+  detailDepenses: DetailDepenses
   nouveauxFans: number
   debauchesNoms: string[]
 }
@@ -81,9 +103,12 @@ export interface DivisionInstance {
   id: string
   nom: string
   areneId: string
+  scenographie: TypeScenographie
+  modeDiffusion: TypeModeDiffusion
   roster: Wrestler[]
   titles: Title[]
   card: BookedMatch[]
+  promos: BookedPromo[]
   dernierResultat: ShowResult | null
   historique: ShowResult[]
 }
