@@ -78,14 +78,14 @@ function WrestlerCard({ w }: { w: Wrestler }) {
   )
 }
 
-export function RosterView() {
+export function RosterView({ capRoster = MAX_ROSTER_DIVISION }: { capRoster?: number } = {}) {
   const divisionActive = useDivisionActive()
 
   return (
     <div className="vue">
       <div className="vue-entete">
         <h2>
-          {divisionActive.nom} — Effectif ({divisionActive.roster.length}/{MAX_ROSTER_DIVISION})
+          {divisionActive.nom} — Effectif ({divisionActive.roster.length}/{capRoster})
         </h2>
         <DivisionSwitcher divisionId={divisionActive.id} />
       </div>

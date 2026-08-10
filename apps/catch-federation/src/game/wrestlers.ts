@@ -41,7 +41,7 @@ export function progressionDepuisFans(fans: number): number {
   return Math.max(0, Math.min(1, fans / SEUIL_FANS_PROGRESSION))
 }
 
-export const TAILLE_MARCHE_PAR_CATEGORIE = 10
+export const TAILLE_MARCHE_PAR_CATEGORIE = 50
 export const SEMAINES_PAR_CONTRAT_PERMANENT = 156 // 3 ans
 
 const DUREES_TEMPORAIRES = [1, 3, 6] as const
