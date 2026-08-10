@@ -1,17 +1,7 @@
-import type { Genre } from "./types"
-import { genererNomAleatoire } from "./wrestlers"
+import type { Wrestler } from "./types"
+import { generateWrestler } from "./wrestlers"
 
 export type PalierRivale = "locale" | "regionale" | "nationale" | "mondiale"
-
-export type StatutLutteurRival = "actif" | "blesse" | "retraite"
-
-export interface LutteurRival {
-  id: string
-  nom: string
-  genre: Genre
-  statut: StatutLutteurRival
-  popularite: number
-}
 
 export interface FederationRivale {
   id: string
@@ -21,7 +11,7 @@ export interface FederationRivale {
   popularite: number
   argent: number
   force: number
-  roster: LutteurRival[]
+  roster: Wrestler[]
   titreChampionId: string | null
 }
 
@@ -47,6 +37,15 @@ export const LABEL_PALIER: Record<PalierRivale, string> = {
   regionale: "Régionale",
   nationale: "Nationale",
   mondiale: "Mondiale",
+}
+
+// Sert à la fois à la croissance hebdomadaire et à générer des catcheurs dont le niveau
+// correspond au standing de la fédération rivale (une mondiale recrute mieux qu'une locale).
+export const PROGRESSION_PAR_PALIER: Record<PalierRivale, number> = {
+  locale: 0.1,
+  regionale: 0.35,
+  nationale: 0.65,
+  mondiale: 0.9,
 }
 
 const TAUX_CROISSANCE: Record<PalierRivale, [number, number]> = {
@@ -82,6 +81,7 @@ const MODELES: ModeleRivale[] = [
 ]
 
 const TAILLE_ROSTER_RIVALE = 5
+const MULTIPLICATEUR_DEBAUCHAGE = 2.5
 
 function randInt(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min
@@ -99,32 +99,19 @@ function idRivale(nom: string, index: number): string {
   return `riv-${index}-${nom.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`
 }
 
-function idLutteurRival(): string {
-  return `rw-${Date.now()}-${Math.round(Math.random() * 100000)}`
-}
-
 function idArticle(): string {
   return `art-${Date.now()}-${Math.round(Math.random() * 100000)}`
 }
 
-function genererLutteurRival(popMin = 15, popMax = 55): LutteurRival {
-  const { nom, genre } = genererNomAleatoire()
-  return {
-    id: idLutteurRival(),
-    nom,
-    genre,
-    statut: "actif",
-    popularite: randInt(popMin, popMax),
-  }
-}
-
-function genererRosterRival(): LutteurRival[] {
-  return Array.from({ length: TAILLE_ROSTER_RIVALE }, () => genererLutteurRival())
+function genererRosterRival(palier: PalierRivale): Wrestler[] {
+  return Array.from({ length: TAILLE_ROSTER_RIVALE }, () =>
+    generateWrestler({ progression: PROGRESSION_PAR_PALIER[palier] }),
+  )
 }
 
 export function creerRivales(): FederationRivale[] {
   return MODELES.map((m, index) => {
-    const roster = genererRosterRival()
+    const roster = genererRosterRival(m.palier)
     const champion = pick(roster)
     return {
       id: idRivale(m.nom, index),
@@ -148,15 +135,21 @@ export function palierPourFans(fans: number): PalierRivale {
   return resultat
 }
 
+// Prix pour débaucher un catcheur d'une fédération rivale : plus cher qu'une signature
+// classique, puisqu'il faut le convaincre de rompre son contrat en cours.
+export function coutRecrutementRival(lutteur: Wrestler): number {
+  return Math.round(lutteur.coutSignature * MULTIPLICATEUR_DEBAUCHAGE)
+}
+
 interface ResultatEvenementsRoster {
-  roster: LutteurRival[]
+  roster: Wrestler[]
   titreChampionId: string | null
   articles: Article[]
 }
 
-// Simule les à-côtés de la fédération rivale cette semaine : titre défendu ou perdu, blessure,
-// retour de blessure, retraite (remplacée par un nouveau venu), révélation d'un jeune espoir,
-// ou simplement un show qui marque les esprits (en bien ou en mal).
+// Simule les à-côtés de la fédération rivale cette semaine : titre défendu, perdu ou remis en jeu,
+// blessure, retour de blessure, retraite (remplacée par un nouveau venu), révélation d'un jeune
+// espoir, ou simplement un show qui marque les esprits (en bien ou en mal).
 function evenementsRosterRival(rivale: FederationRivale, semaine: number): ResultatEvenementsRoster {
   let roster = rivale.roster.map((w) => ({ ...w }))
   let titreChampionId = rivale.titreChampionId
@@ -166,7 +159,7 @@ function evenementsRosterRival(rivale: FederationRivale, semaine: number): Resul
     articles.push({ id: idArticle(), semaine, titre, corps, rivaleId: rivale.id })
   }
 
-  const actifs = roster.filter((w) => w.statut === "actif")
+  const actifs = roster.filter((w) => w.blessureSemaines === 0)
   const rouleau = Math.random()
 
   if (rouleau < 0.1 && titreChampionId && actifs.filter((w) => w.id !== titreChampionId).length > 0) {
@@ -175,60 +168,68 @@ function evenementsRosterRival(rivale: FederationRivale, semaine: number): Resul
     if (champion) {
       if (Math.random() < 0.65) {
         article(
-          `${champion.nom} conserve son titre chez ${rivale.nom}`,
-          `${champion.nom} a défendu victorieusement son titre face à ${challenger.nom} lors du dernier show de ${rivale.nom}.`,
+          `${champion.name} conserve son titre chez ${rivale.nom}`,
+          `${champion.name} a défendu victorieusement son titre face à ${challenger.name} lors du dernier show de ${rivale.nom}.`,
         )
         roster = roster.map((w) => (w.id === champion.id ? { ...w, popularite: clamp(w.popularite + 3) } : w))
       } else {
         titreChampionId = challenger.id
         article(
-          `Séisme chez ${rivale.nom} : ${challenger.nom} devient champion`,
-          `Coup de tonnerre : ${challenger.nom} a détrôné ${champion.nom} et remporte le titre principal de ${rivale.nom}.`,
+          `Séisme chez ${rivale.nom} : ${challenger.name} devient champion`,
+          `Coup de tonnerre : ${challenger.name} a détrôné ${champion.name} et remporte le titre principal de ${rivale.nom}.`,
         )
         roster = roster.map((w) => (w.id === challenger.id ? { ...w, popularite: clamp(w.popularite + 12) } : w))
       }
     }
-  } else if (rouleau < 0.22 && actifs.length > 0) {
-    const victime = pick(actifs)
-    roster = roster.map((w) => (w.id === victime.id ? { ...w, statut: "blesse" as const } : w))
+  } else if (rouleau < 0.16 && !titreChampionId && actifs.length > 0) {
+    const nouveauChampion = pick(actifs)
+    titreChampionId = nouveauChampion.id
+    roster = roster.map((w) => (w.id === nouveauChampion.id ? { ...w, popularite: clamp(w.popularite + 12) } : w))
     article(
-      `${victime.nom} blessé chez ${rivale.nom}`,
-      `${victime.nom} s'est gravement blessé cette semaine et sera absent des rings de ${rivale.nom} pour un moment.`,
+      `${nouveauChampion.name} remporte le titre vacant de ${rivale.nom}`,
+      `Le titre laissé vacant chez ${rivale.nom} a trouvé preneur : ${nouveauChampion.name} devient le nouveau champion.`,
     )
-  } else if (rouleau < 0.3) {
-    const blesses = roster.filter((w) => w.statut === "blesse")
+  } else if (rouleau < 0.28 && actifs.length > 0) {
+    const victime = pick(actifs)
+    roster = roster.map((w) => (w.id === victime.id ? { ...w, blessureSemaines: randInt(2, 8) } : w))
+    article(
+      `${victime.name} blessé chez ${rivale.nom}`,
+      `${victime.name} s'est gravement blessé cette semaine et sera absent des rings de ${rivale.nom} pour un moment.`,
+    )
+  } else if (rouleau < 0.36) {
+    const blesses = roster.filter((w) => w.blessureSemaines > 0)
     if (blesses.length > 0) {
       const retour = pick(blesses)
-      roster = roster.map((w) => (w.id === retour.id ? { ...w, statut: "actif" as const } : w))
+      roster = roster.map((w) => (w.id === retour.id ? { ...w, blessureSemaines: 0 } : w))
       article(
-        `${retour.nom} de retour chez ${rivale.nom}`,
-        `Après plusieurs semaines d'absence, ${retour.nom} fait son retour sur les rings de ${rivale.nom}.`,
+        `${retour.name} de retour chez ${rivale.nom}`,
+        `Après plusieurs semaines d'absence, ${retour.name} fait son retour sur les rings de ${rivale.nom}.`,
       )
     }
-  } else if (rouleau < 0.36 && actifs.filter((w) => w.id !== titreChampionId).length > 0) {
+  } else if (rouleau < 0.42 && actifs.filter((w) => w.id !== titreChampionId).length > 0) {
     const partant = pick(actifs.filter((w) => w.id !== titreChampionId))
     roster = roster.filter((w) => w.id !== partant.id)
-    const nouveau = genererLutteurRival(5, 25)
+    const nouveau = generateWrestler({ progression: PROGRESSION_PAR_PALIER[rivale.palier] })
     roster.push(nouveau)
     article(
-      `${partant.nom} prend sa retraite`,
-      `${partant.nom} annonce la fin de sa carrière après des années passées chez ${rivale.nom}.`,
+      `${partant.name} prend sa retraite`,
+      `${partant.name} annonce la fin de sa carrière après des années passées chez ${rivale.nom}.`,
     )
     article(
-      `${nouveau.nom} rejoint ${rivale.nom}`,
-      `${rivale.nom} annonce la signature d'un nouveau catcheur : ${nouveau.nom}.`,
+      `${nouveau.name} rejoint ${rivale.nom}`,
+      `${rivale.nom} annonce la signature d'un nouveau catcheur : ${nouveau.name}.`,
     )
-  } else if (rouleau < 0.48) {
+  } else if (rouleau < 0.54) {
     const espoirs = actifs.filter((w) => w.popularite < 40)
     if (espoirs.length > 0) {
       const espoir = pick(espoirs)
       roster = roster.map((w) => (w.id === espoir.id ? { ...w, popularite: clamp(w.popularite + 15) } : w))
       article(
-        `${espoir.nom}, la nouvelle sensation de ${rivale.nom}`,
-        `${espoir.nom} enchaîne les bonnes performances et commence à se faire un nom chez ${rivale.nom}.`,
+        `${espoir.name}, la nouvelle sensation de ${rivale.nom}`,
+        `${espoir.name} enchaîne les bonnes performances et commence à se faire un nom chez ${rivale.nom}.`,
       )
     }
-  } else if (rouleau < 0.58) {
+  } else if (rouleau < 0.64) {
     const succes = Math.random() < 0.4 + rivale.force / 200
     if (succes) {
       article(

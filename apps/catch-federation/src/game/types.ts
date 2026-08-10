@@ -1,5 +1,5 @@
 import type { FormatMatch, MatchStipulation } from "./stipulations"
-import type { Article, FederationRivale, LutteurRival } from "./rivals"
+import type { Article, FederationRivale } from "./rivals"
 import type { TypePromo } from "./promos"
 import type { TypeModeDiffusion, TypeScenographie } from "./showSetup"
 
@@ -17,7 +17,6 @@ export type {
   FormatMatch,
   MatchStipulation,
   FederationRivale,
-  LutteurRival,
   Article,
   TypePromo,
   TypeModeDiffusion,

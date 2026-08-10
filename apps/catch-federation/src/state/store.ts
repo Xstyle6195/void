@@ -6,7 +6,13 @@ import { CAMPAGNES_MARKETING } from "../game/marketing"
 import { candidatParId } from "../game/officials"
 import { infoPromo } from "../game/promos"
 import { PRESETS_RANG } from "../game/rangDepart"
-import { creerRivales, valorisationRivale, type PalierRivale } from "../game/rivals"
+import {
+  coutRecrutementRival,
+  creerRivales,
+  PROGRESSION_PAR_PALIER,
+  valorisationRivale,
+  type PalierRivale,
+} from "../game/rivals"
 import { LIMITES_FORMAT, stipulationsPourFormat } from "../game/stipulations"
 import type {
   BookedMatch,
@@ -20,7 +26,12 @@ import type {
   TypePromo,
   Wrestler,
 } from "../game/types"
-import { creerMarcheTransferts, generateWrestler, progressionDepuisFans } from "../game/wrestlers"
+import {
+  creerMarcheTransferts,
+  generateWrestler,
+  progressionDepuisFans,
+  SEMAINES_PAR_CONTRAT_PERMANENT,
+} from "../game/wrestlers"
 
 const COUT_RENOUVELLEMENT = 500
 const INDEMNITE_LIBERATION = 400
@@ -148,6 +159,7 @@ interface Store {
   recruterOfficiel: (candidatId: string) => void
   licencierOfficiel: (role: "marketing" | "artistique" | "adjoint") => void
   racheterRivale: (rivaleId: string) => void
+  recruterDepuisRivale: (rivaleId: string, wrestlerId: string, versDivisionId: string) => void
   recommencer: () => void
 }
 
@@ -617,9 +629,16 @@ export const useStore = create<Store>((set) => ({
 
       const division = state.federation.divisions.find((d) => d.id === state.divisionActiveId)
       const placesRestantes = division ? MAX_ROSTER_DIVISION - division.roster.length : 0
-      const nbAbsorbes = Math.max(0, Math.min(3, Math.round(rivale.fans / 8000), placesRestantes))
-      const progression = progressionDepuisFans(state.federation.fans)
-      const nouveauxLutteurs = Array.from({ length: nbAbsorbes }, () => generateWrestler({ progression }))
+      const nbAbsorbes = Math.max(0, Math.min(3, rivale.roster.length, placesRestantes))
+      const nouveauxLutteurs = [...rivale.roster]
+        .sort((a, b) => b.popularite - a.popularite)
+        .slice(0, nbAbsorbes)
+        .map((w) => ({
+          ...w,
+          contratSemaines: SEMAINES_PAR_CONTRAT_PERMANENT,
+          titreId: null,
+          blessureSemaines: 0,
+        }))
 
       return {
         federation: {
@@ -630,6 +649,46 @@ export const useStore = create<Store>((set) => ({
           rivales: state.federation.rivales.filter((r) => r.id !== rivaleId),
           divisions: state.federation.divisions.map((d) =>
             d.id === state.divisionActiveId ? { ...d, roster: [...d.roster, ...nouveauxLutteurs] } : d,
+          ),
+        },
+      }
+    }),
+
+  recruterDepuisRivale: (rivaleId, wrestlerId, versDivisionId) =>
+    set((state) => {
+      if (!state.federation) return state
+      const rivale = state.federation.rivales.find((r) => r.id === rivaleId)
+      if (!rivale) return state
+      const lutteur = rivale.roster.find((w) => w.id === wrestlerId)
+      if (!lutteur || lutteur.blessureSemaines > 0) return state
+      const cout = coutRecrutementRival(lutteur)
+      if (state.federation.argent < cout) return state
+      const destination = state.federation.divisions.find((d) => d.id === versDivisionId)
+      if (!destination || destination.roster.length >= MAX_ROSTER_DIVISION) return state
+
+      const remplacant = generateWrestler({ progression: PROGRESSION_PAR_PALIER[rivale.palier] })
+      const lutteurRecrute = {
+        ...lutteur,
+        contratSemaines: SEMAINES_PAR_CONTRAT_PERMANENT,
+        titreId: null,
+        blessureSemaines: 0,
+      }
+
+      return {
+        federation: {
+          ...state.federation,
+          argent: state.federation.argent - cout,
+          divisions: state.federation.divisions.map((d) =>
+            d.id === versDivisionId ? { ...d, roster: [...d.roster, lutteurRecrute] } : d,
+          ),
+          rivales: state.federation.rivales.map((r) =>
+            r.id === rivaleId
+              ? {
+                  ...r,
+                  roster: r.roster.map((w) => (w.id === wrestlerId ? remplacant : w)),
+                  titreChampionId: r.titreChampionId === wrestlerId ? null : r.titreChampionId,
+                }
+              : r,
           ),
         },
       }

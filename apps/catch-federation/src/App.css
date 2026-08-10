@@ -948,6 +948,25 @@ select {
   margin-top: 4px;
 }
 
+.bouton-roster-rival {
+  width: 100%;
+  margin-top: 8px;
+  font-size: 12px;
+}
+
+.liste-roster-rival {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--border);
+}
+
+.carte-lutteur-rival {
+  padding: 10px;
+}
+
 /* Actualités */
 
 .liste-actualites {
