@@ -1,0 +1,1187 @@
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100svh;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.app-game-over {
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 24px;
+  gap: 12px;
+}
+
+.top-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 10px;
+  background: var(--panel);
+  border-bottom: 2px solid var(--accent);
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+
+.top-bar-identite {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.top-bar-logo {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.top-bar-nom {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.top-bar-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+}
+
+.top-bar-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+}
+
+.top-bar-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  letter-spacing: 0.03em;
+}
+
+.top-bar-value {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--gold);
+  white-space: nowrap;
+}
+
+.top-bar-value.negatif {
+  color: var(--bad);
+}
+
+.corps-app {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.contenu {
+  flex: 1;
+  min-width: 0;
+  padding: 16px;
+  overflow-y: auto;
+}
+
+.sidebar {
+  flex-shrink: 0;
+  width: 64px;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  background: var(--panel);
+  border-right: 1px solid var(--border);
+}
+
+.onglet-lateral {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 10px 2px;
+  background: none;
+  border: none;
+  border-left: 3px solid transparent;
+  color: var(--text-muted);
+  font-size: 9px;
+  font-weight: 600;
+  text-align: center;
+  line-height: 1.15;
+  cursor: pointer;
+}
+
+.onglet-lateral.actif {
+  color: var(--gold);
+  border-left-color: var(--accent);
+  background: var(--bg-alt);
+}
+
+.onglet-icone {
+  font-size: 19px;
+  line-height: 1;
+}
+
+.onglet-label {
+  word-break: break-word;
+}
+
+.vue h2 {
+  font-size: 18px;
+  margin-bottom: 16px;
+}
+
+button {
+  cursor: pointer;
+  background: var(--bg-alt);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 6px;
+  padding: 8px 12px;
+}
+
+button.primaire {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  font-weight: 700;
+}
+
+button.danger {
+  border-color: var(--bad);
+  color: var(--bad);
+}
+
+button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+select {
+  background: var(--bg-alt);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 6px;
+  padding: 6px 8px;
+}
+
+.texte-muted {
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.liste-lutteurs {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sous-onglets {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.sous-onglets button {
+  flex: 1;
+  font-size: 12px;
+  padding: 8px 4px;
+}
+
+.sous-onglets button.actif {
+  border-color: var(--gold);
+  color: var(--gold);
+  background: var(--bg-alt);
+}
+
+.barre-filtre {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 12px 0;
+}
+
+.barre-filtre label {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.barre-filtre select {
+  flex: 1;
+}
+
+.panneau-filtres {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin: 12px 0;
+}
+
+.panneau-filtres .barre-filtre {
+  margin: 6px 0;
+}
+
+.bouton-reinitialiser-filtres {
+  width: 100%;
+  margin-top: 6px;
+  font-size: 12px;
+  padding: 8px;
+}
+
+.texte-nb-resultats {
+  margin-bottom: 8px;
+}
+
+.carte-lutteur {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+}
+
+.carte-lutteur-entete {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+
+.carte-lutteur-entete h3 {
+  font-size: 15px;
+  margin-bottom: 4px;
+}
+
+.badge {
+  display: inline-block;
+  font-size: 10px;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-right: 4px;
+  background: var(--bg-alt);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+}
+
+.badge-genre {
+  color: var(--accent-soft);
+  border-color: var(--accent-soft);
+}
+
+.badge-face {
+  color: var(--good);
+  border-color: var(--good);
+}
+
+.badge-heel {
+  color: var(--bad);
+  border-color: var(--bad);
+}
+
+.badge-titre {
+  color: var(--gold);
+  border-color: var(--gold);
+}
+
+.badge-blessure {
+  color: var(--bad);
+  border-color: var(--bad);
+}
+
+.ligne-etoiles {
+  display: grid;
+  grid-template-columns: 70px 1fr;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  margin-bottom: 3px;
+}
+
+.etoiles-label {
+  color: var(--text-muted);
+}
+
+.etoiles-affichage {
+  display: inline-flex;
+  gap: 1px;
+}
+
+.etoile {
+  position: relative;
+  display: inline-block;
+  font-size: 13px;
+  line-height: 1;
+}
+
+.etoile-fond {
+  color: var(--text-muted);
+  opacity: 0.35;
+}
+
+.etoile-remplissage {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: inline-block;
+  overflow: hidden;
+  white-space: nowrap;
+  color: var(--gold);
+}
+
+.carte-lutteur-pied {
+  display: flex;
+  gap: 10px;
+  font-size: 11px;
+  color: var(--text-muted);
+  margin: 8px 0;
+}
+
+.carte-lutteur-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.carte-lutteur-actions button {
+  flex: 1;
+  font-size: 12px;
+}
+
+.carte-match {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+  margin-bottom: 14px;
+}
+
+.carte-match-entete {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+  gap: 8px;
+}
+
+.participants-choisis {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 8px 0;
+  min-height: 24px;
+}
+
+.jeton-participant {
+  background: var(--accent);
+  color: #fff;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.grille-selection {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 420px;
+  overflow-y: auto;
+}
+
+.carte-selecteur-lutteur {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 5px;
+  padding: 10px 12px;
+  text-align: left;
+  width: 100%;
+}
+
+.carte-selecteur-lutteur.selectionne {
+  border-color: var(--gold);
+  background: var(--bg-alt);
+}
+
+.carte-selecteur-lutteur-nom {
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.carte-selecteur-lutteur-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.carte-selecteur-lutteur-stats {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.actions-booking {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.actions-booking button {
+  flex: 1;
+}
+
+.resume-show {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+  margin-bottom: 16px;
+}
+
+.liste-resultats-matches {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.carte-resultat-match {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px;
+  font-size: 13px;
+}
+
+.texte-blessure {
+  color: var(--bad);
+  font-size: 12px;
+}
+
+.alerte-faillite {
+  background: rgba(217, 43, 63, 0.15);
+  border: 1px solid var(--bad);
+  border-radius: 10px;
+  padding: 12px;
+  text-align: center;
+}
+
+.liste-titres {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.carte-titre {
+  background: var(--panel);
+  border: 1px solid var(--gold);
+  border-radius: 10px;
+  padding: 14px;
+}
+
+.ecran-accueil {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 32px 20px;
+  min-height: 100svh;
+  justify-content: center;
+}
+
+.titre-accueil {
+  font-size: 28px;
+  text-align: center;
+  color: var(--gold);
+  margin-bottom: 0;
+}
+
+.ecran-accueil > .texte-muted {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.champ-label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  margin: 16px 0 6px;
+}
+
+.champ-nom {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 15px;
+}
+
+.grille-logos {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 6px;
+}
+
+.bouton-logo {
+  aspect-ratio: 1;
+  font-size: 22px;
+  padding: 0;
+  background: var(--panel);
+}
+
+.bouton-logo.actif {
+  border-color: var(--gold);
+  background: var(--bg-alt);
+}
+
+.grille-rangs {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.carte-rang {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  text-align: left;
+  background: var(--panel);
+  padding: 10px 12px;
+}
+
+.carte-rang.actif {
+  border-color: var(--gold);
+  background: var(--bg-alt);
+}
+
+.carte-rang-nom {
+  font-weight: 700;
+  color: var(--gold);
+  font-size: 14px;
+}
+
+.carte-rang-stats {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.carte-rang-description {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.bouton-demarrer {
+  margin-top: 28px;
+  padding: 14px;
+  font-size: 15px;
+}
+
+.liste-divisions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.carte-division {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px;
+}
+
+.carte-division-entete {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.carte-division-condition {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin: 8px 0;
+}
+
+.carte-division .champ-nom {
+  margin: 10px 0;
+}
+
+.vue-entete {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.vue-entete h2 {
+  margin-bottom: 0;
+  flex: 1;
+}
+
+.selecteur-division {
+  flex-shrink: 0;
+  font-size: 12px;
+  max-width: 150px;
+}
+
+.carte-lutteur-transfert {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.carte-lutteur-transfert select {
+  flex: 1;
+  font-size: 12px;
+}
+
+.texte-lancer-semaine {
+  margin-top: 16px;
+}
+
+.bouton-lancer-semaine {
+  width: 100%;
+  padding: 14px;
+  font-size: 15px;
+}
+
+.titre-nouvelle-division {
+  margin-top: 24px;
+}
+
+.liste-resultats-divisions {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.carte-resultat-division {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px;
+}
+
+.carte-resultat-division h3 {
+  font-size: 15px;
+}
+
+.groupe-palier {
+  margin-bottom: 20px;
+}
+
+.titre-palier {
+  font-size: 13px;
+  color: var(--gold);
+  letter-spacing: 0.05em;
+  margin-bottom: 10px;
+}
+
+.liste-campagnes {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.carte-campagne {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+}
+
+.carte-campagne h3 {
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.campagne-gains {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-size: 12px;
+  color: var(--gold);
+  margin: 8px 0;
+}
+
+.carte-campagne button {
+  width: 100%;
+  font-size: 13px;
+}
+
+.texte-arene-active {
+  margin-top: -8px;
+  margin-bottom: 16px;
+}
+
+.carte-arene-division {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px;
+}
+
+.carte-etat-effectif {
+  background: var(--panel);
+  border: 1px solid var(--gold);
+  border-radius: 10px;
+  padding: 14px;
+  margin-bottom: 16px;
+}
+
+.carte-officiel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px;
+  margin-bottom: 12px;
+}
+
+.officiel-en-poste {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 10px 0;
+}
+
+.conseil-officiel {
+  background: var(--bg-alt);
+  border-radius: 8px;
+  padding: 10px;
+  font-size: 13px;
+  margin-bottom: 10px;
+}
+
+.liste-candidats {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.ligne-candidat {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  background: var(--bg-alt);
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+
+.ligne-candidat button {
+  font-size: 12px;
+}
+
+.texte-stipulation {
+  margin: 6px 0;
+}
+
+.avertissement-stipulation {
+  font-size: 12px;
+  color: var(--bad);
+  margin: 0 0 8px;
+}
+
+.case-titre {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  margin: 8px 0;
+  cursor: pointer;
+}
+
+.case-titre input {
+  width: 16px;
+  height: 16px;
+}
+
+.selecteur-format {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.selecteur-format button {
+  font-size: 11px;
+  padding: 5px 8px;
+}
+
+.selecteur-format button.actif {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+.numero-match {
+  font-weight: 700;
+  color: var(--gold);
+  font-size: 13px;
+}
+
+.timeline-carte {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 14px 0;
+}
+
+.fragment-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.bouton-slot-promo {
+  width: 100%;
+  text-align: left;
+  font-size: 12px;
+  padding: 8px 10px;
+  color: var(--text-muted);
+}
+
+.bouton-slot-promo.actif {
+  border-color: var(--gold);
+  color: var(--gold);
+  background: var(--bg-alt);
+}
+
+.timeline-match-label {
+  align-self: center;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  padding: 4px 0;
+}
+
+.bloc-equipes {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 10px;
+}
+
+.bloc-equipe {
+  background: var(--bg-alt);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px;
+}
+
+.titre-equipe {
+  display: block;
+  font-size: 11px;
+  text-transform: uppercase;
+  color: var(--gold);
+  letter-spacing: 0.05em;
+  margin-bottom: 6px;
+}
+
+.controle-booking {
+  margin-top: 12px;
+}
+
+.controle-booking select {
+  width: 100%;
+  margin-top: 4px;
+}
+
+.libelle-controle {
+  display: block;
+  font-size: 11px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+}
+
+.texte-interference {
+  color: var(--gold);
+  font-size: 13px;
+}
+
+.badge-programme {
+  color: var(--gold);
+  border-color: var(--gold);
+}
+
+.carte-rivale {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+}
+
+.carte-rivale h3 {
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.carte-rivale-joueur {
+  border-color: var(--gold);
+}
+
+.carte-rivale button {
+  width: 100%;
+  margin-top: 6px;
+  font-size: 13px;
+}
+
+.texte-champion-rival {
+  color: var(--gold);
+  margin-top: 4px;
+}
+
+.bouton-roster-rival {
+  width: 100%;
+  margin-top: 8px;
+  font-size: 12px;
+}
+
+.liste-roster-rival {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--border);
+}
+
+.carte-lutteur-rival {
+  padding: 10px;
+}
+
+/* Actualités */
+
+.liste-actualites {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.carte-actualite {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 10px;
+  padding: 12px;
+}
+
+.actualite-entete {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.actualite-semaine {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+}
+
+.actualite-titre {
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.actualite-corps {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+/* Recrutement initial (onboarding) */
+
+.entete-recrutement-initial {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.entete-recrutement-initial-logo {
+  font-size: 32px;
+  line-height: 1;
+}
+
+.entete-recrutement-initial h2 {
+  margin-bottom: 2px;
+}
+
+/* Assistant de préparation du show (wizard) */
+
+.texte-etape-wizard {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--gold);
+  margin-bottom: 12px;
+}
+
+.bouton-etape-suivante {
+  width: 100%;
+  padding: 14px;
+  font-size: 15px;
+  margin-top: 12px;
+}
+
+.actions-etapes {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.actions-etapes button {
+  flex: 1;
+}
+
+.carte-setup {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+  margin-bottom: 10px;
+}
+
+.carte-setup-titre {
+  display: block;
+  font-weight: 700;
+  color: var(--gold);
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+
+.grille-arenes {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.carte-arene {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  text-align: left;
+  padding: 10px 12px;
+}
+
+.carte-arene.actif {
+  border-color: var(--gold);
+  background: var(--bg-alt);
+}
+
+.carte-arene-nom {
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.carte-arene-stats {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.carte-arene-verrou {
+  font-size: 11px;
+  color: var(--bad);
+}
+
+.recap-show {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: var(--bg-alt);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 13px;
+  margin-bottom: 12px;
+}
+
+/* Résultats enrichis */
+
+.texte-reaction-public {
+  font-style: italic;
+  color: var(--text);
+  margin-bottom: 12px;
+}
+
+.detail-depenses {
+  background: var(--bg-alt);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  font-size: 13px;
+}
+
+.detail-depenses-titre {
+  display: block;
+  font-weight: 700;
+  color: var(--gold);
+  font-size: 12px;
+  margin-bottom: 6px;
+}
+
+.detail-depenses-ligne {
+  display: flex;
+  justify-content: space-between;
+  color: var(--text-muted);
+  padding: 2px 0;
+}
+
+.detail-depenses-total {
+  color: var(--text);
+  font-weight: 700;
+  border-top: 1px solid var(--border);
+  margin-top: 4px;
+  padding-top: 6px;
+}
+
+.liste-resultats-promos {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.etat-roster {
+  background: var(--bg-alt);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+}
+
+.ligne-etat-lutteur {
+  padding: 6px 0;
+  border-top: 1px solid var(--border);
+}
+
+.ligne-etat-lutteur:first-of-type {
+  border-top: none;
+}
+
+.etat-lutteur-nom {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
