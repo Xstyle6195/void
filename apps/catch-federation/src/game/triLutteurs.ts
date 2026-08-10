@@ -1,4 +1,4 @@
-import type { Alignment, Genre, MoveStyle, Wrestler } from "./types"
+import type { Alignment, Genre, MoveStyle, TypeContrat, Wrestler } from "./types"
 
 export type TriMarche = "aucun" | "sexe" | "niveau" | "specialite" | "alignment"
 
@@ -34,12 +34,14 @@ export interface FiltresLutteurs {
   genre: Genre | "tous"
   style: MoveStyle | "tous"
   alignment: Alignment | "tous"
+  contrat: TypeContrat | "tous"
 }
 
 export const FILTRES_PAR_DEFAUT: FiltresLutteurs = {
   genre: "tous",
   style: "tous",
   alignment: "tous",
+  contrat: "tous",
 }
 
 export const OPTIONS_FILTRE_GENRE: { value: FiltresLutteurs["genre"]; label: string }[] = [
@@ -63,8 +65,19 @@ export const OPTIONS_FILTRE_ALIGNMENT: { value: FiltresLutteurs["alignment"]; la
   { value: "heel", label: "Heel" },
 ]
 
+export const OPTIONS_FILTRE_CONTRAT: { value: FiltresLutteurs["contrat"]; label: string }[] = [
+  { value: "tous", label: "Tous" },
+  { value: "temporaire", label: "Guest star seulement" },
+  { value: "permanent", label: "Contrat permanent seulement" },
+]
+
 export function filtresActifs(filtres: FiltresLutteurs): boolean {
-  return filtres.genre !== "tous" || filtres.style !== "tous" || filtres.alignment !== "tous"
+  return (
+    filtres.genre !== "tous" ||
+    filtres.style !== "tous" ||
+    filtres.alignment !== "tous" ||
+    filtres.contrat !== "tous"
+  )
 }
 
 export function filtrerLutteurs(lutteurs: Wrestler[], filtres: FiltresLutteurs): Wrestler[] {
@@ -72,6 +85,7 @@ export function filtrerLutteurs(lutteurs: Wrestler[], filtres: FiltresLutteurs):
     (w) =>
       (filtres.genre === "tous" || w.genre === filtres.genre) &&
       (filtres.style === "tous" || w.style === filtres.style) &&
-      (filtres.alignment === "tous" || w.alignment === filtres.alignment),
+      (filtres.alignment === "tous" || w.alignment === filtres.alignment) &&
+      (filtres.contrat === "tous" || w.typeContrat === filtres.contrat),
   )
 }

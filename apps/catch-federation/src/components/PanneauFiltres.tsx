@@ -2,6 +2,7 @@ import {
   FILTRES_PAR_DEFAUT,
   filtresActifs,
   OPTIONS_FILTRE_ALIGNMENT,
+  OPTIONS_FILTRE_CONTRAT,
   OPTIONS_FILTRE_GENRE,
   OPTIONS_FILTRE_STYLE,
   type FiltresLutteurs,
@@ -52,6 +53,20 @@ export function PanneauFiltres({
           onChange={(e) => onChange({ ...filtres, alignment: e.target.value as FiltresLutteurs["alignment"] })}
         >
           {OPTIONS_FILTRE_ALIGNMENT.map((o) => (
+            <option key={o.value} value={o.value}>
+              {o.label}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div className="barre-filtre">
+        <label htmlFor="filtre-contrat">Contrat</label>
+        <select
+          id="filtre-contrat"
+          value={filtres.contrat}
+          onChange={(e) => onChange({ ...filtres, contrat: e.target.value as FiltresLutteurs["contrat"] })}
+        >
+          {OPTIONS_FILTRE_CONTRAT.map((o) => (
             <option key={o.value} value={o.value}>
               {o.label}
             </option>

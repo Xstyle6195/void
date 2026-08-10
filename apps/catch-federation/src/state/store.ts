@@ -40,7 +40,11 @@ function idDivision(): string {
   return `div-${Date.now()}-${Math.round(Math.random() * 10000)}`
 }
 
-function nouvelleDivision(nom: string, roster: Wrestler[], titres: { name: string; prestige: number }[]): DivisionInstance {
+function nouvelleDivision(
+  nom: string,
+  roster: Wrestler[],
+  titres: { name: string; prestige: number; genre: Genre }[],
+): DivisionInstance {
   const id = idDivision()
   return {
     id,
@@ -52,6 +56,7 @@ function nouvelleDivision(nom: string, roster: Wrestler[], titres: { name: strin
     titles: titres.map((t, i) => ({
       id: `${id}-t${i}`,
       name: t.name,
+      genre: t.genre,
       prestige: t.prestige,
       championIds: [],
     })),
@@ -62,12 +67,16 @@ function nouvelleDivision(nom: string, roster: Wrestler[], titres: { name: strin
   }
 }
 
+function titresParDefaut(nomDivision: string): { name: string; prestige: number; genre: Genre }[] {
+  return [
+    { name: `Championnat Masculin${nomDivision ? ` — ${nomDivision}` : ""}`, prestige: 100, genre: "homme" },
+    { name: `Championnat Féminin${nomDivision ? ` — ${nomDivision}` : ""}`, prestige: 100, genre: "femme" },
+  ]
+}
+
 function etatInitial(nom: string, logo: string, rang: PalierRivale): FederationState {
   const { argent, fans, popularite } = PRESETS_RANG[rang]
-  const divisionPrincipale = nouvelleDivision("Division Principale", [], [
-    { name: "Championnat du Monde", prestige: 100 },
-    { name: "Championnat Intercontinental", prestige: 60 },
-  ])
+  const divisionPrincipale = nouvelleDivision("Division Principale", [], titresParDefaut(""))
   return {
     nom,
     logo,
@@ -171,9 +180,8 @@ export const useStore = create<Store>((set) => ({
       if (!state.federation) return state
       const cout = coutNouvelleDivision(state.federation.divisions.length)
       if (state.federation.argent < cout) return state
-      const division = nouvelleDivision(nom.trim() || "Nouvelle Division", [], [
-        { name: `Championnat ${nom.trim() || "de la division"}`, prestige: 70 },
-      ])
+      const nomDivision = nom.trim() || "Nouvelle Division"
+      const division = nouvelleDivision(nomDivision, [], titresParDefaut(nomDivision))
       return {
         federation: {
           ...state.federation,

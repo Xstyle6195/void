@@ -42,6 +42,7 @@ export interface Wrestler {
 export interface Title {
   id: string
   name: string
+  genre: Genre
   prestige: number
   championIds: string[]
 }
