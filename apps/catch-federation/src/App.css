@@ -715,28 +715,6 @@ select {
   padding: 14px;
 }
 
-.echelle-arenes {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin: 8px 0;
-}
-
-.palier-arene {
-  font-size: 10px;
-  text-transform: uppercase;
-  padding: 3px 8px;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  color: var(--text-muted);
-}
-
-.palier-arene.actuel {
-  border-color: var(--gold);
-  color: var(--gold);
-  font-weight: 700;
-}
-
 .carte-etat-effectif {
   background: var(--panel);
   border: 1px solid var(--gold);
@@ -963,6 +941,42 @@ select {
   color: var(--gold);
   font-size: 13px;
   margin-bottom: 4px;
+}
+
+.grille-arenes {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.carte-arene {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  text-align: left;
+  padding: 10px 12px;
+}
+
+.carte-arene.actif {
+  border-color: var(--gold);
+  background: var(--bg-alt);
+}
+
+.carte-arene-nom {
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.carte-arene-stats {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.carte-arene-verrou {
+  font-size: 11px;
+  color: var(--bad);
 }
 
 .recap-show {

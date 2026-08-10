@@ -131,10 +131,10 @@ function BlocDivision({ division, semaine }: { division: DivisionInstance; semai
             </p>
           )}
 
-          {division.roster.length > 0 && (
+          {resultat.etatRoster.length > 0 && (
             <div className="etat-roster">
               <span className="detail-depenses-titre">État du roster après le show</span>
-              {division.roster.map((w) => (
+              {resultat.etatRoster.map((w) => (
                 <div key={w.id} className="ligne-etat-lutteur">
                   <span className="etat-lutteur-nom">
                     {w.name}
@@ -144,6 +144,7 @@ function BlocDivision({ division, semaine }: { division: DivisionInstance; semai
                   </span>
                   <Etoiles label="Moral" valeur={w.moral} />
                   <Etoiles label="Forme" valeur={w.forme} />
+                  <Etoiles label="Endurance" valeur={w.endurance} />
                 </div>
               ))}
             </div>

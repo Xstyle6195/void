@@ -32,6 +32,7 @@ export interface Wrestler {
   popularite: number
   moral: number
   forme: number
+  endurance: number
   age: number
   salaire: number
   contratSemaines: number
@@ -87,6 +88,15 @@ export interface DetailDepenses {
   promos: number
 }
 
+export interface EtatLutteurPostShow {
+  id: string
+  name: string
+  moral: number
+  forme: number
+  endurance: number
+  blessureSemaines: number
+}
+
 export interface ShowResult {
   semaine: number
   matches: MatchResult[]
@@ -98,6 +108,7 @@ export interface ShowResult {
   detailDepenses: DetailDepenses
   nouveauxFans: number
   debauchesNoms: string[]
+  etatRoster: EtatLutteurPostShow[]
 }
 
 export interface DivisionInstance {
@@ -121,7 +132,6 @@ export type Screen =
   | "titres"
   | "marche"
   | "marketing"
-  | "arenes"
   | "officiels"
   | "divisions"
   | "rivales"

@@ -1,5 +1,5 @@
 import { create } from "zustand"
-import { areneSuivante } from "../game/arenas"
+import { areneParId } from "../game/arenas"
 import { coutNouvelleDivision } from "../game/divisions"
 import { jouerSemaine } from "../game/engine"
 import { CAMPAGNES_MARKETING } from "../game/marketing"
@@ -110,7 +110,7 @@ interface Store {
   setEcran: (ecran: Screen) => void
   setDivisionActive: (id: string) => void
   creerDivision: (nom: string) => void
-  ameliorerArene: (divisionId: string) => void
+  definirArene: (divisionId: string, areneId: string) => void
   transfererLutteur: (wrestlerId: string, versDivisionId: string) => void
   ajouterMatch: () => void
   supprimerMatch: (matchId: string) => void
@@ -193,21 +193,18 @@ export const useStore = create<Store>((set) => ({
       }
     }),
 
-  ameliorerArene: (divisionId) =>
+  definirArene: (divisionId, areneId) =>
     set((state) => {
       if (!state.federation) return state
       const division = state.federation.divisions.find((d) => d.id === divisionId)
       if (!division) return state
-      const suivante = areneSuivante(division.areneId)
-      if (!suivante) return state
-      if (state.federation.argent < suivante.coutUpgrade) return state
-      if (state.federation.fans < suivante.fansRequis) return state
+      const arene = areneParId(areneId)
+      if (state.federation.fans < arene.fansRequis) return state
       return {
         federation: {
           ...state.federation,
-          argent: state.federation.argent - suivante.coutUpgrade,
           divisions: state.federation.divisions.map((d) =>
-            d.id === divisionId ? { ...d, areneId: suivante.id } : d,
+            d.id === divisionId ? { ...d, areneId: arene.id } : d,
           ),
         },
       }

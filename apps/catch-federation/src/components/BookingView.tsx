@@ -1,10 +1,10 @@
 import { useState } from "react"
-import { areneParId } from "../game/arenas"
+import { ARENES, areneParId } from "../game/arenas"
 import { infoPromo, PROMOS } from "../game/promos"
 import { MODES_DIFFUSION, SCENOGRAPHIES } from "../game/showSetup"
 import { infoStipulation, LIMITES_FORMAT, stipulationsPourFormat } from "../game/stipulations"
 import type { BookedMatch, BookedPromo, FormatMatch, Genre, MatchStipulation, Title, Wrestler } from "../game/types"
-import { useDivisionActive, useStore } from "../state/store"
+import { useDivisionActive, useFederation, useStore } from "../state/store"
 import { DivisionSwitcher } from "./DivisionSwitcher"
 
 function genreParticipantsDuMatch(match: BookedMatch, roster: Wrestler[]): Genre | undefined {
@@ -426,8 +426,10 @@ const ETAPES: { value: EtapeShow; label: string }[] = [
 
 function BookingWizard() {
   const division = useDivisionActive()
+  const federation = useFederation()
   const ajouterMatch = useStore((s) => s.ajouterMatch)
   const ajouterPromo = useStore((s) => s.ajouterPromo)
+  const definirArene = useStore((s) => s.definirArene)
   const lancerSemaine = useStore((s) => s.lancerSemaine)
   const arene = areneParId(division.areneId)
   const [etape, setEtape] = useState<EtapeShow>("matchs")
@@ -435,6 +437,7 @@ function BookingWizard() {
   const matchesValides = division.card.filter(matchEstValide).length
   const promosValides = division.promos.filter(promoEstValide).length
   const coutEstime =
+    arene.coutLocation +
     division.card.filter(matchEstValide).reduce((acc, m) => acc + infoStipulation(m.stipulation).cout, 0) +
     division.promos.filter(promoEstValide).reduce((acc, p) => acc + infoPromo(p.type).cout, 0)
 
@@ -505,10 +508,31 @@ function BookingWizard() {
         <>
           <div className="carte-setup">
             <span className="carte-setup-titre">Arène</span>
-            <p className="texte-muted">
-              {arene.nom} — capacité {arene.capacite.toLocaleString("fr-FR")}, {arene.prixBillet} €/billet
-            </p>
-            <p className="texte-muted">Améliore ton arène depuis l'onglet Arènes.</p>
+            <p className="texte-muted">Choisis la salle pour ce show. Plus elle est grande, plus la location coûte cher et plus il faut de fans pour y accéder.</p>
+            <div className="grille-arenes">
+              {ARENES.map((a) => {
+                const verrouillee = federation.fans < a.fansRequis
+                return (
+                  <button
+                    key={a.id}
+                    className={`carte-arene ${division.areneId === a.id ? "actif" : ""}`}
+                    onClick={() => definirArene(division.id, a.id)}
+                    disabled={verrouillee}
+                  >
+                    <span className="carte-arene-nom">{a.nom}</span>
+                    <span className="carte-arene-stats">
+                      Capacité {a.capacite.toLocaleString("fr-FR")} · {a.prixBillet} €/billet · Location{" "}
+                      {a.coutLocation.toLocaleString("fr-FR")} €
+                    </span>
+                    {verrouillee && (
+                      <span className="carte-arene-verrou">
+                        Nécessite {a.fansRequis.toLocaleString("fr-FR")} fans
+                      </span>
+                    )}
+                  </button>
+                )
+              })}
+            </div>
           </div>
 
           <div className="carte-setup">
@@ -532,7 +556,7 @@ function BookingWizard() {
             <span>
               {promosValides} promo{promosValides > 1 ? "s" : ""}
             </span>
-            <span>Stipulations + promos : {coutEstime.toLocaleString("fr-FR")} €</span>
+            <span>Location + stipulations + promos : {coutEstime.toLocaleString("fr-FR")} €</span>
           </div>
 
           <p className="texte-muted texte-lancer-semaine">

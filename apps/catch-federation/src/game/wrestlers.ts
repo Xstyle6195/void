@@ -121,6 +121,7 @@ export function generateWrestler(options: OptionsGeneration = {}): Wrestler {
     popularite: randInt(5, Math.max(6, populariteMax)),
     moral: randInt(50, 80),
     forme: 100,
+    endurance: 100,
     age: debutant ? randInt(18, 24) : randInt(20, 40),
     salaire,
     contratSemaines,

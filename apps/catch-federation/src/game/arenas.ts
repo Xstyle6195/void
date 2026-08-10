@@ -5,7 +5,7 @@ export interface ArenaTier {
   capacite: number
   prixBillet: number
   fansRequis: number
-  coutUpgrade: number
+  coutLocation: number
 }
 
 export const ARENES: ArenaTier[] = [
@@ -16,7 +16,7 @@ export const ARENES: ArenaTier[] = [
     capacite: 900,
     prixBillet: 18,
     fansRequis: 0,
-    coutUpgrade: 0,
+    coutLocation: 0,
   },
   {
     id: "salle-communale",
@@ -25,7 +25,7 @@ export const ARENES: ArenaTier[] = [
     capacite: 2000,
     prixBillet: 22,
     fansRequis: 0,
-    coutUpgrade: 3000,
+    coutLocation: 3000,
   },
   {
     id: "gymnase-lycee",
@@ -34,7 +34,7 @@ export const ARENES: ArenaTier[] = [
     capacite: 4000,
     prixBillet: 26,
     fansRequis: 3000,
-    coutUpgrade: 8000,
+    coutLocation: 8000,
   },
   {
     id: "arene-nationale",
@@ -43,7 +43,7 @@ export const ARENES: ArenaTier[] = [
     capacite: 12000,
     prixBillet: 35,
     fansRequis: 15000,
-    coutUpgrade: 25000,
+    coutLocation: 25000,
   },
   {
     id: "stade",
@@ -52,16 +52,10 @@ export const ARENES: ArenaTier[] = [
     capacite: 40000,
     prixBillet: 50,
     fansRequis: 50000,
-    coutUpgrade: 70000,
+    coutLocation: 70000,
   },
 ]
 
 export function areneParId(id: string): ArenaTier {
   return ARENES.find((a) => a.id === id) ?? ARENES[0]
-}
-
-export function areneSuivante(id: string): ArenaTier | undefined {
-  const index = ARENES.findIndex((a) => a.id === id)
-  if (index === -1 || index === ARENES.length - 1) return undefined
-  return ARENES[index + 1]
 }

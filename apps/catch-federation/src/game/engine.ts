@@ -22,7 +22,6 @@ import {
   TAILLE_MARCHE_PAR_CATEGORIE,
 } from "./wrestlers"
 
-const FRAIS_SALLE = 2200
 const BONUS_NOTE_INTERFERENCE = 6
 const RISQUE_BLESSURE_INTERFERENCE = 0.05
 const BONUS_POPULARITE_INTERFERENCE = 8
@@ -119,6 +118,8 @@ function simulerMatch(
 
   const formeMoyenne =
     participants.reduce((acc, w) => acc + w.forme, 0) / participants.length
+  const enduranceMoyenne =
+    participants.reduce((acc, w) => acc + w.endurance, 0) / participants.length
 
   const interferant = match.interferenceId ? roster.find((w) => w.id === match.interferenceId) : undefined
 
@@ -127,6 +128,7 @@ function simulerMatch(
   const bonusStip = stip.bonusNote + (match.estTitre ? BONUS_TITRE : 0)
   const bonusInterference = interferant ? BONUS_NOTE_INTERFERENCE : 0
   const penaliteForme = (100 - formeMoyenne) * 0.15
+  const penaliteEndurance = (100 - enduranceMoyenne) * 0.1
   const alea = randInt(-8, 8)
 
   const note = clamp(
@@ -138,7 +140,8 @@ function simulerMatch(
         bonusArtistique +
         bonusInterference +
         alea -
-        penaliteForme,
+        penaliteForme -
+        penaliteEndurance,
     ),
   )
 
@@ -233,12 +236,15 @@ function jouerDivision(
     }
   }
 
-  const resultats: MatchResult[] = matchesValides.map((match, index) =>
-    simulerMatch(match, roster, index === matchesValides.length - 1, bonusArtistique),
-  )
+  // Les matchs sont résolus dans l'ordre : la forme et l'endurance entamées par un match
+  // affectent les matchs suivants de la même soirée (un catcheur peut recombattre, fatigué).
+  const resultats: MatchResult[] = []
+  for (let index = 0; index < matchesValides.length; index += 1) {
+    const match = matchesValides[index]
+    const resultat = simulerMatch(match, roster, index === matchesValides.length - 1, bonusArtistique)
+    resultats.push(resultat)
 
-  for (const resultat of resultats) {
-    const { match, winnerIds, note, blesseId } = resultat
+    const { winnerIds, note, blesseId } = resultat
     const stip = infoStipulation(match.stipulation)
     const participantsIds = campsDuMatch(match).flat()
 
@@ -252,10 +258,12 @@ function jouerDivision(
       w.moral = clamp(w.moral + (gagnant ? 3 : -2))
       const usure = stip.usure + (match.estTitre ? USURE_TITRE : 0)
       w.forme = clamp(w.forme - usure)
+      w.endurance = clamp(w.endurance - usure)
       if (blesseId === pid) {
         const dureeBase = STIPULATIONS_ECHELLES.has(match.stipulation) ? randInt(3, 8) : randInt(1, 5)
         w.blessureSemaines = Math.max(w.blessureSemaines, dureeBase)
         w.forme = clamp(w.forme - 20)
+        w.endurance = clamp(w.endurance - 15)
         w.moral = clamp(w.moral - 5)
       }
     }
@@ -268,6 +276,7 @@ function jouerDivision(
         if (blesseId === interferant.id) {
           interferant.blessureSemaines = Math.max(interferant.blessureSemaines, randInt(1, 4))
           interferant.forme = clamp(interferant.forme - 15)
+          interferant.endurance = clamp(interferant.endurance - 10)
           interferant.moral = clamp(interferant.moral - 3)
         }
       }
@@ -336,7 +345,7 @@ function jouerDivision(
   const facteurReduction = 1 - reductionAdjointPct / 100
   const detailDepenses = {
     salaires: Math.round(salaires * facteurReduction),
-    frais: Math.round(FRAIS_SALLE * facteurReduction),
+    frais: Math.round(arene.coutLocation * facteurReduction),
     stipulations: Math.round(coutStipulations * facteurReduction),
     promos: Math.round(resultatPromos.coutTotal * facteurReduction),
   }
@@ -345,6 +354,17 @@ function jouerDivision(
   const nouveauxFans = Math.max(0, Math.round(spectateurs * 0.6))
 
   const apresDebauchage = appliquerDebauchage(roster, titles, forceRivales)
+
+  // Instantané pris juste après le show (avant le repos de la semaine) pour que les
+  // résultats reflètent la fatigue réelle, avant que forme/endurance ne se régénèrent.
+  const etatRoster = apresDebauchage.roster.map((w) => ({
+    id: w.id,
+    name: w.name,
+    moral: w.moral,
+    forme: w.forme,
+    endurance: w.endurance,
+    blessureSemaines: w.blessureSemaines,
+  }))
 
   const resultatShow: ShowResult = {
     semaine,
@@ -357,6 +377,7 @@ function jouerDivision(
     detailDepenses,
     nouveauxFans,
     debauchesNoms: apresDebauchage.debauchesNoms,
+    etatRoster,
   }
 
   const rosterApresSemaine = tickRoster(apresDebauchage.roster)
@@ -411,7 +432,8 @@ function tickRoster(roster: Wrestler[]): Wrestler[] {
       const contratSemaines = w.contratSemaines - 1
       const blessureSemaines = Math.max(0, w.blessureSemaines - 1)
       const forme = blessureSemaines > 0 ? w.forme : clamp(w.forme + 8)
-      return { ...w, contratSemaines, blessureSemaines, forme }
+      const endurance = blessureSemaines > 0 ? w.endurance : clamp(w.endurance + 20)
+      return { ...w, contratSemaines, blessureSemaines, forme, endurance }
     })
     .filter((w) => w.contratSemaines > 0)
 }

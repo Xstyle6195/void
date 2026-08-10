@@ -41,6 +41,7 @@ function WrestlerCard({ w }: { w: Wrestler }) {
       <Etoiles label="Popularité" valeur={w.popularite} />
       <Etoiles label="Moral" valeur={w.moral} />
       <Etoiles label="Forme" valeur={w.forme} />
+      <Etoiles label="Endurance" valeur={w.endurance} />
       <div className="carte-lutteur-pied">
         <span>Âge {w.age}</span>
         <span>{w.salaire} €/sem.</span>
