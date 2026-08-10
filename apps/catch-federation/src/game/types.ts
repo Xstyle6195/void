@@ -1,5 +1,5 @@
 import type { FormatMatch, MatchStipulation } from "./stipulations"
-import type { FederationRivale } from "./rivals"
+import type { Article, FederationRivale, LutteurRival } from "./rivals"
 import type { TypePromo } from "./promos"
 import type { TypeModeDiffusion, TypeScenographie } from "./showSetup"
 
@@ -13,7 +13,16 @@ export type CategorieRecrutement = "officiel" | "jobbeur"
 
 export type TypeContrat = "permanent" | "temporaire"
 
-export type { FormatMatch, MatchStipulation, FederationRivale, TypePromo, TypeModeDiffusion, TypeScenographie }
+export type {
+  FormatMatch,
+  MatchStipulation,
+  FederationRivale,
+  LutteurRival,
+  Article,
+  TypePromo,
+  TypeModeDiffusion,
+  TypeScenographie,
+}
 
 export interface Wrestler {
   id: string
@@ -139,6 +148,7 @@ export type Screen =
   | "officiels"
   | "divisions"
   | "rivales"
+  | "actualites"
 
 export type Difficulte = "facile" | "normal" | "difficile"
 
@@ -155,5 +165,6 @@ export interface FederationState {
   derniereCampagne: Record<string, number>
   officiels: Record<"marketing" | "artistique" | "adjoint", string | null>
   rivales: FederationRivale[]
+  actualites: Article[]
   gameOver: boolean
 }

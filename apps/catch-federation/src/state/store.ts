@@ -105,6 +105,7 @@ function etatInitial(nom: string, logo: string, rang: PalierRivale): FederationS
     derniereCampagne: {},
     officiels: { marketing: null, artistique: null, adjoint: null },
     rivales: creerRivales(),
+    actualites: [],
     gameOver: false,
   }
 }

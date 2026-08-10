@@ -9,21 +9,23 @@ import { MarketingView } from "./components/MarketingView"
 import { OfficialsView } from "./components/OfficialsView"
 import { DivisionsView } from "./components/DivisionsView"
 import { RivalsView } from "./components/RivalsView"
+import { ActualitesView } from "./components/ActualitesView"
 import { StartScreen } from "./components/StartScreen"
 import { RecrutementInitialScreen } from "./components/RecrutementInitialScreen"
 import { useEcran, useFederation, usePhase, useStore } from "./state/store"
 import type { Screen } from "./game/types"
 
-const ONGLETS: { value: Screen; label: string }[] = [
-  { value: "effectif", label: "Effectif" },
-  { value: "booking", label: "Booking" },
-  { value: "resultats", label: "Résultats" },
-  { value: "titres", label: "Titres" },
-  { value: "marche", label: "Marché" },
-  { value: "marketing", label: "Marketing" },
-  { value: "officiels", label: "Officiels" },
-  { value: "divisions", label: "Divisions" },
-  { value: "rivales", label: "Rivales" },
+const ONGLETS: { value: Screen; label: string; icone: string }[] = [
+  { value: "effectif", label: "Effectif", icone: "👥" },
+  { value: "booking", label: "Booking", icone: "🥊" },
+  { value: "resultats", label: "Résultats", icone: "📊" },
+  { value: "titres", label: "Titres", icone: "🏆" },
+  { value: "marche", label: "Marché", icone: "💰" },
+  { value: "marketing", label: "Marketing", icone: "📣" },
+  { value: "officiels", label: "Officiels", icone: "🧑‍💼" },
+  { value: "divisions", label: "Divisions", icone: "🗂️" },
+  { value: "rivales", label: "Rivales", icone: "⚔️" },
+  { value: "actualites", label: "Actus", icone: "📰" },
 ]
 
 function ContenuEcran({ ecran }: { ecran: Screen }) {
@@ -46,6 +48,8 @@ function ContenuEcran({ ecran }: { ecran: Screen }) {
       return <DivisionsView />
     case "rivales":
       return <RivalsView />
+    case "actualites":
+      return <ActualitesView />
     default:
       return null
   }
@@ -95,20 +99,23 @@ function Jeu() {
   return (
     <div className="app">
       <TopBar />
-      <main className="contenu">
-        <ContenuEcran ecran={ecran} />
-      </main>
-      <nav className="onglets">
-        {ONGLETS.map((o) => (
-          <button
-            key={o.value}
-            className={`onglet ${ecran === o.value ? "actif" : ""}`}
-            onClick={() => setEcran(o.value)}
-          >
-            {o.label}
-          </button>
-        ))}
-      </nav>
+      <div className="corps-app">
+        <nav className="sidebar">
+          {ONGLETS.map((o) => (
+            <button
+              key={o.value}
+              className={`onglet-lateral ${ecran === o.value ? "actif" : ""}`}
+              onClick={() => setEcran(o.value)}
+            >
+              <span className="onglet-icone">{o.icone}</span>
+              <span className="onglet-label">{o.label}</span>
+            </button>
+          ))}
+        </nav>
+        <main className="contenu">
+          <ContenuEcran ecran={ecran} />
+        </main>
+      </div>
     </div>
   )
 }

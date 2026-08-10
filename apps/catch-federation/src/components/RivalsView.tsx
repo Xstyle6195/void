@@ -10,6 +10,7 @@ function CarteRivale({ rivale }: { rivale: FederationRivale }) {
   const rachetable = rivale.fans < federation.fans
   const cout = valorisationRivale(rivale)
   const argentOk = federation.argent >= cout
+  const champion = rivale.roster.find((w) => w.id === rivale.titreChampionId)
 
   return (
     <div className="carte-rivale">
@@ -20,6 +21,7 @@ function CarteRivale({ rivale }: { rivale: FederationRivale }) {
         <span>{rivale.fans.toLocaleString("fr-FR")} fans</span>
         <span>{rivale.popularite}% popularité</span>
       </div>
+      {champion && <p className="texte-muted texte-champion-rival">🏆 Champion : {champion.nom}</p>}
       {rachetable ? (
         <button
           className="primaire"

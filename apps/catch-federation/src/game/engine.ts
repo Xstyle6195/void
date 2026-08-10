@@ -485,7 +485,8 @@ export function jouerSemaine(state: FederationState): FederationState {
     0,
   )
 
-  const rivales = evoluerRivales(state.rivales)
+  const { rivales, articles } = evoluerRivales(state.rivales, semaineEcoulee)
+  const actualites = [...articles, ...state.actualites].slice(0, 40)
 
   const palierJoueur = palierPourFans(state.fans)
   const fansRivalesMemePalier = rivales
@@ -522,6 +523,7 @@ export function jouerSemaine(state: FederationState): FederationState {
     divisions,
     freeAgents,
     rivales,
+    actualites,
     gameOver,
   }
 }

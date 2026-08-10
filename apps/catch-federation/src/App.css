@@ -75,43 +75,62 @@
   color: var(--bad);
 }
 
+.corps-app {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
 .contenu {
   flex: 1;
+  min-width: 0;
   padding: 16px;
-  padding-bottom: 88px;
   overflow-y: auto;
 }
 
-.onglets {
-  position: fixed;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 100%;
-  max-width: 480px;
+.sidebar {
+  flex-shrink: 0;
+  width: 64px;
+  min-height: 0;
   display: flex;
-  overflow-x: auto;
+  flex-direction: column;
+  overflow-y: auto;
   background: var(--panel);
-  border-top: 1px solid var(--border);
+  border-right: 1px solid var(--border);
 }
 
-.onglet {
-  flex: 1 0 auto;
-  min-width: 66px;
-  padding: 12px 4px;
+.onglet-lateral {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 10px 2px;
   background: none;
   border: none;
+  border-left: 3px solid transparent;
   color: var(--text-muted);
-  font-size: 10.5px;
+  font-size: 9px;
   font-weight: 600;
-  text-transform: uppercase;
-  white-space: nowrap;
+  text-align: center;
+  line-height: 1.15;
   cursor: pointer;
 }
 
-.onglet.actif {
+.onglet-lateral.actif {
   color: var(--gold);
-  border-top: 2px solid var(--accent);
+  border-left-color: var(--accent);
+  background: var(--bg-alt);
+}
+
+.onglet-icone {
+  font-size: 19px;
+  line-height: 1;
+}
+
+.onglet-label {
+  word-break: break-word;
 }
 
 .vue h2 {
@@ -922,6 +941,51 @@ select {
   width: 100%;
   margin-top: 6px;
   font-size: 13px;
+}
+
+.texte-champion-rival {
+  color: var(--gold);
+  margin-top: 4px;
+}
+
+/* Actualités */
+
+.liste-actualites {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.carte-actualite {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 10px;
+  padding: 12px;
+}
+
+.actualite-entete {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.actualite-semaine {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+}
+
+.actualite-titre {
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.actualite-corps {
+  font-size: 13px;
+  color: var(--text-muted);
 }
 
 /* Recrutement initial (onboarding) */

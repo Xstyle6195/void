@@ -34,6 +34,12 @@ function pick<T>(items: T[]): T {
   return items[randInt(0, items.length - 1)]
 }
 
+export function genererNomAleatoire(): { nom: string; genre: Genre } {
+  const genre: Genre = Math.random() < 0.5 ? "homme" : "femme"
+  const nom = `${pick(genre === "homme" ? PRENOMS_HOMMES : PRENOMS_FEMMES)} ${pick(NOMS)}`
+  return { nom, genre }
+}
+
 const SEUIL_FANS_PROGRESSION = 15000
 
 // 0 = fédération tout juste lancée (petites stars locales), 1 = fédération installée (vedettes confirmées)
