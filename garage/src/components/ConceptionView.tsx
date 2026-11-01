@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { CUSTOM_COLORS, DOMAINS, ENGINE_SWAPS, PARTS, VARIANTS } from "../game/data";
+import { lazy, Suspense, useState } from "react";
+import { CUSTOM_COLORS, DOMAINS, ENGINE_SWAPS, PART_BY_ID, PARTS, VARIANTS } from "../game/data";
 import { carName, isCollectible, modelOf, partStatusLabel } from "../game/car";
 import { checkCriteria, checkOem, checkRestore, checkSwap, checkVariant, type OpCheck } from "../game/engine";
 import type { Car, Domain, Effects, PartId } from "../game/types";
@@ -7,6 +7,8 @@ import { formatMoney } from "../game/utils";
 import { useStore } from "../state/store";
 import { CarSvg } from "./CarSvg";
 import { Bar, CarLabelsFor, Empty, StatGrid, ValueLine } from "./common";
+
+const Engine3D = lazy(() => import("../three/Engine3D"));
 
 function effectsText(e: Effects): string {
   const out: string[] = [];
@@ -26,7 +28,7 @@ function OpButton({ label, check, onClick, className }: { label: string; check: 
   );
 }
 
-function PartRow({ car, partId }: { car: Car; partId: PartId }) {
+function PartRow({ car, partId, flash }: { car: Car; partId: PartId; flash: boolean }) {
   const { game, restore, oem, variant, swap } = useStore();
   const [open, setOpen] = useState(false);
   const [colorFor, setColorFor] = useState<string | null>(null);
@@ -37,7 +39,7 @@ function PartRow({ car, partId }: { car: Car; partId: PartId }) {
   const rc = checkRestore(game, car, partId);
   const oc = checkOem(game, car, partId);
   return (
-    <div className="part-row">
+    <div className={`part-row ${flash ? "flash" : ""}`} id={`part-${partId}`}>
       <div className="part-head">
         <div className="part-name">
           <strong>{def.label}</strong>
@@ -120,6 +122,7 @@ function PartRow({ car, partId }: { car: Car; partId: PartId }) {
 export function ConceptionView() {
   const { game, selectedCarId, openCar, setTab } = useStore();
   const [domain, setDomain] = useState<Domain>("mecanique");
+  const [flash, setFlash] = useState<PartId | null>(null);
   const workable = game.cars.filter((c) => c.status === "atelier");
   const car = workable.find((c) => c.id === selectedCarId) ?? workable[0];
   if (!car) {
@@ -191,8 +194,21 @@ export function ConceptionView() {
               </button>
             ))}
           </div>
+          {domain === "mecanique" && (
+            <Suspense fallback={<div className="engine3d engine3d-loading">Chargement de la vue 3D…</div>}>
+              <Engine3D
+                car={car}
+                onSelectPart={(part) => {
+                  setDomain(PART_BY_ID[part].domain);
+                  setFlash(part);
+                  setTimeout(() => document.getElementById(`part-${part}`)?.scrollIntoView({ behavior: "smooth", block: "center" }), 50);
+                  setTimeout(() => setFlash(null), 1600);
+                }}
+              />
+            </Suspense>
+          )}
           {PARTS.filter((p) => p.domain === domain).map((p) => (
-            <PartRow key={`${car.id}-${p.id}`} car={car} partId={p.id} />
+            <PartRow key={`${car.id}-${p.id}`} car={car} partId={p.id} flash={flash === p.id} />
           ))}
         </div>
       </div>

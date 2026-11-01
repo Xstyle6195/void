@@ -26,6 +26,19 @@ La partie est sauvegardée automatiquement dans le navigateur (localStorage).
 3. **Vente** : choisissez la promotion (petites annonces, réseaux sociaux, salon auto, enchères prestige). Chaque canal attire un mélange d'acheteurs (particuliers, passionnés de performance, amateurs de luxe, collectionneurs) qui valorisent différemment votre travail. Vous acceptez ou refusez les offres.
 4. **Commandes spéciales** : des clients privés vous demandent de trouver et préparer un modèle précis, ou vous confient leur voiture (préparation, concours d'élégance). Vous acceptez ou refusez ; un délai dépassé coûte de la réputation.
 
+## Vue moteur 3D
+
+Dans l'onglet Conception → Mécanique, le moteur de la voiture est affiché en 3D (three.js, chargé uniquement à cet endroit). Il est généré procéduralement à partir de la fiche technique : 4 / 6 cylindres en ligne, V8, V12, flat-6, électrique, avec ou sans turbo(s), carburateurs ou injection, allumeur et faisceau sur les anciens.
+
+Environ 25 éléments sont modélisés et cliquables : bloc, culasse, couvre-culasse, allumage, admission ou carburateurs, papillon et filtre, collecteur et ligne d'échappement, turbo, échangeur, distribution, poulies et courroie, alternateur, clim, durites, filtre et jauge d'huile, supports, volant moteur, boîte, démarreur (et pour l'électrique : stator, rotor, onduleur, câbles HT, réducteur, arbres).
+
+- Le moteur reflète la voiture : usure et rouille selon l'état des pièces, filtre conique et turbo agrandi en Stage 1/2, ligne inox ou titane, levier de boîte séquentielle, swaps moteur.
+- **Vue éclatée** : un curseur écarte les éléments (le rotor sort du stator sur un électrique).
+- **Diagnostic** : chaque élément est coloré selon l'état de la pièce correspondante.
+- Un clic sur un élément affiche sa fiche ; « Travailler sur cette pièce » amène directement à la bonne ligne de l'atelier.
+
+Le code est dans `src/three/` (`engineModel.ts` pour la géométrie, `Engine3D.tsx` pour la scène) et `src/game/engineLayout.ts`.
+
 ## Labels
 
 - 🏆 **Pièce de collection** : modèle ancien (≤ 2000, rareté ≥ 2), état ≥ 90 % et originalité ≥ 85 %. Cote fortement majorée.
@@ -43,3 +56,4 @@ Places supplémentaires, mécaniciens, banc moteur, cabine de peinture, atelier 
 - `src/game/` : logique pure du jeu (données, calcul des stats et de la cote, moteur de tour).
 - `src/state/store.ts` : store zustand + sauvegarde.
 - `src/components/` : interface React.
+- `src/three/` : vue moteur 3D.
